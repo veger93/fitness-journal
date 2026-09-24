@@ -1,0 +1,23 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: notification-service
+  jpa:
+    open-in-view: false          # не держим соединение с БД открытым до конца HTTP-запроса
+    hibernate:
+      ddl-auto: validate         # схему создаёт Liquibase, Hibernate только проверяет
+  liquibase:
+    enabled: false               # включим в задаче с первыми миграциями
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

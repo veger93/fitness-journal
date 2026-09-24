@@ -1,0 +1,9 @@
+// Обычная библиотека (НЕ Spring Boot приложение) — поэтому без плагина boot и без main-класса
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    // api = зависимость "протекает" в сервисы, которые подключают common-lib
+    api 'jakarta.validation:jakarta.validation-api'
+}

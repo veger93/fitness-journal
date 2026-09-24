@@ -1,0 +1,16 @@
+pluginManagement {
+    // Версии плагинов берём из gradle.properties — в модулях пишем плагин БЕЗ версии
+    plugins {
+        id 'org.springframework.boot' version "${springBootVersion}"
+        id 'io.spring.dependency-management' version "${dependencyManagementVersion}"
+    }
+}
+
+rootProject.name = 'fitness-journal'
+
+include 'common-lib'
+include 'gateway-service'
+include 'user-service'
+include 'workout-service'
+include 'analytics-service'
+include 'notification-service'

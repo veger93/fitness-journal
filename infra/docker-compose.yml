@@ -1,0 +1,32 @@
+# Запуск: из папки infra -> docker compose up -d
+services:
+  postgres:
+    image: postgres:16
+    container_name: vegas-postgres
+    environment:
+      POSTGRES_USER: vegas
+      POSTGRES_PASSWORD: vegas
+      POSTGRES_DB: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      # скрипты из этой папки выполняются ТОЛЬКО при первом создании тома
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+  # Ловушка для писем: notification-service шлёт сюда, смотрим в браузере http://localhost:8025
+  mailpit:
+    image: axllent/mailpit
+    container_name: vegas-mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    restart: unless-stopped
+
+  # --- позже ---
+  # kafka:   события между сервисами (WorkoutCompleted, PlateauDetected)
+  # minio:   S3-хранилище для анимаций упражнений и аватарок
+
+volumes:
+  pg-data:

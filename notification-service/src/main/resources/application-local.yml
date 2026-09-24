@@ -1,0 +1,11 @@
+# Профиль local: запуск из IDEA с -Dspring.profiles.active=local
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5435/notification_db
+    username: ${DB_USERNAME:vegas}
+    password: ${DB_PASSWORD:vegas}
+
+  # Mailpit из infra/docker-compose.yml: письма смотреть на http://localhost:8025
+  mail:
+    host: localhost
+    port: 1025

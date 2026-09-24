@@ -1,0 +1,25 @@
+// notification-service: Email-уведомления, настройки уведомлений пользователя, напоминания по расписанию.
+plugins {
+    id 'org.springframework.boot'
+}
+
+dependencies {
+    implementation project(':common-lib')
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.liquibase:liquibase-core'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+
+    implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+    // чтобы MapStruct "видел" геттеры/сеттеры, сгенерированные Lombok
+    annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${lombokMapstructBindingVersion}"
+
+    // --- специфичное для notification-service ---
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+}

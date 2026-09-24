@@ -1,0 +1,13 @@
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+out/
+.idea/
+*.iml
+*.log
+.DS_Store
+# локальные секреты
+.env
+application-secret.yml
+frontend/node_modules/
+frontend/dist/

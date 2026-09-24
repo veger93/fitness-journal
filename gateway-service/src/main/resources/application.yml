@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      mvc:
+        routes:
+          - id: user-service
+            uri: ${USER_SERVICE_URL:http://localhost:8081}
+            predicates:
+              - Path=/api/auth/**,/api/users/**
+          - id: workout-service
+            uri: ${WORKOUT_SERVICE_URL:http://localhost:8082}
+            predicates:
+              - Path=/api/exercises/**,/api/templates/**,/api/workouts/**
+          - id: analytics-service
+            uri: ${ANALYTICS_SERVICE_URL:http://localhost:8083}
+            predicates:
+              - Path=/api/analytics/**,/api/records/**,/api/reports/**
+          - id: notification-service
+            uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8084}
+            predicates:
+              - Path=/api/notifications/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

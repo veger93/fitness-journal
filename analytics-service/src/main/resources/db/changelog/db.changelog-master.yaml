@@ -1,0 +1,2 @@
+# Главный файл миграций Liquibase. Сюда будем подключать changeset'ы через include.
+databaseChangeLog: []
