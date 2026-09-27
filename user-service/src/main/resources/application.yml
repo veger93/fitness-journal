@@ -21,3 +21,8 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}         # base64, минимум 256 бит; в проде — только через переменную окружения
+    access-token-ttl: 1h          # время жизни токена (Duration: 15m, 1h, 1d)
