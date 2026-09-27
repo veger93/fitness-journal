@@ -1,2 +1,11 @@
-# Главный файл миграций Liquibase. Сюда будем подключать changeset'ы через include.
-databaseChangeLog: []
+# Главный файл миграций. Порядок include = порядок выполнения.
+# Правило: уже применённый changeset НИКОГДА не редактируем — только добавляем новый файл.
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/001-create-exercises.sql
+  - include:
+      file: db/changelog/changes/002-create-exercise-muscles.sql
+  - include:
+      file: db/changelog/changes/003-create-exercise-media.sql
+  - include:
+      file: db/changelog/changes/004-seed-system-exercises.sql
