@@ -1,6 +1,7 @@
 package com.vegas.user.exception;
 
 import com.vegas.common.dto.ErrorResponse;
+import com.vegas.common.exception.BadRequestException;
 import com.vegas.common.exception.BusinessException;
 import com.vegas.common.exception.NotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,6 +37,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, "Некорректное тело запроса", request);
+    }
+
+    /** Данные не прошли бизнес-проверку в сервисе (возраст, дата в будущем...). */
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
