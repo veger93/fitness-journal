@@ -9,7 +9,7 @@ spring:
     hibernate:
       ddl-auto: validate         # схему создаёт Liquibase, Hibernate только проверяет
   liquibase:
-    enabled: false               # включим в задаче с первыми миграциями
+    enabled: true                # при старте сервис сам накатывает новые миграции
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 management:
@@ -21,3 +21,7 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}         # ТОТ ЖЕ ключ, что у user-service: иначе подпись токена не сойдётся
