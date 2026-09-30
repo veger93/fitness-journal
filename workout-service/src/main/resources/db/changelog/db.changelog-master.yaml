@@ -9,3 +9,7 @@ databaseChangeLog:
       file: db/changelog/changes/003-create-exercise-media.sql
   - include:
       file: db/changelog/changes/004-seed-system-exercises.sql
+  - include:
+      file: db/changelog/changes/005-create-workout-templates.sql
+  - include:
+      file: db/changelog/changes/006-seed-system-templates.sql
