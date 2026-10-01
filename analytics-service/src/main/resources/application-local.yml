@@ -4,3 +4,8 @@ spring:
     url: jdbc:postgresql://localhost:5435/analytics_db
     username: ${DB_USERNAME:vegas}
     password: ${DB_PASSWORD:vegas}
+
+app:
+  jwt:
+    # dev-ключ, совпадает с user-service/application-local.yml
+    secret: ${JWT_SECRET:0EJXS5DoMcGPf1mXDuHC7Fn/xZnsIq1q0iyBJXy1pz3pRxx5FNGNmQ+Qihz2H0rix/fZ2V0yopKjXGdQci97MQ==}

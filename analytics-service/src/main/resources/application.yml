@@ -4,12 +4,32 @@ server:
 spring:
   application:
     name: analytics-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      # Consumer group: все экземпляры analytics-service — одна группа.
+      # Kafka делит партиции топика между экземплярами группы: каждое сообщение
+      # обработает ровно один экземпляр. Другой сервис со своей group-id получит ВСЕ сообщения.
+      group-id: analytics-service
+      # группа запускается впервые и сохранённой позиции (offset) нет -> читать с самого начала топика
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # offset фиксирует Spring после успешной обработки, а не сам клиент по таймеру
+      enable-auto-commit: false
+    producer:
+      # продюсер нужен только для отправки сообщений, которые не удалось обработать, в DLT
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      # подтверждать (commit offset) каждое сообщение сразу после обработки
+      ack-mode: record
   jpa:
     open-in-view: false          # не держим соединение с БД открытым до конца HTTP-запроса
     hibernate:
       ddl-auto: validate         # схему создаёт Liquibase, Hibernate только проверяет
   liquibase:
-    enabled: false               # включим в задаче с первыми миграциями
+    enabled: true                # при старте сервис сам накатывает новые миграции
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 management:
@@ -21,3 +41,10 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+app:
+  kafka:
+    topics:
+      workout-events: workout-events
+  jwt:
+    secret: ${JWT_SECRET}         # тот же ключ, что у user-service
