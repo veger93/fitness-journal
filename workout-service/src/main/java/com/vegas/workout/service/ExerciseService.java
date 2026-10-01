@@ -74,7 +74,7 @@ public class ExerciseService {
      */
     private Exercise findVisible(UUID userId, UUID exerciseId) {
         return exerciseRepository.findWithMusclesById(exerciseId)
-                .filter(exercise -> !exercise.isCustom() || exercise.isOwnedBy(userId))
+                .filter(exercise -> exercise.isVisibleTo(userId))
                 .orElseThrow(() -> new NotFoundException("Упражнение не найдено"));
     }
 }

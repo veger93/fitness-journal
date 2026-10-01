@@ -106,4 +106,9 @@ public class Exercise {
     public boolean isOwnedBy(UUID userId) {
         return ownerId != null && ownerId.equals(userId);
     }
+
+    /** Системное видят все, своё — только владелец. */
+    public boolean isVisibleTo(UUID userId) {
+        return !isCustom() || isOwnedBy(userId);
+    }
 }
