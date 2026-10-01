@@ -110,7 +110,7 @@ public class Workout {
 
     public WorkoutExercise findExercise(UUID workoutExerciseId) {
         return exercises.stream()
-                .filter(workoutExercise -> workoutExercise.getId().equals(workoutExerciseId))
+                .filter(workoutExercise -> workoutExerciseId.equals(workoutExercise.getId()))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Упражнение в тренировке не найдено"));
     }

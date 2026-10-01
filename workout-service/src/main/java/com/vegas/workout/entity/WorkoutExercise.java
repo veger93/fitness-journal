@@ -79,7 +79,7 @@ public class WorkoutExercise {
 
     public WorkoutSet findSet(UUID setId) {
         return sets.stream()
-                .filter(set -> set.getId().equals(setId))
+                .filter(set -> setId.equals(set.getId()))
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Подход не найден"));
     }
