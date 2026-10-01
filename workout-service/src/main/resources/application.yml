@@ -4,6 +4,19 @@ server:
 spring:
   application:
     name: workout-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      # ключ и значение отправляем строками: ключ = userId, значение = JSON события
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # acks=all: брокер подтверждает запись только когда она сохранена на всех репликах
+      acks: all
+      properties:           # "[...]" — чтобы точки в имени были частью ключа, а не вложенностью
+        "[enable.idempotence]": true    # повторная отправка при сбое сети не создаст дубль в топике
+        "[max.block.ms]": 5000          # Kafka недоступна -> ошибка через 5 сек, а не через минуту
+        "[request.timeout.ms]": 5000
+        "[delivery.timeout.ms]": 10000
   jpa:
     open-in-view: false          # не держим соединение с БД открытым до конца HTTP-запроса
     hibernate:
@@ -23,5 +36,10 @@ springdoc:
     path: /swagger-ui.html
 
 app:
+  kafka:
+    topics:
+      workout-events: workout-events
+  outbox:
+    poll-interval-ms: 1000        # как часто отправлять накопившиеся события
   jwt:
     secret: ${JWT_SECRET}         # ТОТ ЖЕ ключ, что у user-service: иначе подпись токена не сойдётся

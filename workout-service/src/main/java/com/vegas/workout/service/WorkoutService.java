@@ -1,6 +1,5 @@
 package com.vegas.workout.service;
 
-import com.vegas.common.event.WorkoutCompletedEvent;
 import com.vegas.common.exception.BadRequestException;
 import com.vegas.common.exception.BusinessException;
 import com.vegas.common.exception.NotFoundException;
@@ -19,13 +18,13 @@ import com.vegas.workout.entity.WorkoutExercise;
 import com.vegas.workout.entity.WorkoutSet;
 import com.vegas.workout.entity.WorkoutStatus;
 import com.vegas.workout.entity.WorkoutTemplate;
+import com.vegas.workout.event.OutboxService;
 import com.vegas.workout.mapper.WorkoutMapper;
 import com.vegas.workout.repository.ExerciseRepository;
 import com.vegas.workout.repository.WorkoutExerciseRepository;
 import com.vegas.workout.repository.WorkoutRepository;
 import com.vegas.workout.repository.WorkoutTemplateRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -49,7 +48,7 @@ public class WorkoutService {
     private final WorkoutTemplateRepository templateRepository;
     private final ExerciseRepository exerciseRepository;
     private final WorkoutMapper workoutMapper;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxService outboxService;
     private final Clock clock;
 
     // ---------- тренировка ----------
@@ -96,14 +95,19 @@ public class WorkoutService {
     public WorkoutResponse complete(UUID userId, UUID workoutId) {
         Workout workout = findOwn(userId, workoutId);
         workout.complete(clock.instant());
-        // Событие уйдёт слушателям только ПОСЛЕ успешного коммита (см. WorkoutEventListener)
-        eventPublisher.publishEvent(new WorkoutCompletedEvent(workout.getId(), userId, workout.getCompletedAt()));
+        // в той же транзакции, что и смена статуса: либо сохранится и то и другое, либо ничего
+        outboxService.workoutCompleted(workout);
         return toResponse(workout);
     }
 
     @Transactional
     public void delete(UUID userId, UUID workoutId) {
-        workoutRepository.delete(findOwn(userId, workoutId));
+        Workout workout = findOwn(userId, workoutId);
+        if (!workout.isInProgress()) {
+            // завершённая уже учтена в аналитике -> сообщаем, что её надо убрать
+            outboxService.workoutDeleted(workout);
+        }
+        workoutRepository.delete(workout);
     }
 
     // ---------- упражнения в тренировке ----------

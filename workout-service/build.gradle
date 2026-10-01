@@ -23,4 +23,6 @@ dependencies {
     // --- специфичное для workout-service ---
     // Resource Server: сервис сам НЕ выпускает токены, только проверяет чужие (выпущенные user-service)
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    // Kafka: отправка событий (KafkaTemplate)
+    implementation 'org.springframework.kafka:spring-kafka'
 }

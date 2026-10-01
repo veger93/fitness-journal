@@ -15,3 +15,5 @@ databaseChangeLog:
       file: db/changelog/changes/006-seed-system-templates.sql
   - include:
       file: db/changelog/changes/007-create-workouts.sql
+  - include:
+      file: db/changelog/changes/008-create-outbox-events.sql
