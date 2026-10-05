@@ -77,6 +77,13 @@ public class ExercisePerformance {
     @Column(name = "best_e1rm_kg", precision = 7, scale = 2)
     private BigDecimal bestE1rmKg;
 
+    /** Самый тяжёлый рабочий подход (при равном весе — с большим числом повторов). */
+    @Column(name = "max_weight_kg", precision = 6, scale = 2)
+    private BigDecimal maxWeightKg;
+
+    @Column(name = "max_weight_reps")
+    private Integer maxWeightReps;
+
     @Column(name = "best_duration_sec")
     private Integer bestDurationSec;
 
