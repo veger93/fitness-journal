@@ -19,4 +19,9 @@ dependencies {
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
     // чтобы MapStruct "видел" геттеры/сеттеры, сгенерированные Lombok
     annotationProcessor "org.projectlombok:lombok-mapstruct-binding:${lombokMapstructBindingVersion}"
+
+    // --- специфичное для analytics-service ---
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    // Kafka: приём событий (@KafkaListener) и отправка "битых" сообщений в DLT
+    implementation 'org.springframework.kafka:spring-kafka'
 }

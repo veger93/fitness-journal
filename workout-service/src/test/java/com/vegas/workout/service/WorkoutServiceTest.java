@@ -1,6 +1,5 @@
 package com.vegas.workout.service;
 
-import com.vegas.common.event.WorkoutCompletedEvent;
 import com.vegas.common.exception.BadRequestException;
 import com.vegas.common.exception.BusinessException;
 import com.vegas.common.exception.NotFoundException;
@@ -16,6 +15,7 @@ import com.vegas.workout.entity.Workout;
 import com.vegas.workout.entity.WorkoutExercise;
 import com.vegas.workout.entity.WorkoutStatus;
 import com.vegas.workout.entity.WorkoutTemplate;
+import com.vegas.workout.event.OutboxService;
 import com.vegas.workout.mapper.WorkoutMapper;
 import com.vegas.workout.repository.ExerciseRepository;
 import com.vegas.workout.repository.WorkoutExerciseRepository;
@@ -24,10 +24,8 @@ import com.vegas.workout.repository.WorkoutTemplateRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -60,7 +58,7 @@ class WorkoutServiceTest {
     @Mock
     private ExerciseRepository exerciseRepository;
     @Mock
-    private ApplicationEventPublisher eventPublisher;
+    private OutboxService outboxService;
 
     private WorkoutService service;
 
@@ -70,7 +68,7 @@ class WorkoutServiceTest {
     @BeforeEach
     void setUp() {
         service = new WorkoutService(workoutRepository, workoutExerciseRepository, templateRepository,
-                exerciseRepository, new WorkoutMapper(), eventPublisher, CLOCK);
+                exerciseRepository, new WorkoutMapper(), outboxService, CLOCK);
     }
 
     // ---------- start ----------
@@ -148,7 +146,7 @@ class WorkoutServiceTest {
     // ---------- complete ----------
 
     @Test
-    void complete_publishesEvent() {
+    void complete_writesEventToOutbox() {
         Workout workout = workoutWith(exercise("Жим лёжа", TrackingType.WEIGHT_REPS));
         ReflectionTestUtils.setField(workout, "id", workoutId);
         UUID workoutExerciseId = workout.getExercises().get(0).getId();
@@ -160,11 +158,34 @@ class WorkoutServiceTest {
         assertThat(response.status()).isEqualTo(WorkoutStatus.COMPLETED);
         assertThat(response.tonnageKg()).isEqualByComparingTo("640");
 
-        ArgumentCaptor<WorkoutCompletedEvent> event = ArgumentCaptor.forClass(WorkoutCompletedEvent.class);
-        verify(eventPublisher).publishEvent(event.capture());
-        assertThat(event.getValue().workoutId()).isEqualTo(workoutId);
-        assertThat(event.getValue().userId()).isEqualTo(me);
-        assertThat(event.getValue().completedAt()).isEqualTo(NOW);
+        verify(outboxService).workoutCompleted(workout);
+    }
+
+    // ---------- delete ----------
+
+    @Test
+    void delete_completedWorkout_notifiesAnalytics() {
+        Workout workout = workoutWith(exercise("Жим лёжа", TrackingType.WEIGHT_REPS));
+        workout.getExercises().get(0).addSet(
+                new com.vegas.workout.entity.SetValues(new BigDecimal("80"), 8, null, null, null, false), NOW);
+        workout.complete(NOW);
+        when(workoutRepository.findWithExercisesByIdAndUserId(workoutId, me)).thenReturn(Optional.of(workout));
+
+        service.delete(me, workoutId);
+
+        verify(outboxService).workoutDeleted(workout);
+        verify(workoutRepository).delete(workout);
+    }
+
+    @Test
+    void delete_inProgressWorkout_sendsNoEvent() {
+        Workout workout = workoutWith(exercise("Жим лёжа", TrackingType.WEIGHT_REPS));
+        when(workoutRepository.findWithExercisesByIdAndUserId(workoutId, me)).thenReturn(Optional.of(workout));
+
+        service.delete(me, workoutId);
+
+        verify(outboxService, never()).workoutDeleted(any());
+        verify(workoutRepository).delete(workout);
     }
 
     // ---------- helpers ----------
