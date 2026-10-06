@@ -35,6 +35,18 @@
    — ACWR — ассоциация, а не предсказание; порог 1.5 не "магическая граница", смотреть вместе с другими признаками.
    https://bjsm.bmj.com/content/53/3/144
 
+7. **Latella C., Teo W.-P., Spathis J., van den Hoek D.** Long-Term Strength Adaptation: A 15-Year Analysis
+   of Powerlifting Athletes. *Journal of Strength and Conditioning Research*, 2020.
+   https://pmc.ncbi.nlm.nih.gov/articles/PMC7448836/
+   — у тренированных атлетов сила растёт медленно (~10% за 1.5–2 года) и тем медленнее, чем выше уровень:
+   самые слабые прибавляли примерно вдвое быстрее самых сильных ("эффект потолка").
+
+8. **van den Hoek D.J., Beaumont P.L., van den Hoek A.K., Owen P.J., Garrett J.M., Buhmann R., Latella C.**
+   Normative data for the squat, bench press and deadlift exercises in powerlifting: Data from 809,986 competition entries.
+   *Journal of Science and Medicine in Sport*, 2024, 27(10): 734–742. https://pubmed.ncbi.nlm.nih.gov/39060209/
+   — нормативы относительной силы (результат / вес тела) по полу и возрасту; например, 90-й перцентиль
+   у мужчин 18–35 лет: присед 2.83, жим 1.95, становая 3.25 веса тела. Задел для будущих силовых стандартов.
+
 > Перед публикацией описания проекта выходные данные стоит сверить с первоисточниками.
 
 ## Где что используется
@@ -47,3 +59,6 @@
 | План разгрузки: 7 дней, объём вдвое меньше | `InsightsCalculator.deloadPlan` | [4] |
 | Плато: 21 день без нового максимума при 3+ тренировках | `InsightsCalculator.plateau` | эвристика проекта (порог подбирается) |
 | Разгрузка через 70% от 1ПМ | `InsightsCalculator.deloadPlan` | выбор проекта в рамках [4] |
+| Эталонная кривая: темп роста силы падает с уровнем; продвинутый ~0.5% в месяц | `ExperienceLevel`, `ReferenceCurve` | [7] |
+| Темп для новичка 3% и среднего уровня 1.5% в месяц | `ExperienceLevel` | эвристика проекта в духе [7] |
+| Силовые стандарты (результат / вес тела) | — (план) | [8] |

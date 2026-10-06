@@ -12,6 +12,7 @@ public final class EventTypes {
 
     public static final String WORKOUT_COMPLETED = "WorkoutCompleted";
     public static final String WORKOUT_DELETED = "WorkoutDeleted";
+    public static final String USER_PROFILE_UPDATED = "UserProfileUpdated";
 
     private EventTypes() {
     }

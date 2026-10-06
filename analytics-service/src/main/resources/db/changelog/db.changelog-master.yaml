@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/changes/002-add-max-weight.sql
   - include:
       file: db/changelog/changes/003-add-avg-rpe.sql
+  - include:
+      file: db/changelog/changes/004-create-athlete-profiles.sql

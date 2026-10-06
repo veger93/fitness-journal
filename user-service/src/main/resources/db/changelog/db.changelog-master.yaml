@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/changes/002-create-user-profiles.sql
   - include:
       file: db/changelog/changes/003-create-body-weight-log.sql
+  - include:
+      file: db/changelog/changes/004-create-outbox-events.sql

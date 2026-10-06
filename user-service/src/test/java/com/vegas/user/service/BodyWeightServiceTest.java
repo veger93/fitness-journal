@@ -5,6 +5,7 @@ import com.vegas.user.dto.RecordWeightRequest;
 import com.vegas.user.dto.WeightEntryResponse;
 import com.vegas.user.entity.BodyWeightEntry;
 import com.vegas.user.entity.User;
+import com.vegas.user.event.OutboxService;
 import com.vegas.user.mapper.WeightMapper;
 import com.vegas.user.repository.BodyWeightEntryRepository;
 import com.vegas.user.repository.UserRepository;
@@ -41,6 +42,8 @@ class BodyWeightServiceTest {
     private BodyWeightEntryRepository weightRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private OutboxService outboxService;
 
     private final WeightMapper weightMapper = Mappers.getMapper(WeightMapper.class);
 
@@ -49,7 +52,7 @@ class BodyWeightServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new BodyWeightService(weightRepository, userRepository, weightMapper, CLOCK);
+        service = new BodyWeightService(weightRepository, userRepository, weightMapper, CLOCK, outboxService);
     }
 
     @Test
@@ -66,6 +69,7 @@ class BodyWeightServiceTest {
         assertThat(saved.getValue().getUser()).isSameAs(user);
         assertThat(saved.getValue().getMeasuredOn()).isEqualTo(TODAY);
         assertThat(response.weightKg()).isEqualByComparingTo("81.2");
+        verify(outboxService).profileUpdated(userId);
     }
 
     @Test

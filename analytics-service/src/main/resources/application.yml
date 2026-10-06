@@ -46,5 +46,6 @@ app:
   kafka:
     topics:
       workout-events: workout-events
+      user-events: user-events
   jwt:
     secret: ${JWT_SECRET}         # тот же ключ, что у user-service

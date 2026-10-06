@@ -4,6 +4,17 @@ server:
 spring:
   application:
     name: user-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:           # "[...]" — чтобы точки в имени были частью ключа, а не вложенностью
+        "[enable.idempotence]": true
+        "[max.block.ms]": 5000
+        "[request.timeout.ms]": 5000
+        "[delivery.timeout.ms]": 10000
   jpa:
     open-in-view: false          # не держим соединение с БД открытым до конца HTTP-запроса
     hibernate:
@@ -23,6 +34,11 @@ springdoc:
     path: /swagger-ui.html
 
 app:
+  kafka:
+    topics:
+      user-events: user-events
+  outbox:
+    poll-interval-ms: 1000
   jwt:
     secret: ${JWT_SECRET}         # base64, минимум 256 бит; в проде — только через переменную окружения
     access-token-ttl: 1h          # время жизни токена (Duration: 15m, 1h, 1d)

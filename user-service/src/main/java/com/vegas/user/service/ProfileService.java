@@ -5,6 +5,7 @@ import com.vegas.common.exception.NotFoundException;
 import com.vegas.user.dto.ProfileResponse;
 import com.vegas.user.dto.UpdateProfileRequest;
 import com.vegas.user.entity.UserProfile;
+import com.vegas.user.event.OutboxService;
 import com.vegas.user.mapper.ProfileMapper;
 import com.vegas.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class ProfileService {
     private final BodyWeightService bodyWeightService;
     private final ProfileMapper profileMapper;
     private final Clock clock;
+    private final OutboxService outboxService;
 
     @Transactional(readOnly = true)
     public ProfileResponse getProfile(UUID userId) {
@@ -52,6 +54,8 @@ public class ProfileService {
         profile.setOnboardingCompleted(true);
 
         recordWeightIfChanged(userId, request.weightKg());
+        // аналитике нужен уровень подготовки (эталонная кривая) — сообщаем об изменении
+        outboxService.profileUpdated(userId);
 
         return profileMapper.toResponse(profile, request.weightKg());
     }
