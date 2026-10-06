@@ -7,6 +7,7 @@
 | Модуль | Порт | БД | Зона ответственности |
 |---|---|---|---|
 | common-lib | — | — | общие DTO ошибок, исключения, enum-ы (MuscleGroup, Gender), события |
+| common-outbox | — | — | transactional outbox (таблица outbox_events + relay в Kafka), подключается зависимостью |
 | gateway-service | 8080 | — | единая точка входа, маршрутизация, (позже) проверка JWT, CORS |
 | user-service | 8081 | user_db | регистрация, логин, JWT, OAuth, профиль, история веса |
 | workout-service | 8082 | workout_db | каталог упражнений + мышцы + медиа, комплексы, тренировки, подходы |
@@ -40,15 +41,28 @@ com.vegas.<service>
 ## События (Kafka)
 
 ```
-workout-service ──(outbox_events)──► топик workout-events ──► analytics-service
-                                       ключ = userId              group-id: analytics-service
-                                       заголовок eventType        ошибки -> workout-events.DLT
+workout-service   ──outbox──► workout-events   ──► analytics-service
+user-service      ──outbox──► user-events      ──► analytics-service, notification-service
+analytics-service ──outbox──► analytics-events ──► notification-service ──► email (Mailpit)
+
+ключ сообщения = userId, тип — в заголовке eventType, ошибки -> <топик>.DLT
+у каждого сервиса своя consumer group: оба слушателя user-events получают все сообщения
 ```
 
-| Событие | Когда | Кто слушает |
-|---|---|---|
-| `WorkoutCompleted` | тренировка завершена | analytics-service: прогресс, 1ПМ, рекорды |
-| `WorkoutDeleted` | удалена завершённая тренировка | analytics-service: убрать из статистики |
+| Событие | Топик | Когда | Кто слушает |
+|---|---|---|---|
+| `WorkoutCompleted` | workout-events | тренировка завершена | analytics: прогресс, 1ПМ, рекорды |
+| `WorkoutDeleted` | workout-events | удалена завершённая тренировка | analytics: убрать из статистики |
+| `UserRegistered` | user-events | регистрация | notification: email получателя |
+| `UserProfileUpdated` | user-events | профиль или вес изменились | analytics: уровень подготовки |
+| `PersonalRecord` | analytics-events | новый рекорд в тренировке | notification: письмо |
+| `PlateauDetected` | analytics-events | плато по упражнению | notification: письмо (одно на плато) |
+| `OverloadRisk` | analytics-events | риск перегрузки HIGH | notification: письмо (не чаще раза в неделю) |
+| `MonthlyReportReady` | analytics-events | 1-го числа, отчёт за месяц | notification: письмо |
+
+Аналитика сообщает только о тренировках последних 7 дней; дубли писем отсекает
+notification-service по ключу (`RECORD:тренировка:упражнение`, `PLATEAU:упражнение:дата`,
+`RISK:упражнение:неделя`, `REPORT:месяц`).
 
 Полезные команды:
 

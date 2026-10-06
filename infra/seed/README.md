@@ -12,8 +12,12 @@ docker exec vegas-postgres sh /seed/seed.sh your@email.ru
 ```
 
 Сид можно запускать сколько угодно раз — результат каждый раз одинаковый.
-Чтобы аналитика пересчиталась, должны быть запущены Kafka, **user-service**, **workout-service** и **analytics-service**.
-Через 5–20 секунд после сида проверьте `GET :8083/api/records`.
+Чтобы аналитика пересчиталась, должны быть запущены Kafka, **user-service**, **workout-service**, **analytics-service**
+и (для писем) **notification-service** + Mailpit.
+Через 5–20 секунд после сида проверьте `GET :8083/api/records` и письма на http://localhost:8025.
+
+Письма придут только о тренировках **последних 7 дней** (старые — история, о них не сообщаем):
+рекорды, плато в жиме, риск в приседе. Отчёт за месяц: `POST :8083/api/reports/monthly/notify?month=2026-09`.
 
 ## Что получится
 
@@ -22,6 +26,7 @@ docker exec vegas-postgres sh /seed/seed.sh your@email.ru
 | user_db | остаётся только ваш пользователь; профиль заполнен (что вы уже ввели — сохраняется); вес за 16 недель; событие профиля для аналитики |
 | workout_db | 48 завершённых тренировок по 4 готовым комплексам; ваши комплексы и свои упражнения удалены |
 | analytics_db | очищается и заполняется заново из событий Kafka (outbox -> Kafka -> analytics) |
+| notification_db | журнал писем и получатели очищаются; получатель создаётся заново из события регистрации |
 
 Сценарии для проверки аналитики:
 
@@ -37,8 +42,9 @@ docker exec vegas-postgres sh /seed/seed.sh your@email.ru
 | Файл | БД | Что делает |
 |---|---|---|
 | `seed.sh` | — | находит пользователя по email и запускает скрипты по порядку |
-| `03-analytics.sql` | analytics_db | очищает статистику |
-| `01-user.sql` | user_db | удаляет других пользователей, заполняет профиль и вес |
+| `03-analytics.sql` | analytics_db | очищает статистику и неотправленные события |
+| `04-notifications.sql` | notification_db | очищает журнал писем и получателей |
+| `01-user.sql` | user_db | удаляет других пользователей, заполняет профиль и вес; события регистрации и профиля |
 | `02-workouts.sql` | workout_db | тренировки + события в outbox. **Сгенерирован** — не править руками |
 | `generate_workouts.py` | — | генератор `02-workouts.sql`: `python infra/seed/generate_workouts.py` |
 

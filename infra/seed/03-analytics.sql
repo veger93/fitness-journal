@@ -5,4 +5,6 @@
 \set ON_ERROR_STOP on
 TRUNCATE exercise_performances;
 TRUNCATE athlete_profiles;
+-- неотправленные события аналитики (рекорды, плато...) от прошлого запуска сида
+TRUNCATE outbox_events;
 \echo 'analytics_db: статистика очищена, ждём события из Kafka'

@@ -26,9 +26,25 @@ SELECT :'user_id'::uuid,
        current_date - (15 - week) * 7
 FROM generate_series(0, 15) AS week;
 
+-- Событие для notification-service: email и имя (как его пишет AuthService при регистрации).
+-- Без него письма не уйдут: notification-service не знает, куда их отправлять.
+DELETE FROM outbox_events;
+INSERT INTO outbox_events (aggregate_id, event_type, event_key, payload, created_at)
+SELECT u.id,
+       'UserRegistered',
+       u.id::text,
+       jsonb_build_object(
+           'userId',       u.id,
+           'email',        u.email,
+           'displayName',  u.display_name,
+           'registeredAt', to_char(u.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+       )::text,
+       now()
+FROM users u
+WHERE u.id = :'user_id'::uuid;
+
 -- Событие для аналитики: снимок профиля (как его пишет OutboxService в user-service).
 -- Без него analytics-service не узнает уровень подготовки и возьмёт "средний".
-DELETE FROM outbox_events;
 INSERT INTO outbox_events (aggregate_id, event_type, event_key, payload, created_at)
 SELECT p.user_id,
        'UserProfileUpdated',
@@ -49,4 +65,4 @@ WHERE p.user_id = :'user_id'::uuid;
 
 COMMIT;
 
-\echo 'user_db: профиль заполнен, 16 записей веса, событие профиля в outbox'
+\echo 'user_db: профиль заполнен, 16 записей веса, события регистрации и профиля в outbox'

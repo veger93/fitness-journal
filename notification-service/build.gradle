@@ -22,4 +22,7 @@ dependencies {
 
     // --- специфичное для notification-service ---
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    // Kafka: читаем события аналитики и пользователей
+    implementation 'org.springframework.kafka:spring-kafka'
 }
