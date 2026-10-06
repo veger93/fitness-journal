@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,6 +39,20 @@ public class RecordsService {
 
     @Transactional(readOnly = true)
     public List<PersonalRecordResponse> records(UUID userId, int limit) {
+        List<PersonalRecordResponse> cards = allCards(userId);
+        return cards.subList(0, Math.min(limit, cards.size()));
+    }
+
+    /** Сколько карточек-рекордов поставлено в интервале [from, to) — для месячного отчёта. */
+    @Transactional(readOnly = true)
+    public int countBetween(UUID userId, Instant from, Instant to) {
+        return (int) allCards(userId).stream()
+                .filter(card -> !card.achievedAt().isBefore(from) && card.achievedAt().isBefore(to))
+                .count();
+    }
+
+    /** Все карточки, новые сверху. */
+    private List<PersonalRecordResponse> allCards(UUID userId) {
         List<ExercisePerformance> history = performanceRepository.findByUserIdOrderByPerformedAtAsc(userId);
 
         // упражнение -> тренировка, где был лучший результат (по весу и по силе отдельно)
@@ -68,7 +83,7 @@ public class RecordsService {
 
         // новые сверху (List.reversed() появился только в Java 21, у нас 17)
         Collections.reverse(cards);
-        return cards.subList(0, Math.min(limit, cards.size()));
+        return cards;
     }
 
     private static Optional<RecordItemResponse> weightRecord(ExercisePerformance current, ExercisePerformance best) {
