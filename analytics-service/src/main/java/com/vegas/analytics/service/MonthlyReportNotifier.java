@@ -33,8 +33,14 @@ public class MonthlyReportNotifier {
         List<UUID> users = performanceRepository.findActiveUserIds(
                 MonthlyReportCalculator.startOf(month), MonthlyReportCalculator.startOf(month.plusMonths(1)));
         log.info("Monthly report {}: notifying {} users", month, users.size());
-        // по транзакции на пользователя: ошибка у одного не откатит остальных
-        users.forEach(userId -> reportPublisher.publish(userId, month));
+        // по транзакции на пользователя + try/catch: ошибка у одного не откатит и не остановит остальных
+        for (UUID userId : users) {
+            try {
+                reportPublisher.publish(userId, month);
+            } catch (RuntimeException e) {
+                log.error("Monthly report {} for user {} failed", month, userId, e);
+            }
+        }
     }
 
     /** Отдельный бин, чтобы @Transactional сработал через прокси для каждого вызова. */

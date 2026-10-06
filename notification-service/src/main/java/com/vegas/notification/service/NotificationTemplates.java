@@ -36,8 +36,11 @@ public final class NotificationTemplates {
     public static EmailMessage personalRecord(String greeting, PersonalRecordEvent event) {
         StringBuilder body = new StringBuilder()
                 .append(greeting).append(", новый рекорд!\n\n")
-                .append(event.exerciseName()).append(": ").append(kg(event.weightKg()));
-        if (event.reps() != null) {
+                .append(event.exerciseName());
+        if (event.weightKg() != null) {
+            body.append(": ").append(kg(event.weightKg()));
+        }
+        if (event.weightKg() != null && event.reps() != null) {
             body.append(" × ").append(event.reps());
         }
         body.append("\n\n");
