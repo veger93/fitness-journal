@@ -18,6 +18,7 @@
 ## Запуск локально
 
 1. `cd infra && docker compose up -d` — Postgres, Mailpit, Kafka, Kafka UI
+   (тестовые данные: `docker exec vegas-postgres sh /seed/seed.sh your@email.ru`, см. `infra/seed/README.md`)
 2. Открыть корневую папку `fitness-journal` в IntelliJ IDEA как Gradle-проект.
 3. Run Configuration сервиса → VM options: `-Dspring.profiles.active=local`
 4. Swagger каждого сервиса: `http://localhost:<порт>/swagger-ui.html`
@@ -63,3 +64,7 @@ docker exec vegas-kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-serv
 ```
 
 Kafka UI: http://localhost:8090
+
+## Научная база
+
+Формулы и пороги аналитики опираются на исследования — список и привязка к коду: [docs/references.md](docs/references.md).

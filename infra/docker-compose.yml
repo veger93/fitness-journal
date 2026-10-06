@@ -13,6 +13,8 @@ services:
       - pg-data:/var/lib/postgresql/data
       # скрипты из этой папки выполняются ТОЛЬКО при первом создании тома
       - ./postgres-init:/docker-entrypoint-initdb.d
+      # тестовые данные для разработки (запуск вручную, см. infra/seed/README.md)
+      - ./seed:/seed:ro
     restart: unless-stopped
 
   # Ловушка для писем: notification-service шлёт сюда, смотрим в браузере http://localhost:8025
