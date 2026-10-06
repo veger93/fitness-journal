@@ -38,6 +38,7 @@ class PerformanceCalculatorTest {
         // самый тяжёлый подход — другой: 85×5
         assertThat(result.getMaxWeightKg()).isEqualByComparingTo("85");
         assertThat(result.getMaxWeightReps()).isEqualTo(5);
+        assertThat(result.getAvgRpe()).isNull(); // RPE не указывали
         assertThat(result.getPerformedAt()).isEqualTo(COMPLETED_AT);
     }
 
@@ -65,6 +66,18 @@ class PerformanceCalculatorTest {
 
         assertThat(result.getBestDurationSec()).isEqualTo(90);
         assertThat(result.getTotalReps()).isNull();
+    }
+
+    @Test
+    void averageRpe_onlyOverSetsWhereItIsSet() {
+        ExercisePerformed squat = exercise("WEIGHT_REPS",
+                new SetPerformed(new BigDecimal("100"), 5, null, null, new BigDecimal("8"), false),
+                new SetPerformed(new BigDecimal("100"), 5, null, null, new BigDecimal("9.5"), false),
+                new SetPerformed(new BigDecimal("100"), 5, null, null, null, false));
+
+        ExercisePerformance result = PerformanceCalculator.calculate(event(squat), squat).orElseThrow();
+
+        assertThat(result.getAvgRpe()).isEqualByComparingTo("8.8"); // (8 + 9.5) / 2 = 8.75 -> 8.8
     }
 
     @Test
