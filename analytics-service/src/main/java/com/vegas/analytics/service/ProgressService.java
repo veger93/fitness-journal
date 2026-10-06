@@ -3,7 +3,10 @@ package com.vegas.analytics.service;
 import com.vegas.analytics.dto.ExerciseProgressResponse;
 import com.vegas.analytics.dto.ProgressPeriod;
 import com.vegas.analytics.dto.ProgressPointResponse;
+import com.vegas.analytics.dto.ReferenceResponse;
+import com.vegas.analytics.entity.AthleteProfile;
 import com.vegas.analytics.entity.ExercisePerformance;
+import com.vegas.analytics.repository.AthleteProfileRepository;
 import com.vegas.analytics.repository.ExercisePerformanceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,8 +27,11 @@ public class ProgressService {
 
     private static final Duration WEEK = Duration.ofDays(7);
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
+    /** Уровень по умолчанию, если пользователь не прошёл онбординг. */
+    private static final ExperienceLevel DEFAULT_LEVEL = ExperienceLevel.INTERMEDIATE;
 
     private final ExercisePerformanceRepository performanceRepository;
+    private final AthleteProfileRepository profileRepository;
     private final Clock clock;
 
     @Transactional(readOnly = true)
@@ -35,12 +41,13 @@ public class ProgressService {
                 .findByUserIdAndExerciseIdAndPerformedAtGreaterThanEqualOrderByPerformedAtAsc(
                         userId, exerciseId, period.startFrom(now));
 
-        List<BigDecimal> e1rms = performances.stream()
-                .map(ExercisePerformance::getBestE1rmKg)
-                .filter(Objects::nonNull)
+        List<ExercisePerformance> withE1rm = performances.stream()
+                .filter(performance -> performance.getBestE1rmKg() != null)
                 .toList();
-        BigDecimal first = e1rms.isEmpty() ? null : e1rms.get(0);
-        BigDecimal current = e1rms.isEmpty() ? null : e1rms.get(e1rms.size() - 1);
+        ExercisePerformance anchor = withE1rm.isEmpty() ? null : withE1rm.get(0);
+        ExercisePerformance latest = withE1rm.isEmpty() ? null : withE1rm.get(withE1rm.size() - 1);
+        BigDecimal first = anchor == null ? null : anchor.getBestE1rmKg();
+        BigDecimal current = latest == null ? null : latest.getBestE1rmKg();
 
         // все периоды не короче месяца, поэтому последняя неделя уже есть в выборке
         Instant weekAgo = now.minus(WEEK);
@@ -51,6 +58,23 @@ public class ProgressService {
 
         String exerciseName = performances.isEmpty() ? null : performances.get(performances.size() - 1).getExerciseName();
 
+        // эталон: стартуем из первой точки периода и растём с темпом уровня пользователя
+        ExperienceLevel declared = profileRepository.findById(userId)
+                .map(AthleteProfile::getExperienceLevel)
+                .map(ExperienceLevel::parse)
+                .orElse(null);
+        ExperienceLevel level = Objects.requireNonNullElse(declared, DEFAULT_LEVEL);
+
+        List<ProgressPointResponse> points = performances.stream()
+                .map(performance -> toPoint(performance, anchor == null ? null
+                        : ReferenceCurve.expected(first, anchor.getPerformedAt(), performance.getPerformedAt(),
+                                level.monthlyGainPercent())))
+                .toList();
+
+        ReferenceResponse reference = latest == null ? null
+                : reference(level, declared == null, current,
+                ReferenceCurve.expected(first, anchor.getPerformedAt(), latest.getPerformedAt(), level.monthlyGainPercent()));
+
         return new ExerciseProgressResponse(
                 exerciseId,
                 exerciseName,
@@ -58,7 +82,8 @@ public class ProgressService {
                 current,
                 changePercent(first, current),
                 performances.isEmpty() ? null : weeklyVolume,
-                performances.stream().map(ProgressService::toPoint).toList()
+                reference,
+                points
         );
     }
 
@@ -72,13 +97,28 @@ public class ProgressService {
                 .divide(first, 1, RoundingMode.HALF_UP);
     }
 
-    private static ProgressPointResponse toPoint(ExercisePerformance performance) {
+    private static ReferenceResponse reference(ExperienceLevel level, boolean assumed,
+                                               BigDecimal current, BigDecimal expected) {
+        BigDecimal gap = ReferenceCurve.gapPercent(current, expected);
+        String pace = "уровень «" + level.label() + "»: ~" + level.monthlyGainPercent().stripTrailingZeros().toPlainString()
+                + "% в месяц" + (assumed ? " (уровень не указан в профиле)" : "");
+        String hint;
+        if (gap.signum() >= 0) {
+            hint = "идёшь быстрее обычного темпа на " + gap.abs().toPlainString() + "% — " + pace;
+        } else {
+            hint = "на " + gap.abs().toPlainString() + "% ниже обычного темпа — " + pace;
+        }
+        return new ReferenceResponse(level.name(), assumed, level.monthlyGainPercent(), gap, hint);
+    }
+
+    private static ProgressPointResponse toPoint(ExercisePerformance performance, BigDecimal reference) {
         return new ProgressPointResponse(
                 performance.getPerformedAt(),
                 performance.getBestE1rmKg(),
                 performance.getBestWeightKg(),
                 performance.getBestReps(),
-                performance.getVolumeKg()
+                performance.getVolumeKg(),
+                reference
         );
     }
 }

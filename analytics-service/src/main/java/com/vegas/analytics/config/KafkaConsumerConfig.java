@@ -32,6 +32,14 @@ public class KafkaConsumerConfig {
                 .build();
     }
 
+    @Bean
+    public NewTopic userEventsDeadLetterTopic(@Value("${app.kafka.topics.user-events}") String topic) {
+        return TopicBuilder.name(topic + ".DLT")
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
     /** Spring Boot сам подключит этот бин ко всем @KafkaListener. */
     @Bean
     public DefaultErrorHandler kafkaErrorHandler(KafkaTemplate<String, String> kafkaTemplate) {
