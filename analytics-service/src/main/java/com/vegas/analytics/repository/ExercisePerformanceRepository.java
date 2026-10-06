@@ -27,6 +27,9 @@ public interface ExercisePerformanceRepository extends JpaRepository<ExercisePer
     List<ExercisePerformance> findByUserIdAndExerciseIdAndPerformedAtGreaterThanEqualOrderByPerformedAtAsc(
             UUID userId, UUID exerciseId, Instant from);
 
+    /** Вся история одного упражнения, по возрастанию даты — для плато, риска и плана разгрузки. */
+    List<ExercisePerformance> findByUserIdAndExerciseIdOrderByPerformedAtAsc(UUID userId, UUID exerciseId);
+
     /** Вся история пользователя, по возрастанию даты — для ленты рекордов. */
     List<ExercisePerformance> findByUserIdOrderByPerformedAtAsc(UUID userId);
 }
