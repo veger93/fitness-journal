@@ -27,4 +27,4 @@ $PSQL -d analytics_db -f /seed/03-analytics.sql
 $PSQL -d user_db      -v user_id="$USER_ID" -f /seed/01-user.sql
 $PSQL -d workout_db   -v user_id="$USER_ID" -f /seed/02-workouts.sql
 
-echo "Готово. Если workout-service и analytics-service запущены, статистика пересчитается в течение ~20 секунд."
+echo "Готово. Если user-, workout- и analytics-service запущены, статистика пересчитается в течение ~20 секунд."

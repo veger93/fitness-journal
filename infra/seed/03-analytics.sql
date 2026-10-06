@@ -4,4 +4,5 @@
 
 \set ON_ERROR_STOP on
 TRUNCATE exercise_performances;
+TRUNCATE athlete_profiles;
 \echo 'analytics_db: статистика очищена, ждём события из Kafka'
