@@ -25,4 +25,6 @@ dependencies {
     implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
+    // Kafka: событие UserProfileUpdated через outbox (как в workout-service)
+    implementation 'org.springframework.kafka:spring-kafka'
 }

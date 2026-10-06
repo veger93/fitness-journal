@@ -4,6 +4,7 @@ import com.vegas.common.exception.BadRequestException;
 import com.vegas.user.dto.RecordWeightRequest;
 import com.vegas.user.dto.WeightEntryResponse;
 import com.vegas.user.entity.BodyWeightEntry;
+import com.vegas.user.event.OutboxService;
 import com.vegas.user.mapper.WeightMapper;
 import com.vegas.user.repository.BodyWeightEntryRepository;
 import com.vegas.user.repository.UserRepository;
@@ -29,13 +30,17 @@ public class BodyWeightService {
     private final UserRepository userRepository;
     private final WeightMapper weightMapper;
     private final Clock clock;
+    private final OutboxService outboxService;
 
     @Transactional
     public WeightEntryResponse record(UUID userId, LocalDate measuredOn, RecordWeightRequest request) {
         if (measuredOn.isAfter(LocalDate.now(clock))) {
             throw new BadRequestException("Дата замера не может быть в будущем");
         }
-        return weightMapper.toResponse(upsert(userId, request.weightKg(), measuredOn));
+        BodyWeightEntry entry = upsert(userId, request.weightKg(), measuredOn);
+        // текущий вес мог измениться -> снимок профиля для аналитики
+        outboxService.profileUpdated(userId);
+        return weightMapper.toResponse(entry);
     }
 
     @Transactional(readOnly = true)

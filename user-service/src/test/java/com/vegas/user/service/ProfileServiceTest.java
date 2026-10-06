@@ -7,6 +7,7 @@ import com.vegas.user.dto.UpdateProfileRequest;
 import com.vegas.user.entity.ExperienceLevel;
 import com.vegas.user.entity.User;
 import com.vegas.user.entity.UserProfile;
+import com.vegas.user.event.OutboxService;
 import com.vegas.user.mapper.ProfileMapper;
 import com.vegas.user.repository.UserProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,8 @@ class ProfileServiceTest {
     private UserProfileRepository profileRepository;
     @Mock
     private BodyWeightService bodyWeightService;
+    @Mock
+    private OutboxService outboxService;
 
     // настоящий маппер (сгенерированный MapStruct), мокать его незачем
     private final ProfileMapper profileMapper = Mappers.getMapper(ProfileMapper.class);
@@ -53,7 +56,7 @@ class ProfileServiceTest {
     @BeforeEach
     void setUp() {
         // Clock не мок, поэтому собираем сервис вручную, а не через @InjectMocks
-        profileService = new ProfileService(profileRepository, bodyWeightService, profileMapper, CLOCK);
+        profileService = new ProfileService(profileRepository, bodyWeightService, profileMapper, CLOCK, outboxService);
         profile = new UserProfile(User.local("ivan@mail.ru", "hash", "Иван"));
     }
 
@@ -69,6 +72,7 @@ class ProfileServiceTest {
         assertThat(profile.getHeightCm()).isEqualTo((short) 178);
         assertThat(profile.isOnboardingCompleted()).isTrue();
         verify(bodyWeightService).upsert(userId, new BigDecimal("80.5"), TODAY);
+        verify(outboxService).profileUpdated(userId); // аналитика узнает об изменении
 
         assertThat(response.onboardingCompleted()).isTrue();
         assertThat(response.currentWeightKg()).isEqualByComparingTo("80.5");
