@@ -1,0 +1,14 @@
+// Общий модуль Transactional Outbox: таблица outbox_events + отправка в Kafka.
+// Подключается к сервису одной строкой implementation project(':common-outbox') —
+// дальше Spring Boot настроит всё сам (см. OutboxAutoConfiguration).
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':common-lib')
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+}

@@ -7,6 +7,7 @@ import com.vegas.user.dto.RegisterRequest;
 import com.vegas.user.entity.AuthProvider;
 import com.vegas.user.entity.User;
 import com.vegas.user.entity.UserProfile;
+import com.vegas.user.event.OutboxService;
 import com.vegas.user.exception.InvalidCredentialsException;
 import com.vegas.user.repository.UserProfileRepository;
 import com.vegas.user.repository.UserRepository;
@@ -45,6 +46,8 @@ class AuthServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private JwtService jwtService;
+    @Mock
+    private OutboxService outboxService;
 
     @InjectMocks // создаёт AuthService и передаёт в конструктор моки выше
     private AuthService authService;
@@ -65,6 +68,7 @@ class AuthServiceTest {
         assertThat(saved.getValue().getPasswordHash()).isEqualTo("hashed");    // в БД — хеш, не пароль
         assertThat(saved.getValue().getAuthProvider()).isEqualTo(AuthProvider.LOCAL);
         verify(userProfileRepository).save(any(UserProfile.class));
+        verify(outboxService).userRegistered(saved.getValue()); // email уйдёт в notification-service
 
         assertThat(response.accessToken()).isEqualTo("jwt-token");
         assertThat(response.tokenType()).isEqualTo("Bearer");

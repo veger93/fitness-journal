@@ -1,15 +1,14 @@
 package com.vegas.user.event;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vegas.common.event.EventTypes;
 import com.vegas.common.event.UserProfileUpdatedEvent;
+import com.vegas.common.event.UserRegisteredEvent;
 import com.vegas.common.exception.NotFoundException;
+import com.vegas.outbox.OutboxWriter;
 import com.vegas.user.entity.BodyWeightEntry;
-import com.vegas.user.entity.OutboxEvent;
+import com.vegas.user.entity.User;
 import com.vegas.user.entity.UserProfile;
 import com.vegas.user.repository.BodyWeightEntryRepository;
-import com.vegas.user.repository.OutboxEventRepository;
 import com.vegas.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,19 +21,25 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Записывает события пользователя в outbox-таблицу — в той же транзакции, что и изменение данных.
+ * Какие события пользователя пишутся в outbox (саму запись делает OutboxWriter из common-outbox).
  * Зависит только от репозиториев (не от сервисов), поэтому его можно звать и из ProfileService,
- * и из BodyWeightService без циклических зависимостей.
+ * и из BodyWeightService, и из AuthService без циклических зависимостей.
  */
 @Service
 @RequiredArgsConstructor
 public class OutboxService {
 
-    private final OutboxEventRepository outboxRepository;
+    private final OutboxWriter outboxWriter;
     private final UserProfileRepository profileRepository;
     private final BodyWeightEntryRepository weightRepository;
-    private final ObjectMapper objectMapper;
     private final Clock clock;
+
+    /** Для notification-service: куда слать письма. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void userRegistered(User user) {
+        UserRegisteredEvent event = new UserRegisteredEvent(user.getId(), user.getEmail(), user.getDisplayName(), clock.instant());
+        outboxWriter.write(user.getId(), EventTypes.USER_REGISTERED, user.getId().toString(), event);
+    }
 
     /**
      * Снимок профиля + текущий вес.
@@ -59,14 +64,6 @@ public class OutboxService {
                 currentWeight,
                 now
         );
-        outboxRepository.save(OutboxEvent.create(userId, EventTypes.USER_PROFILE_UPDATED, userId.toString(), toJson(event), now));
-    }
-
-    private String toJson(Object event) {
-        try {
-            return objectMapper.writeValueAsString(event);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Cannot serialize event " + event.getClass().getSimpleName(), e);
-        }
+        outboxWriter.write(userId, EventTypes.USER_PROFILE_UPDATED, userId.toString(), event);
     }
 }

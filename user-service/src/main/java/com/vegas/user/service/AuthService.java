@@ -6,6 +6,7 @@ import com.vegas.user.dto.LoginRequest;
 import com.vegas.user.dto.RegisterRequest;
 import com.vegas.user.entity.User;
 import com.vegas.user.entity.UserProfile;
+import com.vegas.user.event.OutboxService;
 import com.vegas.user.exception.InvalidCredentialsException;
 import com.vegas.user.repository.UserProfileRepository;
 import com.vegas.user.repository.UserRepository;
@@ -27,6 +28,7 @@ public class AuthService {
     private final UserProfileRepository userProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final OutboxService outboxService;
 
     /**
      * @Transactional: пользователь и его профиль сохраняются вместе.
@@ -43,6 +45,8 @@ public class AuthService {
         userRepository.save(user);
         // пустой профиль сразу: онбординг потом только обновляет его
         userProfileRepository.save(new UserProfile(user));
+        // notification-service узнает email нового пользователя
+        outboxService.userRegistered(user);
 
         return toAuthResponse(user);
     }

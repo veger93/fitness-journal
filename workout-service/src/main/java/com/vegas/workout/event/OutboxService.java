@@ -1,21 +1,17 @@
 package com.vegas.workout.event;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vegas.common.event.EventTypes;
-import com.vegas.workout.entity.OutboxEvent;
 import com.vegas.workout.entity.Workout;
-import com.vegas.workout.repository.OutboxEventRepository;
+import com.vegas.outbox.OutboxWriter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Clock;
 import java.util.UUID;
 
 /**
- * Записывает события в outbox-таблицу.
+ * Какие события тренировок пишутся в outbox (саму запись делает OutboxWriter из common-outbox).
  *
  * Propagation.MANDATORY: метод ОБЯЗАН вызываться внутри уже открытой транзакции
  * (иначе исключение). Весь смысл outbox — событие и бизнес-изменение коммитятся вместе
@@ -25,9 +21,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OutboxService {
 
-    private final OutboxEventRepository outboxRepository;
-    private final ObjectMapper objectMapper;
-    private final Clock clock;
+    private final OutboxWriter outboxWriter;
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void workoutCompleted(Workout workout) {
@@ -41,14 +35,6 @@ public class OutboxService {
 
     /** Ключ сообщения = userId: все события одного пользователя попадут в одну партицию и придут по порядку. */
     private void save(UUID aggregateId, String eventType, UUID userId, Object event) {
-        outboxRepository.save(OutboxEvent.create(aggregateId, eventType, userId.toString(), toJson(event), clock.instant()));
-    }
-
-    private String toJson(Object event) {
-        try {
-            return objectMapper.writeValueAsString(event);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Cannot serialize event " + event.getClass().getSimpleName(), e);
-        }
+        outboxWriter.write(aggregateId, eventType, userId.toString(), event);
     }
 }

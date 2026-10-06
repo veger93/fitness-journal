@@ -1,6 +1,5 @@
-package com.vegas.user.repository;
+package com.vegas.outbox;
 
-import com.vegas.user.entity.OutboxEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

@@ -1,4 +1,4 @@
-package com.vegas.user.entity;
+package com.vegas.outbox;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,7 +13,10 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 import java.util.UUID;
 
-/** Событие, ожидающее отправки в Kafka (см. миграцию 008 и OutboxRelay). */
+/**
+ * Событие, ожидающее отправки в Kafka.
+ * Таблицу outbox_events создаёт миграция КАЖДОГО сервиса в его собственной БД.
+ */
 @Entity
 @Table(name = "outbox_events")
 @Getter

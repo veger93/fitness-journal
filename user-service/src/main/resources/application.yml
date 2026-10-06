@@ -38,6 +38,7 @@ app:
     topics:
       user-events: user-events
   outbox:
+    topic: ${app.kafka.topics.user-events}
     poll-interval-ms: 1000
   jwt:
     secret: ${JWT_SECRET}         # base64, минимум 256 бит; в проде — только через переменную окружения

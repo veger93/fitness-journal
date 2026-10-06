@@ -9,6 +9,7 @@ pluginManagement {
 rootProject.name = 'fitness-journal'
 
 include 'common-lib'
+include 'common-outbox'
 include 'gateway-service'
 include 'user-service'
 include 'workout-service'
