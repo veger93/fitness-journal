@@ -2,22 +2,20 @@ package com.vegas.analytics.dto;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
- * Запись в ленте "Личные рекорды".
- * type — вид рекорда; valueKg — новое значение (1ПМ или вес), previousValueKg — прежний максимум.
- * weightKg × reps — подход, которым рекорд поставлен ("77 кг × 8").
+ * Карточка в ленте "Личные рекорды": одно упражнение в одной тренировке.
+ * Если побито несколько видов рекорда, они не дублируют карточку, а лежат в records (бейджи).
+ * weightKg × reps — подход для заголовка карточки ("145 кг × 5"): подход рекорда веса, если он есть.
  */
 public record PersonalRecordResponse(
-        RecordType type,
         UUID exerciseId,
         String exerciseName,
         Instant achievedAt,
         BigDecimal weightKg,
         Integer reps,
-        BigDecimal valueKg,
-        BigDecimal previousValueKg,
-        BigDecimal deltaKg
+        List<RecordItemResponse> records
 ) {
 }
