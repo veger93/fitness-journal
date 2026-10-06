@@ -1,6 +1,7 @@
 package com.vegas.analytics.service;
 
 import com.vegas.analytics.entity.ExercisePerformance;
+import com.vegas.analytics.event.AnalyticsEventsPublisher;
 import com.vegas.analytics.repository.ExercisePerformanceRepository;
 import com.vegas.common.event.WorkoutCompletedEvent;
 import com.vegas.common.event.WorkoutDeletedEvent;
@@ -19,6 +20,7 @@ import java.util.Optional;
 public class PerformanceService {
 
     private final ExercisePerformanceRepository performanceRepository;
+    private final AnalyticsEventsPublisher eventsPublisher;
 
     /**
      * ИДЕМПОТЕНТНО: Kafka гарантирует "как минимум один раз", одно и то же событие может прийти дважды.
@@ -34,6 +36,8 @@ public class PerformanceService {
                 .flatMap(Optional::stream)
                 .toList();
         performanceRepository.saveAll(performances);
+        // рекорды / плато / риск -> события для notification-service (в этой же транзакции)
+        eventsPublisher.workoutRecorded(event);
 
         log.info("Workout {} recorded: {} exercises", event.workoutId(), performances.size());
     }

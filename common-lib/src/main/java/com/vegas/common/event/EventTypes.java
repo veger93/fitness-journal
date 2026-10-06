@@ -15,6 +15,12 @@ public final class EventTypes {
     public static final String USER_PROFILE_UPDATED = "UserProfileUpdated";
     public static final String USER_REGISTERED = "UserRegistered";
 
+    // события analytics-service (топик analytics-events) -> notification-service
+    public static final String PERSONAL_RECORD = "PersonalRecord";
+    public static final String PLATEAU_DETECTED = "PlateauDetected";
+    public static final String OVERLOAD_RISK = "OverloadRisk";
+    public static final String MONTHLY_REPORT_READY = "MonthlyReportReady";
+
     private EventTypes() {
     }
 }

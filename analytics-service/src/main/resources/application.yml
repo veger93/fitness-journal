@@ -18,9 +18,15 @@ spring:
       # offset фиксирует Spring после успешной обработки, а не сам клиент по таймеру
       enable-auto-commit: false
     producer:
-      # продюсер нужен только для отправки сообщений, которые не удалось обработать, в DLT
+      # продюсер: события аналитики (через outbox) и "битые" сообщения в DLT
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:           # "[...]" — чтобы точки в имени были частью ключа, а не вложенностью
+        "[enable.idempotence]": true
+        "[max.block.ms]": 5000
+        "[request.timeout.ms]": 5000
+        "[delivery.timeout.ms]": 10000
     listener:
       # подтверждать (commit offset) каждое сообщение сразу после обработки
       ack-mode: record
@@ -47,5 +53,15 @@ app:
     topics:
       workout-events: workout-events
       user-events: user-events
+      analytics-events: analytics-events
+  outbox:
+    topic: ${app.kafka.topics.analytics-events}
+    poll-interval-ms: 1000
+  insights:
+    # о тренировках старше этого срока не уведомляем (повторная доставка, перезаливка данных)
+    notify-max-age: 7d
+  reports:
+    # 1-го числа в 06:00 UTC — "отчёт за прошлый месяц готов" (cron: сек мин час день месяц день_недели)
+    monthly-cron: "0 0 6 1 * *"
   jwt:
     secret: ${JWT_SECRET}         # тот же ключ, что у user-service

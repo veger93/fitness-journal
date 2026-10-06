@@ -34,6 +34,10 @@ public interface ExercisePerformanceRepository extends JpaRepository<ExercisePer
     List<ExercisePerformance> findByUserIdAndPerformedAtGreaterThanEqualAndPerformedAtLessThanOrderByPerformedAtAsc(
             UUID userId, Instant from, Instant to);
 
+    /** Кто тренировался в интервале — им отправим "отчёт за месяц готов". */
+    @Query("select distinct p.userId from ExercisePerformance p where p.performedAt >= :from and p.performedAt < :to")
+    List<UUID> findActiveUserIds(@Param("from") Instant from, @Param("to") Instant to);
+
     /** Вся история пользователя, по возрастанию даты — для ленты рекордов. */
     List<ExercisePerformance> findByUserIdOrderByPerformedAtAsc(UUID userId);
 }

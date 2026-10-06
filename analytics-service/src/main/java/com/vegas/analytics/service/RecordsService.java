@@ -51,14 +51,31 @@ public class RecordsService {
                 .count();
     }
 
+    /** Рекорды, поставленные в конкретной тренировке, — для уведомлений. */
+    @Transactional(readOnly = true)
+    public List<PersonalRecordResponse> recordsInWorkout(UUID userId, UUID workoutId) {
+        return computeCards(userId).stream()
+                .filter(card -> card.workoutId().equals(workoutId))
+                .map(WorkoutCard::card)
+                .toList();
+    }
+
     /** Все карточки, новые сверху. */
     private List<PersonalRecordResponse> allCards(UUID userId) {
+        return computeCards(userId).stream().map(WorkoutCard::card).toList();
+    }
+
+    /** Карточка + тренировка, в которой поставлен рекорд (наружу workoutId не отдаём). */
+    private record WorkoutCard(UUID workoutId, PersonalRecordResponse card) {
+    }
+
+    private List<WorkoutCard> computeCards(UUID userId) {
         List<ExercisePerformance> history = performanceRepository.findByUserIdOrderByPerformedAtAsc(userId);
 
         // упражнение -> тренировка, где был лучший результат (по весу и по силе отдельно)
         Map<UUID, ExercisePerformance> bestByWeight = new HashMap<>();
         Map<UUID, ExercisePerformance> bestByStrength = new HashMap<>();
-        List<PersonalRecordResponse> cards = new ArrayList<>();
+        List<WorkoutCard> cards = new ArrayList<>();
 
         for (ExercisePerformance current : history) {
             UUID exerciseId = current.getExerciseId();
@@ -76,8 +93,8 @@ public class RecordsService {
 
             if (!items.isEmpty()) {
                 RecordItemResponse headline = items.get(0); // вес идёт первым, если он есть
-                cards.add(new PersonalRecordResponse(exerciseId, current.getExerciseName(), current.getPerformedAt(),
-                        headline.weightKg(), headline.reps(), items));
+                cards.add(new WorkoutCard(current.getWorkoutId(), new PersonalRecordResponse(exerciseId,
+                        current.getExerciseName(), current.getPerformedAt(), headline.weightKg(), headline.reps(), items)));
             }
         }
 
