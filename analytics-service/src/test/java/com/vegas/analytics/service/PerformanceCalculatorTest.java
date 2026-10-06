@@ -35,6 +35,9 @@ class PerformanceCalculatorTest {
         assertThat(result.getBestWeightKg()).isEqualByComparingTo("80");
         assertThat(result.getBestReps()).isEqualTo(8);
         assertThat(result.getBestE1rmKg()).isEqualByComparingTo("101.33");
+        // самый тяжёлый подход — другой: 85×5
+        assertThat(result.getMaxWeightKg()).isEqualByComparingTo("85");
+        assertThat(result.getMaxWeightReps()).isEqualTo(5);
         assertThat(result.getPerformedAt()).isEqualTo(COMPLETED_AT);
     }
 
@@ -47,6 +50,7 @@ class PerformanceCalculatorTest {
         ExercisePerformance result = PerformanceCalculator.calculate(event(pullUps), pullUps).orElseThrow();
 
         assertThat(result.getBestE1rmKg()).isNull();
+        assertThat(result.getMaxWeightKg()).isNull();
         assertThat(result.getBestReps()).isEqualTo(12);
         assertThat(result.getVolumeKg()).isEqualByComparingTo("0");
     }

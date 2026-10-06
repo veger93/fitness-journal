@@ -32,6 +32,11 @@ public final class PerformanceCalculator {
                 .filter(PerformanceCalculator::isWeighted)
                 .max(Comparator.comparing(set -> OneRepMax.epley(set.weightKg(), set.reps())));
 
+        // самый тяжёлый подход; при равном весе — тот, где больше повторов
+        Optional<SetPerformed> heaviest = working.stream()
+                .filter(PerformanceCalculator::isWeighted)
+                .max(Comparator.comparing(SetPerformed::weightKg).thenComparing(SetPerformed::reps));
+
         return Optional.of(ExercisePerformance.builder()
                 .userId(event.userId())
                 .workoutId(event.workoutId())
@@ -47,6 +52,8 @@ public final class PerformanceCalculator {
                 // для упражнений без веса (подтягивания без отягощения) лучший = максимум повторов
                 .bestReps(bestWeighted.map(SetPerformed::reps).orElseGet(() -> maxOf(working, SetPerformed::reps)))
                 .bestE1rmKg(bestWeighted.map(set -> OneRepMax.epley(set.weightKg(), set.reps())).orElse(null))
+                .maxWeightKg(heaviest.map(SetPerformed::weightKg).orElse(null))
+                .maxWeightReps(heaviest.map(SetPerformed::reps).orElse(null))
                 .bestDurationSec(maxOf(working, SetPerformed::durationSec))
                 .bestDistanceM(maxOf(working, SetPerformed::distanceM))
                 .build());

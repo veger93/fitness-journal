@@ -5,17 +5,19 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Запись в ленте "Личные рекорды": новый максимум расчётного 1ПМ по упражнению.
- * weightKg × reps — подход, которым рекорд поставлен; deltaKg — на сколько вырос 1ПМ.
+ * Запись в ленте "Личные рекорды".
+ * type — вид рекорда; valueKg — новое значение (1ПМ или вес), previousValueKg — прежний максимум.
+ * weightKg × reps — подход, которым рекорд поставлен ("77 кг × 8").
  */
 public record PersonalRecordResponse(
+        RecordType type,
         UUID exerciseId,
         String exerciseName,
         Instant achievedAt,
         BigDecimal weightKg,
         Integer reps,
-        BigDecimal e1rmKg,
-        BigDecimal previousE1rmKg,
+        BigDecimal valueKg,
+        BigDecimal previousValueKg,
         BigDecimal deltaKg
 ) {
 }
