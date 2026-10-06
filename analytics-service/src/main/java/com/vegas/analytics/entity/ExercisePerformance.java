@@ -84,6 +84,10 @@ public class ExercisePerformance {
     @Column(name = "max_weight_reps")
     private Integer maxWeightReps;
 
+    /** Средний RPE рабочих подходов; null — пользователь RPE не указывал. */
+    @Column(name = "avg_rpe", precision = 3, scale = 1)
+    private BigDecimal avgRpe;
+
     @Column(name = "best_duration_sec")
     private Integer bestDurationSec;
 

@@ -54,6 +54,7 @@ public final class PerformanceCalculator {
                 .bestE1rmKg(bestWeighted.map(set -> OneRepMax.epley(set.weightKg(), set.reps())).orElse(null))
                 .maxWeightKg(heaviest.map(SetPerformed::weightKg).orElse(null))
                 .maxWeightReps(heaviest.map(SetPerformed::reps).orElse(null))
+                .avgRpe(averageRpe(working))
                 .bestDurationSec(maxOf(working, SetPerformed::durationSec))
                 .bestDistanceM(maxOf(working, SetPerformed::distanceM))
                 .build());
@@ -68,6 +69,16 @@ public final class PerformanceCalculator {
                 .filter(PerformanceCalculator::isWeighted)
                 .map(set -> set.weightKg().multiply(BigDecimal.valueOf(set.reps())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /** Среднее по подходам, где RPE указан. Ни в одном не указан -> null. */
+    private static BigDecimal averageRpe(List<SetPerformed> sets) {
+        List<BigDecimal> rpes = sets.stream().map(SetPerformed::rpe).filter(Objects::nonNull).toList();
+        if (rpes.isEmpty()) {
+            return null;
+        }
+        BigDecimal sum = rpes.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        return sum.divide(BigDecimal.valueOf(rpes.size()), 1, java.math.RoundingMode.HALF_UP);
     }
 
     private static Integer sumReps(List<SetPerformed> sets) {
