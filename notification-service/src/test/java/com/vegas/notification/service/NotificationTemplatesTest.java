@@ -91,4 +91,21 @@ class NotificationTemplatesTest {
                 .doesNotContain("Сила")
                 .doesNotContain("*");
     }
+
+    @Test
+    void workoutReminder_namesWeekday() {
+        EmailMessage message = NotificationTemplates.workoutReminder("Сергей", java.time.LocalDate.parse("2026-10-19"));
+
+        assertThat(message.subject()).isEqualTo("Сегодня тренировка");
+        assertThat(message.body()).startsWith("Сергей, сегодня (понедельник) по плану тренировка.");
+    }
+
+    @Test
+    void inactivity_showsDaysAndDate() {
+        EmailMessage message = NotificationTemplates.inactivity("Сергей", 8, java.time.LocalDate.parse("2026-10-10"));
+
+        assertThat(message.body())
+                .contains("последняя тренировка была 8 дн. назад (10 октября)")
+                .contains("* Пара недель перерыва");
+    }
 }

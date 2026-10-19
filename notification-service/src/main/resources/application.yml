@@ -47,7 +47,13 @@ app:
   kafka:
     topics:
       user-events: user-events
+      workout-events: workout-events
       analytics-events: analytics-events
+  reminders:
+    # напоминания по расписанию: проверяем каждую минуту (секунды минуты часы день месяц день_недели)
+    schedule-cron: "0 * * * * *"
+    # "давно не было тренировок": раз в час достаточно
+    inactivity-cron: "0 0 * * * *"
   mail:
     from: "Vegas <no-reply@vegas.local>"
   jwt:

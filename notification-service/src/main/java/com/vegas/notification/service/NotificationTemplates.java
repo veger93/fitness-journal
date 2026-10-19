@@ -109,6 +109,23 @@ public final class NotificationTemplates {
         return new EmailMessage("Итоги месяца: " + month, body + SIGNATURE);
     }
 
+    public static EmailMessage workoutReminder(String greeting, LocalDate day) {
+        String weekday = day.getDayOfWeek().getDisplayName(TextStyle.FULL, RU);
+        String body = greeting + ", сегодня (" + weekday + ") по плану тренировка. Хорошей работы!\n\n"
+                + "Дни и время напоминаний можно поменять или выключить в профиле.";
+        return new EmailMessage("Сегодня тренировка", body + SIGNATURE);
+    }
+
+    public static EmailMessage inactivity(String greeting, long days, LocalDate lastWorkoutDay) {
+        String body = greeting + ", последняя тренировка была " + days + " дн. назад (" + DATE.format(lastWorkoutDay) + ").\n\n"
+                + "Даже короткая тренировка помогает не терять форму. Не нужно наверстывать всё сразу — "
+                + "начните с привычных упражнений и весов чуть легче обычного.*\n\n"
+                + "* Пара недель перерыва на силе почти не сказывается, а то, что ушло за долгий перерыв, "
+                + "возвращается быстрее, чем набиралось в первый раз.\n\n"
+                + "Частоту этих писем можно настроить в профиле.";
+        return new EmailMessage("Давно не было тренировок", body + SIGNATURE);
+    }
+
     private static void appendFootnotes(StringBuilder body, List<String> footnotes) {
         if (footnotes.isEmpty()) {
             return;

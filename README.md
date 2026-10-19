@@ -41,7 +41,7 @@ com.vegas.<service>
 ## События (Kafka)
 
 ```
-workout-service   ──outbox──► workout-events   ──► analytics-service
+workout-service   ──outbox──► workout-events   ──► analytics-service, notification-service
 user-service      ──outbox──► user-events      ──► analytics-service, notification-service
 analytics-service ──outbox──► analytics-events ──► notification-service ──► email (Mailpit)
 
@@ -51,8 +51,8 @@ analytics-service ──outbox──► analytics-events ──► notification-
 
 | Событие | Топик | Когда | Кто слушает |
 |---|---|---|---|
-| `WorkoutCompleted` | workout-events | тренировка завершена | analytics: прогресс, 1ПМ, рекорды |
-| `WorkoutDeleted` | workout-events | удалена завершённая тренировка | analytics: убрать из статистики |
+| `WorkoutCompleted` | workout-events | тренировка завершена | analytics: прогресс, 1ПМ, рекорды; notification: дата для напоминаний |
+| `WorkoutDeleted` | workout-events | удалена завершённая тренировка | analytics: убрать из статистики; notification: тоже |
 | `UserRegistered` | user-events | регистрация | notification: email получателя |
 | `UserProfileUpdated` | user-events | профиль или вес изменились | analytics: уровень подготовки |
 | `PersonalRecord` | analytics-events | новый рекорд в тренировке | notification: письмо |
@@ -63,6 +63,12 @@ analytics-service ──outbox──► analytics-events ──► notification-
 Аналитика сообщает только о тренировках последних 7 дней; дубли писем отсекает
 notification-service по ключу (`RECORD:тренировка:упражнение`, `PLATEAU:упражнение:дата`,
 `RISK:упражнение:неделя`, `REPORT:месяц`).
+
+Напоминания (notification-service, по настройкам `PUT /api/notifications/settings`):
+- **по расписанию** — в выбранные дни и время по часовому поясу пользователя; не шлём, если сегодня уже была тренировка
+  (ключ `REMINDER:дата`);
+- **давно не было тренировок** — через N дней (3–30, по умолчанию 7), только с 9:00 до 21:00 местного времени,
+  одно письмо на перерыв (ключ `INACTIVITY:дата последней тренировки`).
 
 Полезные команды:
 
