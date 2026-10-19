@@ -40,6 +40,7 @@ app:
     topics:
       workout-events: workout-events
   outbox:
+    topic: ${app.kafka.topics.workout-events}   # куда common-outbox отправляет события этого сервиса
     poll-interval-ms: 1000        # как часто отправлять накопившиеся события
   jwt:
     secret: ${JWT_SECRET}         # ТОТ ЖЕ ключ, что у user-service: иначе подпись токена не сойдётся

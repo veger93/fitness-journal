@@ -1,8 +1,6 @@
-package com.vegas.workout.event;
+package com.vegas.outbox;
 
 import com.vegas.common.event.EventTypes;
-import com.vegas.workout.entity.OutboxEvent;
-import com.vegas.workout.repository.OutboxEventRepository;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,13 +39,14 @@ class OutboxRelayTest {
 
     @BeforeEach
     void setUp() {
-        relay = new OutboxRelay(outboxRepository, kafkaTemplate, Clock.fixed(NOW, ZoneOffset.UTC), "workout-events");
+        relay = new OutboxRelay(outboxRepository, kafkaTemplate, Clock.fixed(NOW, ZoneOffset.UTC),
+                new OutboxProperties("workout-events", 100, 1000));
     }
 
     @Test
     void publishesWithKeyAndTypeHeader_andMarksAsPublished() {
         OutboxEvent event = event("user-1");
-        when(outboxRepository.lockNextBatch(OutboxRelay.BATCH_SIZE)).thenReturn(List.of(event));
+        when(outboxRepository.lockNextBatch(100)).thenReturn(List.of(event));
         when(kafkaTemplate.send(any(ProducerRecord.class))).thenReturn(ok());
 
         int published = relay.publishBatch();
@@ -69,7 +68,7 @@ class OutboxRelayTest {
         OutboxEvent first = event("user-1");
         OutboxEvent second = event("user-1");
         OutboxEvent third = event("user-1");
-        when(outboxRepository.lockNextBatch(OutboxRelay.BATCH_SIZE)).thenReturn(List.of(first, second, third));
+        when(outboxRepository.lockNextBatch(100)).thenReturn(List.of(first, second, third));
         when(kafkaTemplate.send(any(ProducerRecord.class)))
                 .thenReturn(ok())
                 .thenReturn(CompletableFuture.failedFuture(new RuntimeException("broker is down")));

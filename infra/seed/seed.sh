@@ -22,9 +22,11 @@ if [ -z "$USER_ID" ]; then
 fi
 echo "Пользователь: $EMAIL ($USER_ID)"
 
-# порядок важен: сначала очищаем аналитику, потом создаём тренировки (их события заполнят её заново)
+# порядок важен: сначала очищаем аналитику и уведомления, потом создаём пользователя и тренировки (их события заполнят её заново)
 $PSQL -d analytics_db -f /seed/03-analytics.sql
+$PSQL -d notification_db -v user_id="$USER_ID" -f /seed/04-notifications.sql
 $PSQL -d user_db      -v user_id="$USER_ID" -f /seed/01-user.sql
 $PSQL -d workout_db   -v user_id="$USER_ID" -f /seed/02-workouts.sql
 
-echo "Готово. Если user-, workout- и analytics-service запущены, статистика пересчитается в течение ~20 секунд."
+echo "Готово. Если user-, workout-, analytics- и notification-service запущены, статистика пересчитается"
+echo "в течение ~20 секунд, а письма появятся в Mailpit: http://localhost:8025"

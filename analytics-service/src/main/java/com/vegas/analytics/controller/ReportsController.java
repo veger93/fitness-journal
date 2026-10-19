@@ -2,6 +2,7 @@ package com.vegas.analytics.controller;
 
 import com.vegas.analytics.dto.MonthlyReportResponse;
 import com.vegas.analytics.security.CurrentUser;
+import com.vegas.analytics.service.MonthlyReportNotifier;
 import com.vegas.analytics.service.MonthlyReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,7 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,6 +27,7 @@ import java.time.YearMonth;
 public class ReportsController {
 
     private final MonthlyReportService monthlyReportService;
+    private final MonthlyReportNotifier.MonthlyReportPublisher reportPublisher;
 
     /** YearMonth из строки "2026-09": Spring разберёт сам благодаря @DateTimeFormat. */
     @GetMapping("/monthly")
@@ -30,5 +35,17 @@ public class ReportsController {
     public MonthlyReportResponse monthly(@AuthenticationPrincipal Jwt jwt,
                                          @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM") YearMonth month) {
         return monthlyReportService.report(CurrentUser.id(jwt), month);
+    }
+
+    /**
+     * Отправить себе письмо "отчёт готов" прямо сейчас — чтобы не ждать 1-го числа.
+     * 202 Accepted: запрос принят, письмо уйдёт асинхронно (outbox -> Kafka -> notification-service).
+     */
+    @PostMapping("/monthly/notify")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    @Operation(summary = "Прислать себе уведомление об отчёте за месяц (для проверки)")
+    public void notifyMonthly(@AuthenticationPrincipal Jwt jwt,
+                              @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth month) {
+        reportPublisher.publish(CurrentUser.id(jwt), month);
     }
 }

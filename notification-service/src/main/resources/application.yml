@@ -4,12 +4,33 @@ server:
 spring:
   application:
     name: notification-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      # своя consumer group: notification-service получает ВСЕ сообщения топиков,
+      # независимо от того, что их уже прочитал analytics-service (у него своя группа)
+      group-id: notification-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+    producer:
+      # только для DLT
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      ack-mode: record
+  # без spring.mail.host Spring Boot не создаст JavaMailSender; по умолчанию — Mailpit
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    default-encoding: UTF-8
   jpa:
     open-in-view: false          # не держим соединение с БД открытым до конца HTTP-запроса
     hibernate:
       ddl-auto: validate         # схему создаёт Liquibase, Hibernate только проверяет
   liquibase:
-    enabled: false               # включим в задаче с первыми миграциями
+    enabled: true                # при старте сервис сам накатывает новые миграции
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 management:
@@ -21,3 +42,13 @@ management:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+app:
+  kafka:
+    topics:
+      user-events: user-events
+      analytics-events: analytics-events
+  mail:
+    from: "Vegas <no-reply@vegas.local>"
+  jwt:
+    secret: ${JWT_SECRET}         # тот же ключ, что у user-service
