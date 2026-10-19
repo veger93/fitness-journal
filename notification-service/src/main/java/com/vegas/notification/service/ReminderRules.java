@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 /**
@@ -65,18 +66,21 @@ public final class ReminderRules {
     /**
      * "Давно не было тренировок".
      *
-     * @return сколько полных дней прошло с последней тренировки, если пора напомнить; иначе empty.
+     * @return сколько календарных дней прошло с последней тренировки, если пора напомнить; иначе empty.
      *         Пользователю, который ещё ни разу не тренировался, не напоминаем — нечего "продолжать".
      */
     public static Optional<Long> inactivityDue(NotificationSettings settings, Instant now, Optional<Instant> lastWorkoutAt) {
         if (!settings.isInactivityEnabled() || lastWorkoutAt.isEmpty()) {
             return Optional.empty();
         }
-        LocalTime localTime = now.atZone(ZoneId.of(settings.getTimeZone())).toLocalTime();
+        ZoneId zone = ZoneId.of(settings.getTimeZone());
+        LocalTime localTime = now.atZone(zone).toLocalTime();
         if (localTime.isBefore(DAY_START) || !localTime.isBefore(DAY_END)) {
             return Optional.empty();
         }
-        long days = Duration.between(lastWorkoutAt.get(), now).toDays();
+        // календарные дни в поясе пользователя, а не полные сутки: тренировка в субботу 23:00,
+        // сейчас среда 09:00 — для человека это "4 дня назад", хотя полных суток прошло 3
+        long days = ChronoUnit.DAYS.between(lastWorkoutAt.get().atZone(zone).toLocalDate(), now.atZone(zone).toLocalDate());
         return days >= settings.getInactivityDays() ? Optional.of(days) : Optional.empty();
     }
 }

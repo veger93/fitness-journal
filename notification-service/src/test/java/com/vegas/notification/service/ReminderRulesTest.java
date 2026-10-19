@@ -66,8 +66,12 @@ class ReminderRulesTest {
         NotificationSettings s = inactivity(7);
         Optional<Instant> last = Optional.of(at("2026-10-10T18:00:00Z"));
 
-        assertThat(ReminderRules.inactivityDue(s, at("2026-10-19T12:00:00Z"), last)).contains(8L);
-        assertThat(ReminderRules.inactivityDue(s, at("2026-10-15T12:00:00Z"), last)).isEmpty();
+        // 10 -> 19 октября = 9 календарных дней (хотя полных суток — 8)
+        assertThat(ReminderRules.inactivityDue(s, at("2026-10-19T12:00:00Z"), last)).contains(9L);
+        // 10 -> 16 октября = 6 дней < 7
+        assertThat(ReminderRules.inactivityDue(s, at("2026-10-16T12:00:00Z"), last)).isEmpty();
+        // ровно 7 — уже пора
+        assertThat(ReminderRules.inactivityDue(s, at("2026-10-17T10:00:00Z"), last)).contains(7L);
     }
 
     @Test
