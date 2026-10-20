@@ -1,10 +1,12 @@
 package com.vegas.analytics.controller;
 
+import com.vegas.analytics.dto.DashboardResponse;
 import com.vegas.analytics.dto.DeloadPlanResponse;
 import com.vegas.analytics.dto.ExerciseInsightsResponse;
 import com.vegas.analytics.dto.ExerciseProgressResponse;
 import com.vegas.analytics.dto.ProgressPeriod;
 import com.vegas.analytics.security.CurrentUser;
+import com.vegas.analytics.service.DashboardService;
 import com.vegas.analytics.service.ExerciseInsightsService;
 import com.vegas.analytics.service.ProgressService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,6 +30,13 @@ public class AnalyticsController {
 
     private final ProgressService progressService;
     private final ExerciseInsightsService insightsService;
+    private final DashboardService dashboardService;
+
+    @GetMapping("/dashboard")
+    @Operation(summary = "Главная: тоннаж за неделю, тренировки за месяц, упражнения со статусами")
+    public DashboardResponse dashboard(@AuthenticationPrincipal Jwt jwt) {
+        return dashboardService.dashboard(CurrentUser.id(jwt));
+    }
 
     @GetMapping("/exercises/{exerciseId}/progress")
     @Operation(summary = "График 1ПМ и метрики упражнения за период (M1, M3, M6, Y1, ALL)")

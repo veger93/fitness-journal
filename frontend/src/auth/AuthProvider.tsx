@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import { authApi, type AuthResponse } from '../api/auth';
 import { configureApiClient } from '../api/client';
@@ -19,10 +20,17 @@ function toSession(response: AuthResponse): Session {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(() => loadSession());
 
-  const apply = useCallback((next: Session | null) => {
-    saveSession(next);
-    setSession(next);
-  }, []);
+  const queryClient = useQueryClient();
+
+  const apply = useCallback(
+    (next: Session | null) => {
+      saveSession(next);
+      setSession(next);
+      // сменился пользователь (или вышли) — кэш с чужими данными выбрасываем
+      queryClient.clear();
+    },
+    [queryClient],
+  );
 
   // Настраиваем клиент прямо при рендере: запросы дочерних компонентов
   // должны уже видеть актуальный токен.

@@ -1,0 +1,21 @@
+.label {
+  font-size: var(--text-sm);
+  opacity: 0.8;
+}
+
+.value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-num);
+  line-height: 1.1;
+}
+
+.caption {
+  font-size: var(--text-sm);
+  opacity: 0.8;
+}
+
+.highlight {
+  font-weight: 600;
+  opacity: 1;
+}
