@@ -13,7 +13,7 @@ import org.springframework.util.backoff.FixedBackOff;
 
 /**
  * Ошибки обработки: 3 повтора с паузой (почтовый сервер мог моргнуть), затем DLT.
- * user-events.DLT уже объявлен в analytics-service — объявление топика идемпотентно, дубль безвреден.
+ * user-events.DLT и workout-events.DLT уже объявлены в analytics-service — объявление топика идемпотентно, дубль безвреден.
  */
 @Configuration
 public class KafkaConsumerConfig {
@@ -25,6 +25,11 @@ public class KafkaConsumerConfig {
 
     @Bean
     public NewTopic userEventsDeadLetterTopic(@Value("${app.kafka.topics.user-events}") String topic) {
+        return TopicBuilder.name(topic + ".DLT").partitions(3).replicas(1).build();
+    }
+
+    @Bean
+    public NewTopic workoutEventsDeadLetterTopic(@Value("${app.kafka.topics.workout-events}") String topic) {
         return TopicBuilder.name(topic + ".DLT").partitions(3).replicas(1).build();
     }
 
