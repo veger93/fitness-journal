@@ -99,7 +99,7 @@ class WorkoutServiceTest {
         assertThat(response.name()).isEqualTo("Ноги");
         assertThat(response.templateId()).isEqualTo(templateId);
         assertThat(response.status()).isEqualTo(WorkoutStatus.IN_PROGRESS);
-        assertThat(response.startedAt()).isEqualTo(NOW);
+        assertThat(response.startedAt()).isNull(); // подготовлена, время ещё не идёт
         assertThat(response.exercises()).extracting(WorkoutExerciseResponse::exerciseName)
                 .containsExactly("Приседания со штангой", "Жим ногами");
     }
@@ -192,7 +192,7 @@ class WorkoutServiceTest {
 
     /** Идущая тренировка с одним упражнением. id проставляем вручную — БД в тесте нет. */
     private Workout workoutWith(Exercise exercise) {
-        Workout workout = Workout.start(me, "Тренировка", null, List.of(exercise), NOW);
+        Workout workout = Workout.create(me, "Тренировка", null, List.of(exercise));
         WorkoutExercise workoutExercise = workout.getExercises().get(0);
         ReflectionTestUtils.setField(workoutExercise, "id", UUID.randomUUID());
         return workout;

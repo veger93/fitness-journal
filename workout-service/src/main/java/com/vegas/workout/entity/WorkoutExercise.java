@@ -63,7 +63,7 @@ public class WorkoutExercise {
     }
 
     public WorkoutSet addSet(SetValues values, Instant now) {
-        workout.ensureInProgress();
+        workout.begin(now); // забыл нажать "Начать" — тренировка начинается с первого подхода
         WorkoutSet set = new WorkoutSet(this, sets.size(), values, now);
         sets.add(set);
         return set;

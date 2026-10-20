@@ -36,9 +36,13 @@ export function StartWorkoutPage() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Тренировка</h1>
+      <h1 className={styles.title}>Новая тренировка</h1>
+      <p className={styles.muted}>
+        Выберите комплекс или соберите свою тренировку. Время пойдёт, только когда начнёте — можно подготовиться
+        заранее.
+      </p>
       <Button fullWidth onClick={() => start.mutate(null)} disabled={start.isPending}>
-        Пустая тренировка
+        Своя тренировка
       </Button>
       {start.isError && <p className={styles.muted}>{start.error.message}</p>}
 

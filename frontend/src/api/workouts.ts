@@ -32,7 +32,8 @@ export interface Workout {
   name: string;
   templateId: string | null;
   status: 'IN_PROGRESS' | 'COMPLETED';
-  startedAt: string;
+  /** null — тренировка подготовлена, но ещё не начата: таймер не идёт */
+  startedAt: string | null;
   completedAt: string | null;
   durationSec: number | null;
   workingSets: number;
@@ -72,6 +73,7 @@ export const workoutsApi = {
   current: async () => (await api<Workout | undefined>(`${base}/current`)) ?? null,
   get: (id: string) => api<Workout>(`${base}/${id}`),
   start: (templateId: string | null) => api<Workout>(base, { method: 'POST', body: templateId ? { templateId } : {} }),
+  begin: (id: string) => api<Workout>(`${base}/${id}/start`, { method: 'POST' }),
   complete: (id: string) => api<Workout>(`${base}/${id}/complete`, { method: 'POST' }),
   remove: (id: string) => api<void>(`${base}/${id}`, { method: 'DELETE' }),
 

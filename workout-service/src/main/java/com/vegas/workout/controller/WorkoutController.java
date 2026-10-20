@@ -46,7 +46,7 @@ public class WorkoutController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Начать тренировку: {\"templateId\": \"...\"} или {} для пустой")
+    @Operation(summary = "Создать тренировку (ещё не начата): {\"templateId\": \"...\"} или {} — своя")
     public WorkoutResponse start(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody StartWorkoutRequest request) {
         return workoutService.start(CurrentUser.id(jwt), request);
     }
@@ -76,6 +76,12 @@ public class WorkoutController {
     @Operation(summary = "Тренировка целиком")
     public WorkoutResponse getById(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID workoutId) {
         return workoutService.getById(CurrentUser.id(jwt), workoutId);
+    }
+
+    @PostMapping("/{workoutId}/start")
+    @Operation(summary = "Начать подготовленную тренировку (запустить время). Первый подход начинает её сам")
+    public WorkoutResponse begin(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID workoutId) {
+        return workoutService.begin(CurrentUser.id(jwt), workoutId);
     }
 
     @PostMapping("/{workoutId}/complete")
