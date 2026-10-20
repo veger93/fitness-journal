@@ -42,8 +42,21 @@ export function RegisterPage() {
         <Card size="section">
           <form className={styles.form} onSubmit={onSubmit}>
             <h1 className={styles.title}>Регистрация</h1>
-            <TextField label="Как к вам обращаться" autoComplete="nickname" maxLength={100} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-            <TextField label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <TextField
+              label="Как к вам обращаться"
+              autoComplete="nickname"
+              maxLength={100}
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+            />
+            <TextField
+              label="Email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
             <TextField
               label="Пароль"
               type="password"

@@ -18,6 +18,7 @@ Dev-сервер Vite пересылает `/api/*` в gateway, поэтому C
 ```bash
 npm test           # тесты (Vitest)
 npm run build      # проверка типов + сборка в dist/
+npm run format     # отформатировать код (Prettier, настройки в .prettierrc.json)
 ```
 
 ## Структура
@@ -25,9 +26,11 @@ npm run build      # проверка типов + сборка в dist/
 | Папка | Что внутри |
 |---|---|
 | `src/styles` | `tokens.css` — все цвета/шрифты/скругления двух тем; `global.css` — базовые стили |
-| `src/components/ui` | базовые компоненты: Button, Card, TextField, SegmentedControl. Экраны собираем только из них |
+| `src/components/ui` | базовые компоненты: Button, Card, TextField, SegmentedControl, Badge, StatTile, Chip, Dialog, Stepper. Экраны собираем только из них |
 | `src/components` | общая раскладка (шапка, навигация) |
 | `src/pages` | экраны |
+| `src/hooks` | общие хуки: тренировка (запросы и мутации), таймер |
+| `src/lib` | логика без React (форматирование, расчёты тренировки) — покрыта тестами |
 | `src/api` | `client.ts` — fetch + JWT + ошибки бэкенда; по файлу на сервис |
 | `src/auth` | вход/выход, хранение токена, защита страниц |
 | `src/theme` | светлая / тёмная / как в системе |

@@ -26,7 +26,11 @@ export function ProgressChart({ points, plateauFrom }: ProgressChartProps) {
   const plateauStart = plateauFrom ? new Date(plateauFrom).getTime() : null;
 
   return (
-    <div role="img" aria-label="График силы по тренировкам: твоя линия и норма для твоего уровня" style={{ width: '100%', height: 260 }}>
+    <div
+      role="img"
+      aria-label="График силы по тренировкам: твоя линия и норма для твоего уровня"
+      style={{ width: '100%', height: 260 }}
+    >
       <ResponsiveContainer>
         <LineChart data={data} margin={{ top: 24, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid stroke="var(--border)" vertical={false} />

@@ -5,8 +5,11 @@ import { RequireAuth } from './auth/RequireAuth';
 import { AppLayout } from './components/AppLayout';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
+import { ActiveWorkoutPage } from './pages/ActiveWorkoutPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { RegisterPage } from './pages/RegisterPage';
+import { StartWorkoutPage } from './pages/StartWorkoutPage';
+import { WorkoutSummaryPage } from './pages/WorkoutSummaryPage';
 import { ThemeProvider } from './theme/ThemeProvider';
 
 // Один клиент на всё приложение: в нём кэш ответов сервера.
@@ -32,6 +35,9 @@ export function App() {
                 }
               >
                 <Route path="/" element={<HomePage />} />
+                <Route path="/workout" element={<StartWorkoutPage />} />
+                <Route path="/workout/active" element={<ActiveWorkoutPage />} />
+                <Route path="/workout/:workoutId/summary" element={<WorkoutSummaryPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

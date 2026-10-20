@@ -3,8 +3,9 @@ import styles from './AppLayout.module.css';
 
 const NAV = [
   { to: '/', label: 'Главная' },
+  { to: '/workout', label: 'Тренировка' },
   { to: '/profile', label: 'Профиль' },
-  // Комплексы, История, Рекорды — появятся вместе со своими экранами
+  // История, Рекорды, Комплексы — появятся вместе со своими экранами
 ];
 
 /** Общая "рамка" всех страниц после входа: шапка + контент. */
@@ -21,7 +22,7 @@ export function AppLayout() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                end
+                end={item.to === '/'}
                 className={({ isActive }) => [styles.link, isActive && styles.active].filter(Boolean).join(' ')}
               >
                 {item.label}

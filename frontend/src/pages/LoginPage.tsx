@@ -43,7 +43,14 @@ export function LoginPage() {
         <Card size="section">
           <form className={styles.form} onSubmit={onSubmit}>
             <h1 className={styles.title}>Вход</h1>
-            <TextField label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <TextField
+              label="Email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
             <TextField
               label="Пароль"
               type="password"
