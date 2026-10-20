@@ -24,8 +24,16 @@
 }
 
 .secondary {
-  border: 2px solid var(--surface-inverse);
+  /* обводка цветом текста — кнопка видна на любой карточке: светлой, тёмной, оранжевой */
+  border: 2px solid currentColor;
   background: transparent;
+  color: inherit;
+}
+
+/* на цветной карточке (риск): кнопка цвета обычной карточки */
+.surface {
+  border: 0;
+  background: var(--surface);
   color: var(--text);
 }
 

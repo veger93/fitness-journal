@@ -3,7 +3,7 @@ import { Link, type LinkProps } from 'react-router-dom';
 import styles from './Button.module.css';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'surface';
   fullWidth?: boolean;
 }
 
@@ -14,7 +14,7 @@ export function Button({ variant = 'primary', fullWidth = false, className, type
 }
 
 interface ButtonLinkProps extends LinkProps {
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'surface';
   fullWidth?: boolean;
 }
 

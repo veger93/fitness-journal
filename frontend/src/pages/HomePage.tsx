@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { analyticsApi, type Dashboard, type ExerciseSummary } from '../api/analytics';
 import { authApi } from '../api/auth';
-import { ExerciseCard } from '../components/ExerciseCard';
+import { ExerciseTicker } from '../components/home/ExerciseTicker';
+import { SignalCards } from '../components/home/SignalCards';
 import { ProgressChart } from '../components/ProgressChart';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -100,14 +101,8 @@ function Content({ dashboard }: { dashboard: Dashboard }) {
 
       {focus && <FocusChart exercise={focus} />}
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Упражнения</h2>
-        <div className={styles.exercises}>
-          {dashboard.exercises.map((exercise) => (
-            <ExerciseCard key={exercise.exerciseId} exercise={exercise} />
-          ))}
-        </div>
-      </section>
+      <SignalCards exercises={dashboard.exercises} />
+      <ExerciseTicker exercises={dashboard.exercises} />
 
       <p className="footnote">* Сила — сколько ты поднял бы один раз, посчитано по твоим подходам.</p>
     </>

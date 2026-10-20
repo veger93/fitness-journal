@@ -32,6 +32,9 @@ import java.util.UUID;
  */
 public final class DashboardCalculator {
 
+    /** Сколько последних тренировок показывать в мини-графике. */
+    static final int TREND_POINTS = 8;
+
     /** Рекорд считается "свежим" (бейдж на главной) две недели. */
     static final Duration FRESH_RECORD = Duration.ofDays(14);
 
@@ -113,14 +116,15 @@ public final class DashboardCalculator {
             note = null;
         }
 
-        BigDecimal currentE1rm = history.stream()
+        List<BigDecimal> e1rms = history.stream()
                 .map(ExercisePerformance::getBestE1rmKg)
                 .filter(Objects::nonNull)
-                .reduce((first, second) -> second)  // последний не-null
-                .orElse(null);
+                .toList();
+        BigDecimal currentE1rm = e1rms.isEmpty() ? null : e1rms.get(e1rms.size() - 1);
+        List<BigDecimal> trend = e1rms.subList(Math.max(0, e1rms.size() - TREND_POINTS), e1rms.size());
 
         return new ExerciseSummaryResponse(last.getExerciseId(), last.getExerciseName(), last.getPerformedAt(),
-                last.getMaxWeightKg(), last.getMaxWeightReps(), currentE1rm, status, risk.level(), note);
+                last.getMaxWeightKg(), last.getMaxWeightReps(), currentE1rm, status, risk.level(), note, trend);
     }
 
     private static Optional<PersonalRecordResponse> freshRecord(List<PersonalRecordResponse> records, UUID exerciseId, Instant now) {
