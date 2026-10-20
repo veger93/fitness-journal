@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vegas — дневник тренировок</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;700&display=swap" rel="stylesheet" />
+    <script>
+      // Тему ставим ДО загрузки React: иначе тёмная тема на мгновение мигнёт светлой.
+      // Логика та же, что в src/theme/theme.ts (здесь копия — React ещё не загружен).
+      (function () {
+        var choice = 'system';
+        try { choice = localStorage.getItem('vegas.theme') || 'system'; } catch (e) {}
+        var dark = choice === 'dark' ||
+          (choice === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
