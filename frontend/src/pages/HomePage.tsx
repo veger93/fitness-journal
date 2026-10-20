@@ -3,9 +3,10 @@ import { analyticsApi, type Dashboard, type ExerciseSummary } from '../api/analy
 import { authApi } from '../api/auth';
 import { ExerciseCard } from '../components/ExerciseCard';
 import { ProgressChart } from '../components/ProgressChart';
-import { Button } from '../components/ui/Button';
+import { Button, ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { StatTile } from '../components/ui/StatTile';
+import { useCurrentWorkout } from '../hooks/useWorkout';
 import { formatChange, formatKg, formatMonth, formatSet, formatTonnage } from '../lib/format';
 import styles from './HomePage.module.css';
 
@@ -16,15 +17,25 @@ import styles from './HomePage.module.css';
  */
 export function HomePage() {
   const me = useQuery({ queryKey: ['me'], queryFn: authApi.me });
-  const dashboard = useQuery({ queryKey: ['dashboard'], queryFn: analyticsApi.dashboard });
+  const dashboard = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: analyticsApi.dashboard,
+  });
+  const current = useCurrentWorkout();
 
   return (
     <div className={styles.page}>
-      <div>
-        <p className={styles.greeting}>Привет, {me.data?.displayName || me.data?.email || '…'}</p>
-        <h1 className={styles.title}>
-          {dashboard.data ? `Прогресс за ${formatMonth(dashboard.data.month)}` : 'Прогресс'}
-        </h1>
+      <div className={styles.header}>
+        <div>
+          <p className={styles.greeting}>Привет, {me.data?.displayName || me.data?.email || '…'}</p>
+          <h1 className={styles.title}>
+            {dashboard.data ? `Прогресс за ${formatMonth(dashboard.data.month)}` : 'Прогресс'}
+          </h1>
+        </div>
+        {/* идёт тренировка — главное действие "вернуться к ней" */}
+        <ButtonLink to={current.data ? '/workout/active' : '/workout'}>
+          {current.data ? 'Продолжить тренировку' : 'Начать тренировку'}
+        </ButtonLink>
       </div>
 
       {dashboard.isPending && <p className={styles.muted}>Загружаем…</p>}
@@ -73,9 +84,17 @@ function Content({ dashboard }: { dashboard: Dashboard }) {
           highlightCaption={dashboard.weekTonnageChangePercent != null}
         />
         {focus?.currentE1rmKg != null && (
-          <StatTile label={`Сила: ${focus.exerciseName.toLowerCase()}*`} value={formatKg(focus.currentE1rmKg)} caption="расчётный максимум" />
+          <StatTile
+            label={`Сила: ${focus.exerciseName.toLowerCase()}*`}
+            value={formatKg(focus.currentE1rmKg)}
+            caption="расчётный максимум"
+          />
         )}
-        <StatTile label="Тренировок" value={dashboard.workoutsThisMonth} caption={`в ${formatMonthIn(dashboard.month)}`} />
+        <StatTile
+          label="Тренировок"
+          value={dashboard.workoutsThisMonth}
+          caption={`в ${formatMonthIn(dashboard.month)}`}
+        />
         <RiskTile exercises={dashboard.exercises} />
       </div>
 
@@ -120,8 +139,14 @@ function RiskTile({ exercises }: { exercises: ExerciseSummary[] }) {
 function FocusChart({ exercise }: { exercise: ExerciseSummary }) {
   const id = exercise.exerciseId;
   // queryKey включает id: другое упражнение — другой кэш
-  const progress = useQuery({ queryKey: ['progress', id, 'M3'], queryFn: () => analyticsApi.progress(id, 'M3') });
-  const insights = useQuery({ queryKey: ['insights', id], queryFn: () => analyticsApi.insights(id) });
+  const progress = useQuery({
+    queryKey: ['progress', id, 'M3'],
+    queryFn: () => analyticsApi.progress(id, 'M3'),
+  });
+  const insights = useQuery({
+    queryKey: ['insights', id],
+    queryFn: () => analyticsApi.insights(id),
+  });
   const lastSet = formatSet(exercise.lastWeightKg, exercise.lastReps);
   const plateau = insights.data?.plateau;
 
@@ -148,10 +173,7 @@ function FocusChart({ exercise }: { exercise: ExerciseSummary }) {
         )}
       </div>
       {progress.data ? (
-        <ProgressChart
-          points={progress.data.points}
-          plateauFrom={plateau?.detected ? plateau.lastProgressAt : null}
-        />
+        <ProgressChart points={progress.data.points} plateauFrom={plateau?.detected ? plateau.lastProgressAt : null} />
       ) : (
         <div className={`${styles.muted} ${styles.chartPlaceholder}`}>
           {progress.isError ? progress.error.message : 'Загружаем график…'}
@@ -159,7 +181,18 @@ function FocusChart({ exercise }: { exercise: ExerciseSummary }) {
       )}
       {insights.data && insights.data.recommendation.type !== 'NOT_ENOUGH_DATA' && (
         <p className={styles.advice}>
-          <svg className={styles.adviceIcon} aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            className={styles.adviceIcon}
+            aria-hidden="true"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M9 18h6" />
             <path d="M10 22h4" />
             <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" />
