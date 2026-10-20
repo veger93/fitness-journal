@@ -27,3 +27,9 @@
   border-radius: var(--radius-section);
   padding: var(--space-6);
 }
+
+@media (max-width: 600px) {
+  .section {
+    padding: var(--space-5) var(--space-4);
+  }
+}
