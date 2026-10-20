@@ -1,0 +1,50 @@
+.group {
+  border: 0;
+  margin: 0;
+  padding: var(--space-1);
+  /* равные колонки по числу вариантов (--count ставит компонент), не шире 480px */
+  display: grid;
+  grid-template-columns: repeat(var(--count), minmax(0, 1fr));
+  width: 100%;
+  max-width: 480px;
+  gap: var(--space-1);
+  background: var(--chip);
+  border-radius: var(--radius-pill);
+}
+
+.option {
+  position: relative;
+}
+
+/* настоящий radio: работает с клавиатуры (стрелки) и экранными дикторами, просто спрятан визуально */
+.option input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.option span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
+  min-height: 44px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.option input:checked + span {
+  background: var(--surface-inverse);
+  color: var(--text-on-inverse);
+}
+
+.option input:focus-visible + span {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}

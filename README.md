@@ -13,7 +13,7 @@
 | workout-service | 8082 | workout_db | каталог упражнений + мышцы + медиа, комплексы, тренировки, подходы |
 | analytics-service | 8083 | analytics_db | 1ПМ, прогресс, эталоны, плато, перетрен, разгрузка, рекорды, отчёты |
 | notification-service | 8084 | notification_db | email, настройки уведомлений, напоминания |
-| frontend | 5173 | — | веб-клиент (позже) |
+| frontend | 5173 | — | веб-клиент: React + TypeScript + Vite, см. frontend/README.md |
 | infra | — | — | docker-compose: Postgres 16 (5435), Mailpit (8025), Kafka (9092), Kafka UI (8090) |
 
 ## Запуск локально
@@ -23,6 +23,7 @@
 2. Открыть корневую папку `fitness-journal` в IntelliJ IDEA как Gradle-проект.
 3. Run Configuration сервиса → VM options: `-Dspring.profiles.active=local`
 4. Swagger каждого сервиса: `http://localhost:<порт>/swagger-ui.html`
+5. Фронт: `cd frontend && npm install && npm run dev` → http://localhost:5173 (нужен Node.js 22)
 
 ## Структура пакетов сервиса
 

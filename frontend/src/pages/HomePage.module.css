@@ -1,0 +1,29 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.greeting {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.title {
+  font-size: var(--text-h1);
+}
+
+.cardTitle {
+  font-size: var(--text-xl);
+}
+
+.muted {
+  margin: 0;
+  opacity: 0.8;
+}
+
+@media (max-width: 600px) {
+  .title {
+    font-size: 32px;
+  }
+}

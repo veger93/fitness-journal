@@ -1,0 +1,80 @@
+/*
+ * Дизайн-токены Vegas (вариант C). ЕДИНСТВЕННОЕ место, где живут цвета, шрифты, скругления и отступы.
+ * Компоненты используют только var(--...) — никаких "#111827" и "border-radius: 13px" по месту.
+ * Так все экраны выглядят одинаково, а тёмная тема — это просто другой набор значений.
+ * Правила: docs/design/STYLEGUIDE.md
+ */
+:root {
+  /* шрифты: крупные заголовки и цифры — Unbounded, всё остальное — Onest */
+  --font-display: 'Unbounded', system-ui, sans-serif;
+  --font-body: 'Onest', system-ui, sans-serif;
+
+  /* размеры текста */
+  --text-xs: 12px;   /* сноски* */
+  --text-sm: 14px;   /* подписи, вторичный текст */
+  --text-md: 16px;   /* основной текст */
+  --text-lg: 20px;   /* заголовки секций (display) */
+  --text-xl: 24px;   /* заголовок карточки (display) */
+  --text-num: 34px;  /* большие цифры (display) */
+  --text-h1: 44px;   /* заголовок страницы (display) */
+
+  /* скругления: только эти три */
+  --radius-card: 24px;     /* карточки, плитки */
+  --radius-section: 28px;  /* большие блоки (график) */
+  --radius-pill: 999px;    /* кнопки, бейджи, переключатели */
+
+  /* отступы: шаг 4px */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --content-width: 1120px;
+  --control-height: 52px;  /* кнопки и поля: удобно попадать пальцем (>= 44px) */
+}
+
+/* ---------- светлая тема ---------- */
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #EEF1F5;
+  --surface: #FFFFFF;           /* обычная карточка */
+  --surface-inverse: #111827;   /* главная карточка-акцент, основная кнопка */
+  --text: #111827;
+  --text-muted: #4B5563;
+  --text-on-inverse: #FFFFFF;
+  --accent: #C2410C;            /* заливки: риск, бейдж "перегрузка" (текст на нём белый) */
+  --accent-strong: #EA580C;     /* линии графиков, иконки */
+  --text-on-accent: #FFFFFF;
+  --accent-soft-text: #FFEDD5;  /* вторичный текст на акцентной заливке */
+  --chip: #E5E7EB;              /* нейтральный бейдж */
+  --border: #E5E7EB;
+  --input-bg: #FFFFFF;
+  --input-border: #D1D5DB;
+  --danger-text: #B91C1C;
+  --focus: #2563EB;
+}
+
+/* ---------- тёмная тема ---------- */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0B0F17;
+  --surface: #161B26;
+  --surface-inverse: #F9FAFB;   /* в тёмной теме акцентная карточка СВЕТЛАЯ */
+  --text: #F3F4F6;
+  --text-muted: #9CA3AF;
+  --text-on-inverse: #0B0F17;
+  --accent: #C2410C;
+  --accent-strong: #FB923C;     /* на тёмном фоне оранжевый светлее, иначе теряется */
+  --text-on-accent: #FFFFFF;
+  --accent-soft-text: #FFEDD5;
+  --chip: #2D3546;
+  --border: #232A38;
+  --input-bg: #0F141E;
+  --input-border: #374151;
+  --danger-text: #FCA5A5;
+  --focus: #93C5FD;
+}
