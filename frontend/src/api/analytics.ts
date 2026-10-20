@@ -58,6 +58,21 @@ export interface ExerciseInsights {
   recommendation: { type: 'NOT_ENOUGH_DATA' | 'KEEP_GOING' | 'WATCH_RECOVERY' | 'DELOAD'; message: string };
 }
 
+/** Карточка в ленте рекордов (analytics: PersonalRecordResponse) */
+export interface PersonalRecord {
+  exerciseId: string;
+  exerciseName: string;
+  achievedAt: string;
+  weightKg: number | null;
+  reps: number | null;
+  records: {
+    type: 'WEIGHT' | 'E1RM';
+    valueKg: number;
+    deltaKg: number | null;
+    hint: string | null;
+  }[];
+}
+
 /** План разгрузочной недели (analytics: DeloadPlanResponse) */
 export interface DeloadPlan {
   exerciseId: string;
@@ -77,5 +92,6 @@ export const analyticsApi = {
   progress: (exerciseId: string, period: ProgressPeriod = 'M3') =>
     api<ExerciseProgress>(`/api/analytics/exercises/${exerciseId}/progress?period=${period}`),
   insights: (exerciseId: string) => api<ExerciseInsights>(`/api/analytics/exercises/${exerciseId}/insights`),
+  records: (limit = 50) => api<PersonalRecord[]>(`/api/records?limit=${limit}`),
   deloadPlan: (exerciseId: string) => api<DeloadPlan>(`/api/analytics/exercises/${exerciseId}/deload-plan`),
 };

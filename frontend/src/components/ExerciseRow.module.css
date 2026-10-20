@@ -1,0 +1,62 @@
+.row {
+  min-height: 72px;
+  padding: var(--space-3) var(--space-5);
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 120px 110px;
+  grid-template-areas: 'name set spark badge';
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.name {
+  grid-area: name;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.set {
+  grid-area: set;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
+}
+
+.spark {
+  grid-area: spark;
+}
+
+.badge {
+  grid-area: badge;
+  justify-self: end;
+}
+
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'name badge'
+      'set spark';
+    row-gap: var(--space-2);
+  }
+
+  .spark {
+    justify-self: end;
+  }
+}
