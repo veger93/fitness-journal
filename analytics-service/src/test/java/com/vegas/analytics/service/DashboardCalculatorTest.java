@@ -115,9 +115,22 @@ class DashboardCalculatorTest {
         ExerciseSummaryResponse bench = DashboardCalculator.build(history, List.of(), NOW).exercises().get(0);
 
         assertThat(bench.currentE1rmKg()).isEqualByComparingTo("95");
+        assertThat(bench.trend()).extracting(BigDecimal::intValue).containsExactly(90, 95);
         assertThat(bench.lastWeightKg()).isEqualByComparingTo("80");
         assertThat(bench.lastReps()).isEqualTo(5);
         assertThat(bench.lastPerformedAt()).isEqualTo(NOW.minus(Duration.ofDays(2)));
+    }
+
+    @Test
+    void trend_keepsLastEightValuesInOrder() {
+        List<ExercisePerformance> history = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            history.add(perf(BENCH, "Жим", 40 - i * 3, String.valueOf(80 + i), "1000"));
+        }
+
+        ExerciseSummaryResponse bench = DashboardCalculator.build(history, List.of(), NOW).exercises().get(0);
+
+        assertThat(bench.trend()).extracting(BigDecimal::intValue).containsExactly(82, 83, 84, 85, 86, 87, 88, 89);
     }
 
     // ---------- helpers ----------

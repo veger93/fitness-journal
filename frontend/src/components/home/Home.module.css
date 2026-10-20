@@ -1,0 +1,225 @@
+/* ---------- "Что сделать сейчас" ---------- */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionTitle {
+  font-size: var(--text-lg);
+  font-weight: 500;
+}
+
+.signals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-3);
+}
+
+.signal {
+  min-height: 220px;
+}
+
+.signalLabel {
+  font-size: var(--text-sm);
+  opacity: 0.8;
+}
+
+.signalTitle {
+  font-size: var(--text-lg);
+  line-height: 1.2;
+}
+
+.signalText {
+  margin: 0;
+  opacity: 0.85;
+}
+
+.signalAction {
+  margin-top: auto;
+  align-self: flex-start;
+}
+
+/* ---------- бегущая строка упражнений ---------- */
+
+.ticker {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  padding: var(--space-2) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.viewport {
+  overflow: hidden;
+  touch-action: pan-y; /* вертикальную прокрутку страницы оставляем браузеру, горизонтальный свайп — наш */
+}
+
+.track {
+  display: flex;
+}
+
+.animated {
+  transition: transform 0.5s ease;
+}
+
+.slide {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+.row {
+  min-height: 72px;
+  padding: var(--space-3) var(--space-5);
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 120px 110px;
+  grid-template-areas: 'name set spark badge';
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.rowName {
+  grid-area: name;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowNote {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowSet {
+  grid-area: set;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
+}
+
+.rowSpark {
+  grid-area: spark;
+}
+
+.rowBadge {
+  grid-area: badge;
+  justify-self: end;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--space-3) 0 var(--space-5);
+}
+
+.dots {
+  display: flex;
+  gap: var(--space-1);
+}
+
+/* точка — кнопка 24×24 (удобно попасть), а видимый кружок внутри маленький */
+.dot {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.dot::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--chip);
+}
+
+.dotActive::after {
+  background: var(--text);
+}
+
+.pause {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+/* ---------- окна ---------- */
+
+.planGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.planCell {
+  background: var(--bg);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+}
+
+.planValue {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
+}
+
+.muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.list {
+  margin: 0;
+  padding-left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  /* карточки идут столбиком — выравнивать их по высоте не нужно */
+  .signal {
+    min-height: 0;
+  }
+
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'name badge'
+      'set spark';
+    row-gap: var(--space-2);
+  }
+
+  .rowSpark {
+    justify-self: end;
+  }
+}

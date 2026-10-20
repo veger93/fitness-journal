@@ -15,6 +15,8 @@ export interface ExerciseSummary {
   status: ExerciseStatus;
   riskLevel: RiskLevel;
   note: string | null;
+  /** последние значения силы (1ПМ) по тренировкам — для мини-графика */
+  trend: number[];
 }
 
 export interface Dashboard {
@@ -56,9 +58,24 @@ export interface ExerciseInsights {
   recommendation: { type: 'NOT_ENOUGH_DATA' | 'KEEP_GOING' | 'WATCH_RECOVERY' | 'DELOAD'; message: string };
 }
 
+/** План разгрузочной недели (analytics: DeloadPlanResponse) */
+export interface DeloadPlan {
+  exerciseId: string;
+  exerciseName: string;
+  reason: string;
+  durationDays: number;
+  intensityPercent: number;
+  currentE1rmKg: number | null;
+  workingWeightKg: number | null;
+  sets: number;
+  reps: number;
+  notes: string[];
+}
+
 export const analyticsApi = {
   dashboard: () => api<Dashboard>('/api/analytics/dashboard'),
   progress: (exerciseId: string, period: ProgressPeriod = 'M3') =>
     api<ExerciseProgress>(`/api/analytics/exercises/${exerciseId}/progress?period=${period}`),
   insights: (exerciseId: string) => api<ExerciseInsights>(`/api/analytics/exercises/${exerciseId}/insights`),
+  deloadPlan: (exerciseId: string) => api<DeloadPlan>(`/api/analytics/exercises/${exerciseId}/deload-plan`),
 };
