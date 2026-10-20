@@ -24,8 +24,16 @@ export function useWorkoutActions(workout: Workout) {
   const addSet = useMutation({
     mutationFn: ({ exerciseId, set }: { exerciseId: string; set: SetInput }) =>
       workoutsApi.addSet(workout.id, exerciseId, set),
-    onSuccess: (saved, { exerciseId }) => update((w) => withSetAdded(w, exerciseId, saved)),
+    onSuccess: (saved, { exerciseId }) => {
+      update((w) => withSetAdded(w, exerciseId, saved));
+      // первый подход сам начинает тренировку на сервере — перечитаем, чтобы получить время начала
+      if (!workout.startedAt) {
+        queryClient.invalidateQueries({ queryKey: CURRENT_WORKOUT_KEY });
+      }
+    },
   });
+
+  const begin = useMutation({ mutationFn: () => workoutsApi.begin(workout.id), onSuccess: replace });
 
   const updateSet = useMutation({
     mutationFn: ({ exerciseId, setId, set }: { exerciseId: string; setId: string; set: SetInput }) =>
@@ -67,5 +75,5 @@ export function useWorkoutActions(workout: Workout) {
   });
   const cancel = useMutation({ mutationFn: () => workoutsApi.remove(workout.id), onSuccess: () => finish('/') });
 
-  return { addSet, updateSet, deleteSet, addExercise, removeExercise, complete, cancel };
+  return { begin, addSet, updateSet, deleteSet, addExercise, removeExercise, complete, cancel };
 }

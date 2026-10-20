@@ -65,13 +65,20 @@ public class WorkoutService {
             WorkoutTemplate template = templateRepository.findWithExercisesById(request.templateId())
                     .filter(found -> found.isVisibleTo(userId))
                     .orElseThrow(() -> new NotFoundException("Комплекс не найден"));
-            workout = Workout.start(userId, nameOrDefault(request.name(), template.getName()),
-                    template.getId(), template.getExercises(), clock.instant());
+            workout = Workout.create(userId, nameOrDefault(request.name(), template.getName()),
+                    template.getId(), template.getExercises());
         } else {
-            workout = Workout.start(userId, nameOrDefault(request.name(), DEFAULT_NAME),
-                    null, List.of(), clock.instant());
+            workout = Workout.create(userId, nameOrDefault(request.name(), DEFAULT_NAME), null, List.of());
         }
         return toResponse(workoutRepository.save(workout));
+    }
+
+    /** Кнопка "Начать": подготовленная тренировка начинается, пошёл таймер. */
+    @Transactional
+    public WorkoutResponse begin(UUID userId, UUID workoutId) {
+        Workout workout = findOwn(userId, workoutId);
+        workout.begin(clock.instant());
+        return toResponse(workout);
     }
 
     @Transactional(readOnly = true)

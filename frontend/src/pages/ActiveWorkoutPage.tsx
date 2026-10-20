@@ -48,7 +48,7 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
   const [modal, setModal] = useState<Modal>(null);
 
   const exercise = workout.exercises.find((e) => e.id === selectedId) ?? workout.exercises[0] ?? null;
-  const elapsedSec = (now - new Date(workout.startedAt).getTime()) / 1000;
+  const elapsedSec = workout.startedAt ? (now - new Date(workout.startedAt).getTime()) / 1000 : 0;
   const hasSets = workout.exercises.some((e) => e.sets.length > 0);
 
   const setMutation = modal?.kind === 'set' && modal.editing ? actions.updateSet : actions.addSet;
@@ -77,15 +77,28 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
 
   return (
     <div className={styles.page}>
-      <div className={styles.topBar}>
-        <p className={styles.timerBlock}>
-          <span className={styles.muted}>Тренировка идёт</span>
-          <span className={styles.timer}>{formatClock(elapsedSec)}</span>
-        </p>
-        <Button variant="secondary" onClick={() => setModal({ kind: hasSets ? 'complete' : 'cancel' })}>
-          Завершить
-        </Button>
-      </div>
+      {workout.startedAt ? (
+        <div className={styles.topBar}>
+          <p className={styles.timerBlock}>
+            <span className={styles.muted}>Тренировка идёт</span>
+            <span className={styles.timer}>{formatClock(elapsedSec)}</span>
+          </p>
+          <Button variant="secondary" onClick={() => setModal({ kind: hasSets ? 'complete' : 'cancel' })}>
+            Завершить
+          </Button>
+        </div>
+      ) : (
+        // подготовка: выбираем упражнения заранее, время не идёт
+        <div className={styles.topBar}>
+          <p className={styles.timerBlock}>
+            <span className={styles.timer}>Подготовка</span>
+            <span className={styles.muted}>Время пойдёт, когда нажмёте «Начать» или запишете первый подход</span>
+          </p>
+          <Button onClick={() => actions.begin.mutate()} disabled={actions.begin.isPending}>
+            Начать
+          </Button>
+        </div>
+      )}
 
       <h1 className={styles.title}>{exercise?.exerciseName ?? workout.name}</h1>
 

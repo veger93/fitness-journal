@@ -55,7 +55,8 @@ public class Workout {
     @Column(nullable = false, length = 20)
     private WorkoutStatus status;
 
-    @Column(name = "started_at", nullable = false)
+    /** null — тренировка подготовлена, но ещё не начата (см. begin()). */
+    @Column(name = "started_at")
     private Instant startedAt;
 
     @Column(name = "completed_at")
@@ -79,15 +80,30 @@ public class Workout {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    public static Workout start(UUID userId, String name, UUID templateId, List<Exercise> exercises, Instant now) {
+    /**
+     * Новая тренировка — пока "подготовка": упражнения можно выбирать, а время ещё не идёт.
+     * Время пойдёт с begin(): по кнопке "Начать" или с первым подходом.
+     */
+    public static Workout create(UUID userId, String name, UUID templateId, List<Exercise> exercises) {
         Workout workout = new Workout();
         workout.userId = userId;
         workout.name = name;
         workout.templateId = templateId;
         workout.status = WorkoutStatus.IN_PROGRESS;
-        workout.startedAt = now;
         exercises.forEach(workout::addExercise);
         return workout;
+    }
+
+    /** Запустить время. Повторный вызов ничего не меняет: начало тренировки фиксируется один раз. */
+    public void begin(Instant now) {
+        ensureInProgress();
+        if (startedAt == null) {
+            startedAt = now;
+        }
+    }
+
+    public boolean isStarted() {
+        return startedAt != null;
     }
 
     public WorkoutExercise addExercise(Exercise exercise) {
@@ -151,9 +167,9 @@ public class Workout {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    /** Длительность — только у завершённой; у идущей фронт сам считает таймер от startedAt. */
+    /** Длительность — только у завершённой; у идущей фронт сам считает таймер от startedAt (если начата). */
     public Long getDurationSec() {
-        return completedAt == null ? null : Duration.between(startedAt, completedAt).toSeconds();
+        return completedAt == null || startedAt == null ? null : Duration.between(startedAt, completedAt).toSeconds();
     }
 
     private void renumber() {

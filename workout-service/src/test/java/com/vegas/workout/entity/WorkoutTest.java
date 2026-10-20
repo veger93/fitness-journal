@@ -28,7 +28,7 @@ class WorkoutTest {
 
     @Test
     void tonnageAndWorkingSets_ignoreWarmups() {
-        Workout workout = Workout.start(UUID.randomUUID(), "Торс", null, List.of(bench), START);
+        Workout workout = Workout.create(UUID.randomUUID(), "Торс", null, List.of(bench));
         WorkoutExercise benchInWorkout = workout.getExercises().get(0);
 
         benchInWorkout.addSet(weightReps("40", 10, true), START);   // разминка — не считается
@@ -41,7 +41,7 @@ class WorkoutTest {
 
     @Test
     void complete_setsStatusAndDuration() {
-        Workout workout = Workout.start(UUID.randomUUID(), "Торс", null, List.of(bench), START);
+        Workout workout = Workout.create(UUID.randomUUID(), "Торс", null, List.of(bench));
         workout.getExercises().get(0).addSet(weightReps("80", 8, false), START);
 
         workout.complete(END);
@@ -52,14 +52,14 @@ class WorkoutTest {
 
     @Test
     void complete_withoutSets_isRejected() {
-        Workout workout = Workout.start(UUID.randomUUID(), "Торс", null, List.of(bench), START);
+        Workout workout = Workout.create(UUID.randomUUID(), "Торс", null, List.of(bench));
 
         assertThatThrownBy(() -> workout.complete(END)).isInstanceOf(BadRequestException.class);
     }
 
     @Test
     void completedWorkout_cannotBeChanged() {
-        Workout workout = Workout.start(UUID.randomUUID(), "Торс", null, List.of(bench), START);
+        Workout workout = Workout.create(UUID.randomUUID(), "Торс", null, List.of(bench));
         WorkoutExercise benchInWorkout = workout.getExercises().get(0);
         benchInWorkout.addSet(weightReps("80", 8, false), START);
         workout.complete(END);
@@ -72,14 +72,14 @@ class WorkoutTest {
 
     @Test
     void sameExerciseTwice_isRejected() {
-        Workout workout = Workout.start(UUID.randomUUID(), "Торс", null, List.of(bench), START);
+        Workout workout = Workout.create(UUID.randomUUID(), "Торс", null, List.of(bench));
 
         assertThatThrownBy(() -> workout.addExercise(bench)).isInstanceOf(BadRequestException.class);
     }
 
     @Test
     void removeExercise_renumbersTheRest() {
-        Workout workout = Workout.start(UUID.randomUUID(), "Фулбади", null, List.of(bench, squat), START);
+        Workout workout = Workout.create(UUID.randomUUID(), "Фулбади", null, List.of(bench, squat));
         WorkoutExercise first = workout.getExercises().get(0);
         ReflectionTestUtils.setField(first, "id", UUID.randomUUID());
 
@@ -88,6 +88,27 @@ class WorkoutTest {
         assertThat(workout.getExercises()).hasSize(1);
         assertThat(workout.getExercises().get(0).getExercise()).isSameAs(squat);
         assertThat(workout.getExercises().get(0).getPosition()).isZero(); // без "дыры" в нумерации
+    }
+
+    @Test
+    void newWorkout_isNotStarted_untilFirstSet() {
+        Workout workout = Workout.create(UUID.randomUUID(), "Торс", null, List.of(bench));
+        assertThat(workout.isStarted()).isFalse();
+
+        workout.getExercises().get(0).addSet(weightReps("80", 8, false), END);
+
+        assertThat(workout.getStartedAt()).isEqualTo(END); // забыл нажать "Начать" — время с первого подхода
+    }
+
+    @Test
+    void begin_onlyOnce() {
+        Workout workout = Workout.create(UUID.randomUUID(), "Торс", null, List.of(bench));
+
+        workout.begin(START);
+        workout.begin(END);                                          // повторное нажатие
+        workout.getExercises().get(0).addSet(weightReps("80", 8, false), END);
+
+        assertThat(workout.getStartedAt()).isEqualTo(START);
     }
 
     private static SetValues weightReps(String weight, int reps, boolean warmup) {
