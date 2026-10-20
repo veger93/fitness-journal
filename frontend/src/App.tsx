@@ -6,7 +6,9 @@ import { AppLayout } from './components/AppLayout';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { ActiveWorkoutPage } from './pages/ActiveWorkoutPage';
+import { ExercisesPage } from './pages/ExercisesPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { RecordsPage } from './pages/RecordsPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { StartWorkoutPage } from './pages/StartWorkoutPage';
 import { WorkoutSummaryPage } from './pages/WorkoutSummaryPage';
@@ -38,6 +40,8 @@ export function App() {
                 <Route path="/workout" element={<StartWorkoutPage />} />
                 <Route path="/workout/active" element={<ActiveWorkoutPage />} />
                 <Route path="/workout/:workoutId/summary" element={<WorkoutSummaryPage />} />
+                <Route path="/exercises" element={<ExercisesPage />} />
+                <Route path="/records" element={<RecordsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

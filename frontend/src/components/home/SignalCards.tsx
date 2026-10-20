@@ -1,84 +1,113 @@
 import { useState } from 'react';
-import type { ExerciseStatus, ExerciseSummary } from '../../api/analytics';
+import type { ExerciseSummary } from '../../api/analytics';
 import { formatSet } from '../../lib/format';
-import { Button } from '../ui/Button';
+import { Button, ButtonLink } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { DeloadDialog } from './DeloadDialog';
 import { PlateauDialog } from './PlateauDialog';
 import styles from './Home.module.css';
 
-const MAX_SIGNALS = 3;
-
-interface Signal {
-  variant: 'accent' | 'default' | 'inverse';
-  title: string;
-  text: string;
-  action: { label: string; dialog: 'deload' | 'plateau' } | null;
-}
-
-/** Текст карточки по статусу. Цифры — из сервера (note), формулировка — здесь. */
-function toSignal(exercise: ExerciseSummary): Signal | null {
-  const statuses: Record<Exclude<ExerciseStatus, 'NORMAL'>, () => Signal> = {
-    OVERLOAD: () => ({
-      variant: 'accent',
-      title: 'Пора неделю полегче',
-      text: exercise.note ?? 'Похоже, накопилась усталость.',
-      action: { label: 'План разгрузки', dialog: 'deload' },
-    }),
-    PLATEAU: () => ({
-      variant: 'default',
-      title: exercise.note ? `Плато: ${exercise.note.replace(' без нового максимума', '')}` : 'Плато',
-      text: 'Вес не растёт, хотя тренировки идут. Это нормально — помогут небольшие перемены.',
-      action: { label: 'Что попробовать', dialog: 'plateau' },
-    }),
-    RECORD: () => ({
-      variant: 'inverse',
-      title: `Рекорд: ${formatSet(exercise.lastWeightKg, exercise.lastReps) ?? ''}`,
-      text: `${exercise.note ?? 'Новый личный рекорд'}. Так держать!`,
-      action: null,
-    }),
-  };
-  return exercise.status === 'NORMAL' ? null : statuses[exercise.status]();
-}
-
-/** "Что сделать сейчас": только упражнения, требующие внимания (сервер уже отсортировал по важности). */
+/**
+ * "Что сделать сейчас" — три постоянных места, у каждого своя роль:
+ *   1. перегрузка (оранжевая) -> план разгрузки;
+ *   2. плато (обычная карточка) -> что попробовать;
+ *   3. рекорды (акцентная тёмная/светлая) -> все рекорды.
+ * Если по своей теме сказать нечего, карточка остаётся на месте, но спокойного цвета и с хорошей новостью:
+ * оранжевый — только когда действительно пора обратить внимание.
+ */
 export function SignalCards({ exercises }: { exercises: ExerciseSummary[] }) {
   const [open, setOpen] = useState<{ dialog: 'deload' | 'plateau'; exercise: ExerciseSummary } | null>(null);
-  const signals = exercises
-    .map((exercise) => ({ exercise, signal: toSignal(exercise) }))
-    .filter((s): s is { exercise: ExerciseSummary; signal: Signal } => s.signal !== null)
-    .slice(0, MAX_SIGNALS);
+  const overloads = exercises.filter((e) => e.status === 'OVERLOAD');
+  const plateaus = exercises.filter((e) => e.status === 'PLATEAU');
+  const records = exercises.filter((e) => e.status === 'RECORD');
 
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Что сделать сейчас</h2>
-      {signals.length === 0 ? (
-        <Card>
-          <p className={styles.signalText}>Всё идёт по плану: ни перегрузки, ни плато. Продолжайте в том же духе.</p>
+      <div className={styles.signals}>
+        {overloads.length > 0 ? (
+          <Card as="article" variant="accent" className={styles.signal}>
+            <span className={styles.signalLabel}>{withMore(overloads)}</span>
+            <h3 className={styles.signalTitle}>Пора неделю полегче</h3>
+            <p className={styles.signalText}>{overloads[0].note ?? 'Похоже, накопилась усталость.'}</p>
+            <Button
+              variant="surface"
+              className={styles.signalAction}
+              onClick={() => setOpen({ dialog: 'deload', exercise: overloads[0] })}
+            >
+              План разгрузки
+            </Button>
+          </Card>
+        ) : (
+          <Card as="article" className={styles.signal}>
+            <span className={styles.signalLabel}>Восстановление</span>
+            <h3 className={styles.signalTitle}>Перегрузки нет</h3>
+            <p className={styles.signalText}>Нагрузка растёт в нормальном темпе — отдых не нужен.</p>
+          </Card>
+        )}
+
+        {plateaus.length > 0 ? (
+          <Card as="article" className={styles.signal}>
+            <span className={styles.signalLabel}>{withMore(plateaus)}</span>
+            <h3 className={styles.signalTitle}>{plateauTitle(plateaus[0])}</h3>
+            <p className={styles.signalText}>Вес не растёт, хотя тренировки идут. Помогут небольшие перемены.</p>
+            <Button
+              variant="secondary"
+              className={styles.signalAction}
+              onClick={() => setOpen({ dialog: 'plateau', exercise: plateaus[0] })}
+            >
+              Что попробовать
+            </Button>
+          </Card>
+        ) : (
+          <Card as="article" className={styles.signal}>
+            <span className={styles.signalLabel}>Прогресс</span>
+            <h3 className={styles.signalTitle}>Плато нет</h3>
+            <p className={styles.signalText}>Во всех упражнениях вес растёт или пока рано делать выводы.</p>
+          </Card>
+        )}
+
+        <Card as="article" variant="inverse" className={styles.signal}>
+          {records.length > 0 ? (
+            <>
+              <span className={styles.signalLabel}>{withMore(records)}</span>
+              <h3 className={styles.signalTitle}>
+                {records.length === 1
+                  ? `Рекорд: ${formatSet(records[0].lastWeightKg, records[0].lastReps) ?? ''}`
+                  : `Рекордов: ${records.length}`}
+              </h3>
+              <p className={styles.signalText}>
+                {records.length === 1
+                  ? `${records[0].note ?? 'Новый рекорд'}. Так держать!`
+                  : 'За последние две недели. Так держать!'}
+              </p>
+            </>
+          ) : (
+            <>
+              <span className={styles.signalLabel}>Рекорды</span>
+              <h3 className={styles.signalTitle}>Новых рекордов нет</h3>
+              <p className={styles.signalText}>Здесь появятся рекорды за последние две недели.</p>
+            </>
+          )}
+          <ButtonLink to="/records" variant="secondary" className={styles.signalAction}>
+            Все рекорды
+          </ButtonLink>
         </Card>
-      ) : (
-        <div className={styles.signals}>
-          {signals.map(({ exercise, signal }) => (
-            <Card key={exercise.exerciseId} as="article" variant={signal.variant} className={styles.signal}>
-              <span className={styles.signalLabel}>{exercise.exerciseName}</span>
-              <h3 className={styles.signalTitle}>{signal.title}</h3>
-              <p className={styles.signalText}>{signal.text}</p>
-              {signal.action && (
-                <Button
-                  variant={signal.variant === 'accent' ? 'surface' : 'secondary'}
-                  className={styles.signalAction}
-                  onClick={() => setOpen({ dialog: signal.action!.dialog, exercise })}
-                >
-                  {signal.action.label}
-                </Button>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
+      </div>
 
       {open?.dialog === 'deload' && <DeloadDialog exercise={open.exercise} onClose={() => setOpen(null)} />}
       {open?.dialog === 'plateau' && <PlateauDialog exercise={open.exercise} onClose={() => setOpen(null)} />}
     </section>
   );
+}
+
+/** "Приседания со штангой" или "Приседания со штангой и ещё 2" */
+function withMore(list: ExerciseSummary[]): string {
+  return list.length > 1 ? `${list[0].exerciseName} и ещё ${list.length - 1}` : list[0].exerciseName;
+}
+
+/** note с сервера: "24 дн. без нового максимума" -> "Плато 24 дн." */
+function plateauTitle(exercise: ExerciseSummary): string {
+  const days = exercise.note?.match(/^(\d+)/)?.[1];
+  return days ? `Плато ${days} дн.` : 'Плато';
 }
