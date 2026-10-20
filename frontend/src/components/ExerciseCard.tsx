@@ -4,7 +4,10 @@ import { Badge } from './ui/Badge';
 import { Card } from './ui/Card';
 import styles from './ExerciseCard.module.css';
 
-const BADGES: Record<Exclude<ExerciseStatus, 'NORMAL'>, { label: string; variant: 'neutral' | 'inverse' | 'accent' }> = {
+const BADGES: Record<
+  Exclude<ExerciseStatus, 'NORMAL'>,
+  { label: string; variant: 'neutral' | 'inverse' | 'accent' }
+> = {
   OVERLOAD: { label: 'перегрузка', variant: 'accent' },
   PLATEAU: { label: 'плато', variant: 'neutral' },
   RECORD: { label: 'рекорд', variant: 'inverse' },
@@ -20,7 +23,9 @@ export function ExerciseCard({ exercise }: { exercise: ExerciseSummary }) {
         {badge && <Badge variant={badge.variant}>{badge.label}</Badge>}
       </div>
       <span className={styles.set}>{formatSet(exercise.lastWeightKg, exercise.lastReps) ?? '—'}</span>
-      <span className={styles.note}>{exercise.note ?? `последняя тренировка ${formatShortDate(exercise.lastPerformedAt)}`}</span>
+      <span className={styles.note}>
+        {exercise.note ?? `последняя тренировка ${formatShortDate(exercise.lastPerformedAt)}`}
+      </span>
     </Card>
   );
 }

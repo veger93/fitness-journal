@@ -10,18 +10,18 @@
   --font-body: 'Onest', system-ui, sans-serif;
 
   /* размеры текста */
-  --text-xs: 12px;   /* сноски* */
-  --text-sm: 14px;   /* подписи, вторичный текст */
-  --text-md: 16px;   /* основной текст */
-  --text-lg: 20px;   /* заголовки секций (display) */
-  --text-xl: 24px;   /* заголовок карточки (display) */
-  --text-num: 34px;  /* большие цифры (display) */
-  --text-h1: 44px;   /* заголовок страницы (display) */
+  --text-xs: 12px; /* сноски* */
+  --text-sm: 14px; /* подписи, вторичный текст */
+  --text-md: 16px; /* основной текст */
+  --text-lg: 20px; /* заголовки секций (display) */
+  --text-xl: 24px; /* заголовок карточки (display) */
+  --text-num: 34px; /* большие цифры (display) */
+  --text-h1: 44px; /* заголовок страницы (display) */
 
   /* скругления: только эти три */
-  --radius-card: 24px;     /* карточки, плитки */
-  --radius-section: 28px;  /* большие блоки (график) */
-  --radius-pill: 999px;    /* кнопки, бейджи, переключатели */
+  --radius-card: 24px; /* карточки, плитки */
+  --radius-section: 28px; /* большие блоки (график) */
+  --radius-pill: 999px; /* кнопки, бейджи, переключатели */
 
   /* отступы: шаг 4px */
   --space-1: 4px;
@@ -33,48 +33,48 @@
   --space-7: 48px;
 
   --content-width: 1120px;
-  --control-height: 52px;  /* кнопки и поля: удобно попадать пальцем (>= 44px) */
+  --control-height: 52px; /* кнопки и поля: удобно попадать пальцем (>= 44px) */
 }
 
 /* ---------- светлая тема ---------- */
 :root,
 :root[data-theme='light'] {
   color-scheme: light;
-  --bg: #EEF1F5;
-  --surface: #FFFFFF;           /* обычная карточка */
-  --surface-inverse: #111827;   /* главная карточка-акцент, основная кнопка */
+  --bg: #eef1f5;
+  --surface: #ffffff; /* обычная карточка */
+  --surface-inverse: #111827; /* главная карточка-акцент, основная кнопка */
   --text: #111827;
-  --text-muted: #4B5563;
-  --text-on-inverse: #FFFFFF;
-  --accent: #C2410C;            /* заливки: риск, бейдж "перегрузка" (текст на нём белый) */
-  --accent-strong: #EA580C;     /* линии графиков, иконки */
-  --text-on-accent: #FFFFFF;
-  --accent-soft-text: #FFEDD5;  /* вторичный текст на акцентной заливке */
-  --chip: #E5E7EB;              /* нейтральный бейдж */
-  --border: #E5E7EB;
-  --input-bg: #FFFFFF;
-  --input-border: #D1D5DB;
-  --danger-text: #B91C1C;
-  --focus: #2563EB;
+  --text-muted: #4b5563;
+  --text-on-inverse: #ffffff;
+  --accent: #c2410c; /* заливки: риск, бейдж "перегрузка" (текст на нём белый) */
+  --accent-strong: #ea580c; /* линии графиков, иконки */
+  --text-on-accent: #ffffff;
+  --accent-soft-text: #ffedd5; /* вторичный текст на акцентной заливке */
+  --chip: #e5e7eb; /* нейтральный бейдж */
+  --border: #e5e7eb;
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --danger-text: #b91c1c;
+  --focus: #2563eb;
 }
 
 /* ---------- тёмная тема ---------- */
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #0B0F17;
-  --surface: #161B26;
-  --surface-inverse: #F9FAFB;   /* в тёмной теме акцентная карточка СВЕТЛАЯ */
-  --text: #F3F4F6;
-  --text-muted: #9CA3AF;
-  --text-on-inverse: #0B0F17;
-  --accent: #C2410C;
-  --accent-strong: #FB923C;     /* на тёмном фоне оранжевый светлее, иначе теряется */
-  --text-on-accent: #FFFFFF;
-  --accent-soft-text: #FFEDD5;
-  --chip: #2D3546;
-  --border: #232A38;
-  --input-bg: #0F141E;
+  --bg: #0b0f17;
+  --surface: #161b26;
+  --surface-inverse: #f9fafb; /* в тёмной теме акцентная карточка СВЕТЛАЯ */
+  --text: #f3f4f6;
+  --text-muted: #9ca3af;
+  --text-on-inverse: #0b0f17;
+  --accent: #c2410c;
+  --accent-strong: #fb923c; /* на тёмном фоне оранжевый светлее, иначе теряется */
+  --text-on-accent: #ffffff;
+  --accent-soft-text: #ffedd5;
+  --chip: #2d3546;
+  --border: #232a38;
+  --input-bg: #0f141e;
   --input-border: #374151;
-  --danger-text: #FCA5A5;
-  --focus: #93C5FD;
+  --danger-text: #fca5a5;
+  --focus: #93c5fd;
 }

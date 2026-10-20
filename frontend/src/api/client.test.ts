@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { api, ApiError, configureApiClient } from './client';
 
 function mockFetch(status: number, body?: unknown) {
-  const fetchMock = vi.fn().mockResolvedValue(
-    new Response(body === undefined ? null : JSON.stringify(body), { status }),
-  );
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(new Response(body === undefined ? null : JSON.stringify(body), { status }));
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
 }
@@ -43,6 +43,9 @@ describe('api', () => {
 
   it('сервис не запущен — понятное сообщение', async () => {
     mockFetch(504);
-    await expect(api('/api/users/me')).rejects.toHaveProperty('message', 'Сервис временно недоступен. Попробуйте позже.');
+    await expect(api('/api/users/me')).rejects.toHaveProperty(
+      'message',
+      'Сервис временно недоступен. Попробуйте позже.',
+    );
   });
 });
