@@ -1,5 +1,5 @@
 import type { ExerciseStatus, ExerciseSummary } from '../api/analytics';
-import { formatSet, formatShortDate } from '../lib/format';
+import { formatExerciseResult, formatShortDate } from '../lib/format';
 import { Badge } from './ui/Badge';
 import { Sparkline } from './ui/Sparkline';
 import styles from './ExerciseRow.module.css';
@@ -24,7 +24,7 @@ export function ExerciseRow({ exercise }: { exercise: ExerciseSummary }) {
           {exercise.note ?? `последняя тренировка ${formatShortDate(exercise.lastPerformedAt)}`}
         </span>
       </div>
-      <span className={styles.set}>{formatSet(exercise.lastWeightKg, exercise.lastReps) ?? '—'}</span>
+      <span className={styles.set}>{formatExerciseResult(exercise) ?? '—'}</span>
       <span className={styles.spark}>
         <Sparkline values={exercise.trend} accent={exercise.status === 'OVERLOAD'} />
       </span>

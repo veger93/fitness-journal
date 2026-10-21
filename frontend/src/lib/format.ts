@@ -1,3 +1,5 @@
+import { describeRun, formatClock } from './workout';
+
 /** Форматирование чисел и дат для экрана. Всё в одном месте — одинаково на всех страницах. */
 
 const numberFormat = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
@@ -36,4 +38,22 @@ export function formatShortDate(iso: string | number): string {
 /** "2026-10" -> "октябрь" */
 export function formatMonth(month: string): string {
   return monthName.format(new Date(`${month}-01T00:00:00Z`));
+}
+
+/** Последний результат упражнения одной строкой — по его виду: "80 кг × 5", "12 повт.", "1:30", "5 км · 26:40 · 5:20 /км". */
+export function formatExerciseResult(e: {
+  trackingType: 'WEIGHT_REPS' | 'TIME' | 'DISTANCE';
+  lastWeightKg: number | null;
+  lastReps: number | null;
+  lastDistanceM: number | null;
+  lastDurationSec: number | null;
+}): string | null {
+  switch (e.trackingType) {
+    case 'DISTANCE':
+      return e.lastDistanceM ? describeRun(e.lastDistanceM, e.lastDurationSec) : null;
+    case 'TIME':
+      return e.lastDurationSec ? formatClock(e.lastDurationSec) : null;
+    default:
+      return formatSet(e.lastWeightKg, e.lastReps);
+  }
 }

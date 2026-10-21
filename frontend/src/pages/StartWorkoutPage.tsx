@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { workoutsApi, type WorkoutTemplate } from '../api/workouts';
 import { Button } from '../components/ui/Button';
+import { ConfirmDialog } from '../components/workout/ConfirmDialog';
 import { CURRENT_WORKOUT_KEY, useCurrentWorkout } from '../hooks/useWorkout';
 import styles from './WorkoutPages.module.css';
 
@@ -12,6 +14,15 @@ export function StartWorkoutPage() {
   const queryClient = useQueryClient();
   const current = useCurrentWorkout();
   const templates = useQuery({ queryKey: ['templates'], queryFn: workoutsApi.templates });
+
+  const [deleting, setDeleting] = useState<WorkoutTemplate | null>(null);
+  const remove = useMutation({
+    mutationFn: (id: string) => workoutsApi.deleteTemplate(id),
+    onSuccess: () => {
+      setDeleting(null);
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+    },
+  });
 
   const start = useMutation({
     mutationFn: workoutsApi.start,
@@ -48,6 +59,7 @@ export function StartWorkoutPage() {
 
       {mine.length > 0 && (
         <TemplateGroup
+          onDelete={setDeleting}
           title="Мои комплексы"
           templates={mine}
           disabled={start.isPending}
@@ -63,6 +75,17 @@ export function StartWorkoutPage() {
         />
       )}
       {templates.isPending && <p className={styles.muted}>Загружаем комплексы…</p>}
+
+      {deleting && (
+        <ConfirmDialog
+          title="Удалить комплекс?"
+          text={`«${deleting.name}» исчезнет из «Мои комплексы». Прошлые тренировки по нему останутся в истории.`}
+          confirmLabel="Удалить"
+          busy={remove.isPending}
+          onConfirm={() => remove.mutate(deleting.id)}
+          onClose={() => setDeleting(null)}
+        />
+      )}
     </div>
   );
 }
@@ -72,27 +95,48 @@ function TemplateGroup({
   templates,
   disabled,
   onPick,
+  onDelete,
 }: {
   title: string;
   templates: WorkoutTemplate[];
   disabled: boolean;
   onPick: (id: string) => void;
+  /** только для своих комплексов — готовые удалить нельзя */
+  onDelete?: (template: WorkoutTemplate) => void;
 }) {
   return (
     <section className={styles.page}>
       <h2 className={styles.sectionTitle}>{title}</h2>
       <div className={styles.templates}>
         {templates.map((template) => (
-          <button
-            key={template.id}
-            type="button"
-            className={styles.template}
-            disabled={disabled}
-            onClick={() => onPick(template.id)}
-          >
-            <span className={styles.templateName}>{template.name}</span>
-            <span className={styles.muted}>{exercisesLabel(template.exercises.length)}</span>
-          </button>
+          // две отдельные кнопки рядом, а не кнопка в кнопке: вложенные <button> в HTML запрещены
+          <div key={template.id} className={styles.templateWrap}>
+            <button type="button" className={styles.template} disabled={disabled} onClick={() => onPick(template.id)}>
+              <span className={styles.templateName}>{template.name}</span>
+              <span className={styles.muted}>{exercisesLabel(template.exercises.length)}</span>
+            </button>
+            {onDelete && (
+              <button
+                type="button"
+                className={styles.templateDelete}
+                aria-label={`Удалить комплекс ${template.name}`}
+                onClick={() => onDelete(template)}
+              >
+                <svg
+                  aria-hidden="true"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            )}
+          </div>
         ))}
       </div>
     </section>

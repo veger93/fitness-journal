@@ -123,8 +123,11 @@ public final class DashboardCalculator {
         BigDecimal currentE1rm = e1rms.isEmpty() ? null : e1rms.get(e1rms.size() - 1);
         List<BigDecimal> trend = e1rms.subList(Math.max(0, e1rms.size() - TREND_POINTS), e1rms.size());
 
-        return new ExerciseSummaryResponse(last.getExerciseId(), last.getExerciseName(), last.getPerformedAt(),
-                last.getMaxWeightKg(), last.getMaxWeightReps(), currentE1rm, status, risk.level(), note, trend);
+        // без веса (подтягивания) показываем лучшие повторы, а не прочерк
+        Integer lastReps = last.getMaxWeightReps() != null ? last.getMaxWeightReps() : last.getBestReps();
+        return new ExerciseSummaryResponse(last.getExerciseId(), last.getExerciseName(), last.getTrackingType(),
+                last.getPerformedAt(), last.getMaxWeightKg(), lastReps, last.getBestDistanceM(), last.getBestDurationSec(),
+                currentE1rm, status, risk.level(), note, trend);
     }
 
     private static Optional<PersonalRecordResponse> freshRecord(List<PersonalRecordResponse> records, UUID exerciseId, Instant now) {

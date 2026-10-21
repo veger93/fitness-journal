@@ -133,6 +133,28 @@ class DashboardCalculatorTest {
         assertThat(bench.trend()).extracting(BigDecimal::intValue).containsExactly(82, 83, 84, 85, 86, 87, 88, 89);
     }
 
+    @Test
+    void run_showsDistanceAndTime_bodyweight_showsReps() {
+        ExercisePerformance run = ExercisePerformance.builder()
+                .userId(UUID.randomUUID()).workoutId(UUID.randomUUID()).exerciseId(CURL).exerciseName("Бег")
+                .bodyPart(BodyPart.LEGS).trackingType("DISTANCE").performedAt(NOW.minus(Duration.ofDays(1)))
+                .workingSets(1).volumeKg(BigDecimal.ZERO).bestDistanceM(5000).bestDurationSec(1600)
+                .build();
+        ExercisePerformance pullUps = ExercisePerformance.builder()
+                .userId(UUID.randomUUID()).workoutId(UUID.randomUUID()).exerciseId(BENCH).exerciseName("Подтягивания")
+                .bodyPart(BodyPart.BACK).trackingType("WEIGHT_REPS").performedAt(NOW.minus(Duration.ofDays(2)))
+                .workingSets(3).volumeKg(BigDecimal.ZERO).bestReps(12)
+                .build();
+
+        List<ExerciseSummaryResponse> exercises = DashboardCalculator.build(List.of(pullUps, run), List.of(), NOW).exercises();
+
+        assertThat(exercises.get(0).trackingType()).isEqualTo("DISTANCE");
+        assertThat(exercises.get(0).lastDistanceM()).isEqualTo(5000);
+        assertThat(exercises.get(0).lastDurationSec()).isEqualTo(1600);
+        assertThat(exercises.get(1).lastWeightKg()).isNull();
+        assertThat(exercises.get(1).lastReps()).isEqualTo(12);
+    }
+
     // ---------- helpers ----------
 
     private static List<ExercisePerformance> sorted(List<ExercisePerformance> list) {

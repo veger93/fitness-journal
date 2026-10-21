@@ -7,7 +7,9 @@ import java.util.UUID;
 
 /**
  * Карточка упражнения на главной: "Приседания · 110 кг × 5 · перегрузка".
- * lastWeightKg × lastReps — самый тяжёлый подход последней тренировки (null у упражнений без веса);
+ * trackingType — что записываем: WEIGHT_REPS / TIME / DISTANCE (от этого зависит, как показывать результат);
+ * lastWeightKg × lastReps — самый тяжёлый подход последней тренировки; без веса (подтягивания) — только lastReps;
+ * lastDistanceM, lastDurationSec — лучшие дистанция и время последней тренировки (бег, планка);
  * currentE1rmKg — последний расчётный 1ПМ (null, если не считается);
  * note — короткое пояснение к статусу простыми словами (null у NORMAL);
  * trend — последние значения 1ПМ по тренировкам, от старых к новым (мини-график на главной; пусто у упражнений без веса).
@@ -15,9 +17,12 @@ import java.util.UUID;
 public record ExerciseSummaryResponse(
         UUID exerciseId,
         String exerciseName,
+        String trackingType,
         Instant lastPerformedAt,
         BigDecimal lastWeightKg,
         Integer lastReps,
+        Integer lastDistanceM,
+        Integer lastDurationSec,
         BigDecimal currentE1rmKg,
         ExerciseStatus status,
         RiskLevel riskLevel,
