@@ -26,6 +26,35 @@
   border-top: 1px solid var(--border);
 }
 
+.historyRow {
+  min-height: 72px;
+  padding: var(--space-3) var(--space-5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.historyMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.historyTitle {
+  font-weight: 600;
+}
+
+.historyDate {
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-align: right;
+}
+
 .records {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

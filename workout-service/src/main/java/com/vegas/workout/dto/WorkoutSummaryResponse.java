@@ -16,12 +16,16 @@ public record WorkoutSummaryResponse(
         Instant completedAt,
         Long exerciseCount,
         Long workingSets,
-        BigDecimal tonnageKg
+        BigDecimal tonnageKg,
+        Long distanceM          // сумма дистанций рабочих подходов (бег); 0, если не бегали
 ) {
     /** Компактный конструктор record: выполняется перед присвоением полей — нормализуем null. */
     public WorkoutSummaryResponse {
         if (tonnageKg == null) {
             tonnageKg = BigDecimal.ZERO;
+        }
+        if (distanceM == null) {
+            distanceM = 0L;
         }
     }
 }

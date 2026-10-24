@@ -180,6 +180,23 @@
 
 /* ---------- итоги ---------- */
 
+.exerciseTitle {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.setList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.setValueSmall {
+  font-weight: 600;
+  text-align: right;
+}
+
 .tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

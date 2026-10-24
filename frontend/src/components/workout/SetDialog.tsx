@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import type { SetInput, WorkoutExercise, WorkoutSet } from '../../api/workouts';
-import { formatPace, suggestNextSet } from '../../lib/workout';
+import { distanceFromSpeed, formatPace, formatSpeed, speedKmh, suggestNextSet } from '../../lib/workout';
+import { SegmentedControl } from '../ui/SegmentedControl';
 import { Chip } from '../ui/Chip';
 import { Button } from '../ui/Button';
 import { Dialog } from '../ui/Dialog';
@@ -18,16 +19,6 @@ interface SetDialogProps {
   onDelete: () => void;
   onClose: () => void;
 }
-
-/**
- * "Как далось" для бега — субъективная тяжесть (RPE), которую мы уже храним в подходе.
- * Пригодится для подсказки про баланс лёгких и тяжёлых пробежек (Seiler, 2010: ~80% лёгких).
- */
-const EFFORT = [
-  { label: 'Легко', rpe: 4 },
-  { label: 'Средне', rpe: 6 },
-  { label: 'Тяжело', rpe: 8 },
-];
 
 /** Модалка "Добавление подхода": поля под вид упражнения (вес/время/бег), разминка, Готово/Отмена. */
 export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, onClose }: SetDialogProps) {
@@ -89,37 +80,7 @@ export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, 
             onChange={(durationSec) => change({ durationSec })}
           />
         )}
-        {isRun && (
-          <>
-            <Stepper
-              label="Дистанция, км"
-              value={(values.distanceM ?? 0) / 1000}
-              step={0.1}
-              max={1000}
-              inputMode="decimal"
-              onChange={(km) => change({ distanceM: Math.round(km * 1000) })}
-            />
-            <TimeField
-              legend="Время"
-              seconds={values.durationSec ?? 0}
-              onChange={(durationSec) => change({ durationSec })}
-            />
-            {values.distanceM && values.durationSec ? (
-              <p className={styles.pace}>Темп {formatPace(values.durationSec, values.distanceM)}</p>
-            ) : null}
-            <div className={styles.effort} role="group" aria-label="Как далось">
-              {EFFORT.map((option) => (
-                <Chip
-                  key={option.rpe}
-                  selected={values.rpe === option.rpe}
-                  onClick={() => change({ rpe: values.rpe === option.rpe ? null : option.rpe })}
-                >
-                  {option.label}
-                </Chip>
-              ))}
-            </div>
-          </>
-        )}
+        {isRun && <RunFields values={values} change={change} />}
 
         <label className={styles.checkbox}>
           <input type="checkbox" checked={values.warmup} onChange={(e) => change({ warmup: e.target.checked })} />
@@ -147,4 +108,120 @@ export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, 
       </form>
     </Dialog>
   );
+}
+
+type RunInput = 'speed' | 'distance';
+
+const RUN_INPUT_KEY = 'vegas.runInput';
+const RUN_INPUTS: { value: RunInput; label: string }[] = [
+  { value: 'speed', label: 'Скорость и время' },
+  { value: 'distance', label: 'Дистанция и время' },
+];
+
+/**
+ * "Как далась пробежка?" — субъективная тяжесть (RPE), которую мы храним в подходе.
+ * Простой ориентир — "тест разговором": легко, если можно спокойно говорить; тяжело — если почти нельзя.
+ * Нужна, чтобы потом подсказать баланс: у бегунов большая часть пробежек — лёгкие (Seiler, 2010).
+ */
+const EFFORT = [
+  { label: 'Легко', rpe: 4 },
+  { label: 'Средне', rpe: 6 },
+  { label: 'Тяжело', rpe: 8 },
+];
+
+/**
+ * Два способа записать пробежку — как удобнее:
+ * беговая дорожка показывает скорость и время, часы на улице — дистанцию и время.
+ * Храним всегда дистанцию и время: из любых двух величин третья считается
+ * (дистанция = скорость × время), так что для аналитики способы равноценны.
+ */
+function RunFields({ values, change }: { values: SetInput; change: (patch: Partial<SetInput>) => void }) {
+  const [mode, setMode] = useState<RunInput>(() => {
+    try {
+      return localStorage.getItem(RUN_INPUT_KEY) === 'distance' ? 'distance' : 'speed';
+    } catch {
+      return 'speed';
+    }
+  });
+  const duration = values.durationSec ?? 0;
+  const distance = values.distanceM ?? 0;
+  // скорость в поле — с точностью 0,1 км/ч, как на дорожке
+  const speed = duration && distance ? Math.round(speedKmh(duration, distance) * 10) / 10 : 8;
+
+  const switchMode = (next: RunInput) => {
+    setMode(next);
+    try {
+      localStorage.setItem(RUN_INPUT_KEY, next);
+    } catch {
+      // не запомнили — не страшно
+    }
+  };
+
+  return (
+    <>
+      <SegmentedControl legend="Как записать пробежку" options={RUN_INPUTS} value={mode} onChange={switchMode} />
+      {mode === 'speed' ? (
+        <>
+          <Stepper
+            label="Средняя скорость, км/ч"
+            value={speed}
+            step={0.1}
+            max={40}
+            inputMode="decimal"
+            onChange={(kmh) => change({ distanceM: distanceFromSpeed(kmh, duration) })}
+          />
+          <TimeField
+            legend="Время"
+            seconds={duration}
+            onChange={(durationSec) => change({ durationSec, distanceM: distanceFromSpeed(speed, durationSec) })}
+          />
+        </>
+      ) : (
+        <>
+          <Stepper
+            label="Дистанция, км"
+            value={distance / 1000}
+            step={0.1}
+            max={1000}
+            inputMode="decimal"
+            onChange={(km) => change({ distanceM: Math.round(km * 1000) })}
+          />
+          <TimeField legend="Время" seconds={duration} onChange={(durationSec) => change({ durationSec })} />
+        </>
+      )}
+
+      {duration > 0 && distance > 0 && (
+        <div className={styles.effortBlock}>
+          <p className={styles.pace}>
+            {mode === 'speed' ? `Дистанция ${formatKm(distance)}` : formatSpeed(duration, distance)} · темп{' '}
+            {formatPace(duration, distance)}
+          </p>
+          <p className="footnote">Темп — сколько минут уходит на 1 км: чем он меньше, тем быстрее бег.</p>
+        </div>
+      )}
+
+      <div className={styles.effortBlock}>
+        <span className={styles.effortQuestion}>Как далась пробежка?</span>
+        <div className={styles.effort} role="group" aria-label="Как далась пробежка">
+          {EFFORT.map((option) => (
+            <Chip
+              key={option.rpe}
+              selected={values.rpe === option.rpe}
+              onClick={() => change({ rpe: values.rpe === option.rpe ? null : option.rpe })}
+            >
+              {option.label}
+            </Chip>
+          ))}
+        </div>
+        <p className="footnote">
+          Легко — можно спокойно разговаривать, тяжело — говорить почти не получается. Необязательно: поможет
+          подсказать, хватает ли лёгких пробежек.
+        </p>
+      </div>
+    </>
+  );
+}
+
+function formatKm(meters: number): string {
+  return `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(meters / 1000)} км`;
 }

@@ -270,11 +270,11 @@ function SetValue({ trackingType, set }: { trackingType: TrackingType; set: Work
   if (trackingType !== 'DISTANCE') {
     return <span className={styles.setValue}>{describeSet(trackingType, set)}</span>;
   }
-  const { main, pace } = runParts(set.distanceM, set.durationSec);
+  const { main, sub } = runParts(set.distanceM, set.durationSec);
   return (
     <span className={styles.runValue}>
       <span className={styles.setValue}>{main}</span>
-      {pace && <span className={styles.muted}>{pace}</span>}
+      {sub && <span className={styles.muted}>{sub}</span>}
     </span>
   );
 }

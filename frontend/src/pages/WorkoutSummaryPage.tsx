@@ -16,7 +16,14 @@ interface Tile {
 }
 
 /** Экран "Тренировка завершена". Рекорды посчитает аналитика через пару секунд — они появятся на главной. */
-export function WorkoutSummaryPage() {
+const dayTitle = new Intl.DateTimeFormat('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+
+/**
+ * Одна завершённая тренировка. Два режима:
+ * "finished" — сразу после "Завершить" ("Тренировка завершена");
+ * "view" — открыта из истории (заголовок — дата, можно вспомнить, что и с каким весом делал).
+ */
+export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 'view' }) {
   const { workoutId = '' } = useParams();
   const [saving, setSaving] = useState(false);
   const workout = useQuery({ queryKey: ['workout', workoutId], queryFn: () => workoutsApi.get(workoutId) });
@@ -45,7 +52,11 @@ export function WorkoutSummaryPage() {
   return (
     <div className={styles.page}>
       <div>
-        <h1 className={styles.title}>Тренировка завершена</h1>
+        <h1 className={styles.title}>
+          {mode === 'finished'
+            ? 'Тренировка завершена'
+            : capitalize(dayTitle.format(new Date(w.startedAt ?? w.completedAt ?? '')))}
+        </h1>
         <p className={styles.muted}>
           {w.name} · {formatDuration(w.durationSec ?? 0)}
         </p>
@@ -63,28 +74,43 @@ export function WorkoutSummaryPage() {
         ))}
       </div>
 
-      <Card>
-        {done.map((exercise) => (
-          <div key={exercise.id} className={styles.summaryExercise}>
-            <span>{exercise.exerciseName}</span>
-            <span className={styles.muted}>
-              {exercise.sets
-                .filter((s) => !s.warmup)
-                .map((s) => describeSet(exercise.trackingType, s))
-                .join(', ')}
-            </span>
-          </div>
-        ))}
-      </Card>
+      {done.map((exercise) => (
+        <Card key={exercise.id} as="section">
+          <h2 className={styles.exerciseTitle}>{exercise.exerciseName}</h2>
+          <ol className={styles.setList}>
+            {exercise.sets.map((set) => (
+              <li key={set.id} className={styles.summaryExercise}>
+                <span className={styles.muted}>
+                  {exercise.trackingType === 'DISTANCE' && exercise.sets.length === 1 ? 'Пробежка' : `${set.number}`}
+                  {set.warmup && ' · разминка'}
+                </span>
+                <span className={styles.setValueSmall}>{describeSet(exercise.trackingType, set)}</span>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      ))}
 
-      <p className="footnote">Рекорды и прогресс обновятся на главной через несколько секунд.</p>
+      {mode === 'finished' && (
+        <p className="footnote">Рекорды и прогресс обновятся на главной через несколько секунд.</p>
+      )}
       {!w.templateId && (
         <Button variant="secondary" onClick={() => setSaving(true)}>
           Сохранить как комплекс
         </Button>
       )}
-      <ButtonLink to="/">На главную</ButtonLink>
+      {mode === 'finished' ? (
+        <ButtonLink to="/">На главную</ButtonLink>
+      ) : (
+        <ButtonLink to="/history" variant="secondary">
+          ← К истории
+        </ButtonLink>
+      )}
       {saving && <SaveTemplateDialog exerciseIds={done.map((e) => e.exerciseId)} onClose={() => setSaving(false)} />}
     </div>
   );
+}
+
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
