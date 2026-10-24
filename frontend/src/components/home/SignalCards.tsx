@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ExerciseSummary } from '../../api/analytics';
-import { formatSet } from '../../lib/format';
+import { formatExerciseResult } from '../../lib/format';
 import { Button, ButtonLink } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { DeloadDialog } from './DeloadDialog';
@@ -73,7 +73,7 @@ export function SignalCards({ exercises }: { exercises: ExerciseSummary[] }) {
               <span className={styles.signalLabel}>{withMore(records)}</span>
               <h3 className={styles.signalTitle}>
                 {records.length === 1
-                  ? `Рекорд: ${formatSet(records[0].lastWeightKg, records[0].lastReps) ?? ''}`
+                  ? `Рекорд: ${formatExerciseResult(records[0]) ?? ''}`
                   : `Рекордов: ${records.length}`}
               </h3>
               <p className={styles.signalText}>

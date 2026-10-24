@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import type { SetInput, Workout, WorkoutSet } from '../api/workouts';
+import type { SetInput, TrackingType, Workout, WorkoutSet } from '../api/workouts';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Chip } from '../components/ui/Chip';
 import { AddExerciseDialog } from '../components/workout/AddExerciseDialog';
 import { ConfirmDialog } from '../components/workout/ConfirmDialog';
+import { SaveTemplateDialog } from '../components/workout/SaveTemplateDialog';
 import { SetDialog } from '../components/workout/SetDialog';
 import { useNow } from '../hooks/useNow';
 import { useCurrentWorkout, useWorkoutActions } from '../hooks/useWorkout';
-import { describeSet, formatClock, toRequest } from '../lib/workout';
+import { describeSet, formatClock, runParts, toRequest } from '../lib/workout';
 import styles from './WorkoutPages.module.css';
 
 export function ActiveWorkoutPage() {
@@ -39,6 +40,7 @@ type Modal =
   | { kind: 'addExercise' }
   | { kind: 'complete' }
   | { kind: 'cancel' }
+  | { kind: 'saveTemplate' }
   | null;
 
 function ActiveWorkout({ workout }: { workout: Workout }) {
@@ -128,13 +130,13 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
                     type="button"
                     className={styles.setRow}
                     onClick={() => setModal({ kind: 'set', editing: set })}
-                    aria-label={`Подход ${set.number}: ${describeSet(exercise.trackingType, set)}. Изменить`}
+                    aria-label={`${setLabel(exercise.trackingType, set.number, exercise.sets.length)}: ${describeSet(exercise.trackingType, set)}. Изменить`}
                   >
                     <span>
-                      Подход {set.number}
+                      {setLabel(exercise.trackingType, set.number, exercise.sets.length)}
                       {set.warmup && <span className={styles.muted}> · разминка</span>}
                     </span>
-                    <span className={styles.setValue}>{describeSet(exercise.trackingType, set)}</span>
+                    <SetValue trackingType={exercise.trackingType} set={set} />
                     <svg
                       className={styles.check}
                       aria-hidden="true"
@@ -156,11 +158,12 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
           )}
 
           <Button fullWidth onClick={() => setModal({ kind: 'set', editing: null })}>
-            + Записать подход {next}
+            {addSetLabel(exercise.trackingType, next)}
           </Button>
           {previousSame && (
             <p className={styles.hint}>
-              Прошлый раз на этом подходе: {describeSet(exercise.trackingType, previousSame)}
+              {exercise.trackingType === 'DISTANCE' ? 'Прошлый раз' : 'Прошлый раз на этом подходе'}:{' '}
+              {describeSet(exercise.trackingType, previousSame)}
             </p>
           )}
         </>
@@ -175,6 +178,11 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
             disabled={actions.removeExercise.isPending}
           >
             Убрать упражнение
+          </button>
+        )}
+        {!workout.templateId && workout.exercises.length > 0 && (
+          <button type="button" className={styles.link} onClick={() => setModal({ kind: 'saveTemplate' })}>
+            Сохранить как комплекс
           </button>
         )}
         <button type="button" className={styles.linkDanger} onClick={() => setModal({ kind: 'cancel' })}>
@@ -213,6 +221,10 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
         />
       )}
 
+      {modal?.kind === 'saveTemplate' && (
+        <SaveTemplateDialog exerciseIds={workout.exercises.map((e) => e.exerciseId)} onClose={closeModal} />
+      )}
+
       {modal?.kind === 'complete' && (
         <ConfirmDialog
           title="Завершить тренировку?"
@@ -235,5 +247,34 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
         />
       )}
     </div>
+  );
+}
+
+/** Бег без подходов: одна запись — "Пробежка"; несколько — это интервалы, "Отрезок 1, 2…". */
+function setLabel(trackingType: TrackingType, number: number, total: number): string {
+  if (trackingType === 'DISTANCE') {
+    return total === 1 ? 'Пробежка' : `Отрезок ${number}`;
+  }
+  return `Подход ${number}`;
+}
+
+function addSetLabel(trackingType: TrackingType, next: number): string {
+  if (trackingType === 'DISTANCE') {
+    return next === 1 ? '+ Записать пробежку' : '+ Добавить отрезок (интервалы)';
+  }
+  return `+ Записать подход ${next}`;
+}
+
+/** Значение подхода в строке. У бега темп — отдельной строкой: целиком "5 км · 26:40 · 5:20 /км" на телефон не влезает. */
+function SetValue({ trackingType, set }: { trackingType: TrackingType; set: WorkoutSet }) {
+  if (trackingType !== 'DISTANCE') {
+    return <span className={styles.setValue}>{describeSet(trackingType, set)}</span>;
+  }
+  const { main, pace } = runParts(set.distanceM, set.durationSec);
+  return (
+    <span className={styles.runValue}>
+      <span className={styles.setValue}>{main}</span>
+      {pace && <span className={styles.muted}>{pace}</span>}
+    </span>
   );
 }

@@ -8,9 +8,12 @@ export type ProgressPeriod = 'M1' | 'M3' | 'M6' | 'Y1' | 'ALL';
 export interface ExerciseSummary {
   exerciseId: string;
   exerciseName: string;
+  trackingType: 'WEIGHT_REPS' | 'TIME' | 'DISTANCE';
   lastPerformedAt: string;
   lastWeightKg: number | null;
   lastReps: number | null;
+  lastDistanceM: number | null;
+  lastDurationSec: number | null;
   currentE1rmKg: number | null;
   status: ExerciseStatus;
   riskLevel: RiskLevel;

@@ -8,7 +8,7 @@ import { Button, ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { StatTile } from '../components/ui/StatTile';
 import { useCurrentWorkout } from '../hooks/useWorkout';
-import { formatChange, formatKg, formatMonth, formatSet, formatTonnage } from '../lib/format';
+import { formatChange, formatKg, formatMonth, formatExerciseResult, formatTonnage } from '../lib/format';
 import styles from './HomePage.module.css';
 
 /**
@@ -142,7 +142,7 @@ function FocusChart({ exercise }: { exercise: ExerciseSummary }) {
     queryKey: ['insights', id],
     queryFn: () => analyticsApi.insights(id),
   });
-  const lastSet = formatSet(exercise.lastWeightKg, exercise.lastReps);
+  const lastSet = formatExerciseResult(exercise);
   const plateau = insights.data?.plateau;
 
   return (

@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import type { SetInput, WorkoutExercise, WorkoutSet } from '../../api/workouts';
-import { suggestNextSet } from '../../lib/workout';
+import { formatPace, suggestNextSet } from '../../lib/workout';
+import { Chip } from '../ui/Chip';
 import { Button } from '../ui/Button';
 import { Dialog } from '../ui/Dialog';
 import { Stepper } from '../ui/Stepper';
+import { TimeField } from '../ui/TimeField';
 import styles from './Workout.module.css';
 
 interface SetDialogProps {
@@ -17,19 +19,38 @@ interface SetDialogProps {
   onClose: () => void;
 }
 
-/** Модалка "Добавление подхода": степперы под вид упражнения, разминка, Готово/Отмена. */
+/**
+ * "Как далось" для бега — субъективная тяжесть (RPE), которую мы уже храним в подходе.
+ * Пригодится для подсказки про баланс лёгких и тяжёлых пробежек (Seiler, 2010: ~80% лёгких).
+ */
+const EFFORT = [
+  { label: 'Легко', rpe: 4 },
+  { label: 'Средне', rpe: 6 },
+  { label: 'Тяжело', rpe: 8 },
+];
+
+/** Модалка "Добавление подхода": поля под вид упражнения (вес/время/бег), разминка, Готово/Отмена. */
 export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, onClose }: SetDialogProps) {
-  const [values, setValues] = useState<SetInput>(() => editing ?? suggestNextSet(exercise.sets, exercise.previousSets));
+  const [values, setValues] = useState<SetInput>(
+    () => editing ?? suggestNextSet(exercise.sets, exercise.previousSets, exercise.trackingType),
+  );
   const change = (patch: Partial<SetInput>) => setValues((v) => ({ ...v, ...patch }));
 
   const number = editing ? editing.number : exercise.sets.length + 1;
+  const isRun = exercise.trackingType === 'DISTANCE';
   const planned = exercise.previousSets.length;
-  const subtitle = planned > 0 && !editing ? `Подход ${number} из ~${Math.max(planned, number)}` : `Подход ${number}`;
+  const subtitle = isRun
+    ? number === 1 && exercise.sets.length <= 1
+      ? 'Пробежка'
+      : `Отрезок ${number}`
+    : planned > 0 && !editing
+      ? `Подход ${number} из ~${Math.max(planned, number)}`
+      : `Подход ${number}`;
 
   const invalid =
     (exercise.trackingType === 'WEIGHT_REPS' && (Number.isNaN(values.weightKg) || !values.reps)) ||
     (exercise.trackingType === 'TIME' && !values.durationSec) ||
-    (exercise.trackingType === 'DISTANCE' && !values.distanceM);
+    (exercise.trackingType === 'DISTANCE' && (!values.distanceM || !values.durationSec));
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -62,29 +83,47 @@ export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, 
           </>
         )}
         {exercise.trackingType === 'TIME' && (
-          <Stepper
-            label="Время, сек"
-            value={values.durationSec ?? 0}
-            step={5}
-            min={1}
-            max={86_400}
+          <TimeField
+            legend="Время"
+            seconds={values.durationSec ?? 0}
             onChange={(durationSec) => change({ durationSec })}
           />
         )}
-        {exercise.trackingType === 'DISTANCE' && (
-          <Stepper
-            label="Дистанция, м"
-            value={values.distanceM ?? 0}
-            step={50}
-            min={1}
-            max={1_000_000}
-            onChange={(distanceM) => change({ distanceM })}
-          />
+        {isRun && (
+          <>
+            <Stepper
+              label="Дистанция, км"
+              value={(values.distanceM ?? 0) / 1000}
+              step={0.1}
+              max={1000}
+              inputMode="decimal"
+              onChange={(km) => change({ distanceM: Math.round(km * 1000) })}
+            />
+            <TimeField
+              legend="Время"
+              seconds={values.durationSec ?? 0}
+              onChange={(durationSec) => change({ durationSec })}
+            />
+            {values.distanceM && values.durationSec ? (
+              <p className={styles.pace}>Темп {formatPace(values.durationSec, values.distanceM)}</p>
+            ) : null}
+            <div className={styles.effort} role="group" aria-label="Как далось">
+              {EFFORT.map((option) => (
+                <Chip
+                  key={option.rpe}
+                  selected={values.rpe === option.rpe}
+                  onClick={() => change({ rpe: values.rpe === option.rpe ? null : option.rpe })}
+                >
+                  {option.label}
+                </Chip>
+              ))}
+            </div>
+          </>
         )}
 
         <label className={styles.checkbox}>
           <input type="checkbox" checked={values.warmup} onChange={(e) => change({ warmup: e.target.checked })} />
-          Разминочный подход*
+          {isRun ? 'Разминка или заминка*' : 'Разминочный подход*'}
         </label>
 
         {error && (

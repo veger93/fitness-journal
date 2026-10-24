@@ -33,6 +33,10 @@ describe('suggestNextSet', () => {
     expect(suggestNextSet([], [set(1, 75, 8), set(2, 80, 6)])).toMatchObject({ weightKg: 75, reps: 8 });
   });
 
+  it('бег впервые — 5 км за 30 минут', () => {
+    expect(suggestNextSet([], [], 'DISTANCE')).toMatchObject({ distanceM: 5000, durationSec: 1800 });
+  });
+
   it('упражнение впервые — значения по умолчанию', () => {
     expect(suggestNextSet([], [])).toMatchObject({ weightKg: 20, reps: 10, warmup: false });
   });
@@ -50,6 +54,7 @@ describe('toRequest', () => {
       warmup: false,
     });
     expect(toRequest('TIME', input)).toMatchObject({ weightKg: null, reps: null, durationSec: 60 });
+    expect(toRequest('DISTANCE', input)).toMatchObject({ weightKg: null, distanceM: 1000, durationSec: 60 });
   });
 });
 
@@ -61,6 +66,12 @@ describe('форматирование', () => {
     expect(describeSet('WEIGHT_REPS', { weightKg: 0, reps: 15, durationSec: null, distanceM: null })).toBe('15 повт.');
     expect(describeSet('TIME', { weightKg: null, reps: null, durationSec: 90, distanceM: null })).toBe('1:30');
     expect(describeSet('DISTANCE', { weightKg: null, reps: null, durationSec: null, distanceM: 1500 })).toBe('1,5 км');
+    expect(describeSet('DISTANCE', { weightKg: null, reps: null, durationSec: 1600, distanceM: 5000 })).toBe(
+      '5 км · 26:40 · 5:20 /км',
+    );
+    expect(describeSet('DISTANCE', { weightKg: null, reps: null, durationSec: 90, distanceM: 400 })).toBe(
+      '400 м · 1:30 · 3:45 /км',
+    );
   });
 
   it('таймер и длительность', () => {

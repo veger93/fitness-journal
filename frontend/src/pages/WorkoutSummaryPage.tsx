@@ -1,16 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { workoutsApi } from '../api/workouts';
-import { ButtonLink } from '../components/ui/Button';
+import { Button, ButtonLink } from '../components/ui/Button';
+import { SaveTemplateDialog } from '../components/workout/SaveTemplateDialog';
 import { Card } from '../components/ui/Card';
 import { StatTile } from '../components/ui/StatTile';
 import { formatTonnage } from '../lib/format';
-import { describeSet, formatDuration } from '../lib/workout';
+import { describeSet, formatDistance, formatDuration } from '../lib/workout';
 import styles from './WorkoutPages.module.css';
+
+interface Tile {
+  label: string;
+  value: string | number;
+}
 
 /** Экран "Тренировка завершена". Рекорды посчитает аналитика через пару секунд — они появятся на главной. */
 export function WorkoutSummaryPage() {
   const { workoutId = '' } = useParams();
+  const [saving, setSaving] = useState(false);
   const workout = useQuery({ queryKey: ['workout', workoutId], queryFn: () => workoutsApi.get(workoutId) });
 
   if (!workout.data) {
@@ -18,6 +26,21 @@ export function WorkoutSummaryPage() {
   }
   const w = workout.data;
   const done = w.exercises.filter((e) => e.sets.length > 0);
+  const workingSets = (type: 'run' | 'other') =>
+    done
+      .filter((e) => (e.trackingType === 'DISTANCE') === (type === 'run'))
+      .flatMap((e) => e.sets.filter((s) => !s.warmup));
+  const distanceM = workingSets('run').reduce((sum, s) => sum + (s.distanceM ?? 0), 0);
+  const otherSets = workingSets('other').length;
+
+  // показываем только то, что было в тренировке: у пробежки нет "Поднято 0 кг"
+  const tiles: (Tile | false)[] = [
+    w.tonnageKg > 0 && { label: 'Поднято', value: formatTonnage(w.tonnageKg) },
+    distanceM > 0 && { label: 'Дистанция', value: formatDistance(distanceM) },
+    otherSets > 0 && { label: 'Подходов', value: otherSets },
+    { label: 'Упражнений', value: done.length },
+  ];
+  const shown = tiles.filter((tile): tile is Tile => tile !== false);
 
   return (
     <div className={styles.page}>
@@ -29,9 +52,15 @@ export function WorkoutSummaryPage() {
       </div>
 
       <div className={styles.tiles}>
-        <StatTile variant="inverse" label="Поднято" value={formatTonnage(w.tonnageKg)} />
-        <StatTile label="Подходов" value={w.workingSets} />
-        <StatTile label="Упражнений" value={done.length} />
+        {shown.map((tile, index) => (
+          // первая плитка — главная цифра тренировки, она акцентная
+          <StatTile
+            key={tile.label}
+            variant={index === 0 ? 'inverse' : 'default'}
+            label={tile.label}
+            value={tile.value}
+          />
+        ))}
       </div>
 
       <Card>
@@ -49,7 +78,13 @@ export function WorkoutSummaryPage() {
       </Card>
 
       <p className="footnote">Рекорды и прогресс обновятся на главной через несколько секунд.</p>
+      {!w.templateId && (
+        <Button variant="secondary" onClick={() => setSaving(true)}>
+          Сохранить как комплекс
+        </Button>
+      )}
       <ButtonLink to="/">На главную</ButtonLink>
+      {saving && <SaveTemplateDialog exerciseIds={done.map((e) => e.exerciseId)} onClose={() => setSaving(false)} />}
     </div>
   );
 }

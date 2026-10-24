@@ -90,5 +90,9 @@ export const workoutsApi = {
     api<void>(`${exercisePath(workoutId, workoutExerciseId)}/sets/${setId}`, { method: 'DELETE' }),
 
   templates: () => api<WorkoutTemplate[]>('/api/templates'),
+  /** Свой комплекс. color — ключ из палитры бэкенда (orange, blue, green, violet). */
+  createTemplate: (name: string, exerciseIds: string[], color = 'blue') =>
+    api<WorkoutTemplate>('/api/templates', { method: 'POST', body: { name, color, icon: null, exerciseIds } }),
+  deleteTemplate: (id: string) => api<void>(`/api/templates/${id}`, { method: 'DELETE' }),
   exercises: (search: string) => api<CatalogExercise[]>(`/api/exercises?search=${encodeURIComponent(search)}`),
 };
