@@ -20,6 +20,7 @@ export function ExerciseTicker({ exercises }: { exercises: ExerciseSummary[] }) 
   const count = exercises.length;
   const carousel = useCarousel(count, { paused: hovered || focused || reducedMotion });
   const swipeStart = useRef<number | null>(null);
+  const swiped = useRef(false);
 
   if (count === 0) {
     return null;
@@ -37,6 +38,8 @@ export function ExerciseTicker({ exercises }: { exercises: ExerciseSummary[] }) 
     }
     const dx = e.clientX - swipeStart.current;
     swipeStart.current = null;
+    // свайп по строке-ссылке не должен открывать страницу — запоминаем и гасим ближайший клик
+    swiped.current = Math.abs(dx) > SWIPE_PX;
     if (dx < -SWIPE_PX) {
       carousel.next();
     } else if (dx > SWIPE_PX) {
@@ -63,7 +66,17 @@ export function ExerciseTicker({ exercises }: { exercises: ExerciseSummary[] }) 
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
       >
-        <div className={styles.viewport} onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
+        <div
+          className={styles.viewport}
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          onClickCapture={(e) => {
+            if (swiped.current) {
+              e.preventDefault();
+              swiped.current = false;
+            }
+          }}
+        >
           <div
             className={`${styles.track} ${carousel.animate && !reducedMotion ? styles.animated : ''}`}
             style={{ transform: `translateX(-${carousel.position * 100}%)` }}

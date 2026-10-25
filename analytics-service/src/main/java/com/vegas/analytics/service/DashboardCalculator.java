@@ -9,6 +9,7 @@ import com.vegas.analytics.dto.PlateauResponse;
 import com.vegas.analytics.dto.RecordItemResponse;
 import com.vegas.analytics.dto.RecordType;
 import com.vegas.analytics.dto.RiskLevel;
+import com.vegas.analytics.dto.RunningSummaryResponse;
 import com.vegas.analytics.entity.ExercisePerformance;
 
 import java.math.BigDecimal;
@@ -85,9 +86,15 @@ public final class DashboardCalculator {
             byExercise.computeIfAbsent(performance.getExerciseId(), id -> new ArrayList<>()).add(performance);
         }
 
+        // нагрузка бега считается по всем пробежкам сразу: дорожка и улица нагружают одни и те же ноги
+        List<ExercisePerformance> runs = history.stream().filter(DashboardCalculator::isRun).toList();
+        RunningSummaryResponse.Load runLoad = RunningCalculator.load(runs, now);
+
         List<ExerciseSummaryResponse> result = new ArrayList<>();
         for (List<ExercisePerformance> exerciseHistory : byExercise.values()) {
-            result.add(summary(exerciseHistory, freshRecord(records, exerciseHistory.get(0).getExerciseId(), now), now));
+            result.add(isRun(exerciseHistory.get(0))
+                    ? runSummary(exerciseHistory, runLoad, now)
+                    : summary(exerciseHistory, freshRecord(records, exerciseHistory.get(0).getExerciseId(), now), now));
         }
         result.sort(Comparator.comparing(ExerciseSummaryResponse::status)
                 .thenComparing(ExerciseSummaryResponse::lastPerformedAt, Comparator.reverseOrder()));
@@ -128,6 +135,47 @@ public final class DashboardCalculator {
         return new ExerciseSummaryResponse(last.getExerciseId(), last.getExerciseName(), last.getTrackingType(),
                 last.getPerformedAt(), last.getMaxWeightKg(), lastReps, last.getBestDistanceM(), last.getBestDurationSec(),
                 currentE1rm, status, risk.level(), note, trend);
+    }
+
+    /**
+     * Бег: свои правила вместо силовых (у пробежки нет ни 1ПМ, ни тоннажа).
+     * Перегрузка — резкий рост километража; рекорд — самая длинная пробежка или лучший темп за 14 дней;
+     * мини-график — средняя скорость по пробежкам (растёт — значит бегаешь быстрее).
+     */
+    private static ExerciseSummaryResponse runSummary(List<ExercisePerformance> history, RunningSummaryResponse.Load load,
+                                                      Instant now) {
+        ExercisePerformance last = history.get(history.size() - 1);
+        Optional<RunningSummaryResponse.Run> longest = RunningCalculator.longestRun(history, now).filter(RunningSummaryResponse.Run::fresh);
+        Optional<RunningSummaryResponse.Run> pace = RunningCalculator.bestPace(history, now).filter(RunningSummaryResponse.Run::fresh);
+
+        ExerciseStatus status;
+        String note;
+        if (load.warning()) {
+            status = ExerciseStatus.OVERLOAD;
+            note = "Километраж за 2 недели +" + load.changePercent() + "%";
+        } else if (longest.isPresent()) {
+            status = ExerciseStatus.RECORD;
+            note = "Самая длинная пробежка: " + RunningCalculator.km(longest.get().distanceM()) + " км";
+        } else if (pace.isPresent()) {
+            status = ExerciseStatus.RECORD;
+            note = "Лучший темп: " + RunningCalculator.pace(pace.get().paceSecPerKm()) + " /км";
+        } else {
+            status = ExerciseStatus.NORMAL;
+            note = null;
+        }
+
+        List<BigDecimal> speeds = history.stream().map(RunningCalculator::speedKmh).filter(Objects::nonNull).toList();
+        List<BigDecimal> trend = speeds.subList(Math.max(0, speeds.size() - TREND_POINTS), speeds.size());
+        Integer distance = last.getTotalDistanceM() != null ? last.getTotalDistanceM() : last.getBestDistanceM();
+        Integer duration = last.getTotalDurationSec() != null ? last.getTotalDurationSec() : last.getBestDurationSec();
+
+        return new ExerciseSummaryResponse(last.getExerciseId(), last.getExerciseName(), last.getTrackingType(),
+                last.getPerformedAt(), null, null, distance, duration, null, status,
+                load.warning() ? RiskLevel.HIGH : RiskLevel.LOW, note, trend);
+    }
+
+    private static boolean isRun(ExercisePerformance performance) {
+        return RunningService.DISTANCE.equals(performance.getTrackingType());
     }
 
     private static Optional<PersonalRecordResponse> freshRecord(List<PersonalRecordResponse> records, UUID exerciseId, Instant now) {

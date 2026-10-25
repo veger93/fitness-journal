@@ -28,15 +28,24 @@ export function SignalCards({ exercises }: { exercises: ExerciseSummary[] }) {
         {overloads.length > 0 ? (
           <Card as="article" variant="accent" className={styles.signal}>
             <span className={styles.signalLabel}>{withMore(overloads)}</span>
-            <h3 className={styles.signalTitle}>Пора неделю полегче</h3>
+            <h3 className={styles.signalTitle}>
+              {overloads[0].trackingType === 'DISTANCE' ? 'Притормозите с километражем' : 'Пора неделю полегче'}
+            </h3>
             <p className={styles.signalText}>{overloads[0].note ?? 'Похоже, накопилась усталость.'}</p>
-            <Button
-              variant="surface"
-              className={styles.signalAction}
-              onClick={() => setOpen({ dialog: 'deload', exercise: overloads[0] })}
-            >
-              План разгрузки
-            </Button>
+            {overloads[0].trackingType === 'DISTANCE' ? (
+              // у бега своя перегрузка (рост километража) — план разгрузки для силовых тут не подходит
+              <ButtonLink to="/running" variant="surface" className={styles.signalAction}>
+                Подробнее
+              </ButtonLink>
+            ) : (
+              <Button
+                variant="surface"
+                className={styles.signalAction}
+                onClick={() => setOpen({ dialog: 'deload', exercise: overloads[0] })}
+              >
+                План разгрузки
+              </Button>
+            )}
           </Card>
         ) : (
           <Card as="article" className={styles.signal}>

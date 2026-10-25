@@ -40,4 +40,7 @@ public interface ExercisePerformanceRepository extends JpaRepository<ExercisePer
 
     /** Вся история пользователя, по возрастанию даты — для ленты рекордов. */
     List<ExercisePerformance> findByUserIdOrderByPerformedAtAsc(UUID userId);
+
+    /** Все пробежки пользователя: trackingType = DISTANCE. */
+    List<ExercisePerformance> findByUserIdAndTrackingTypeOrderByPerformedAtAsc(UUID userId, String trackingType);
 }

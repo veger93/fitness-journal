@@ -69,6 +69,21 @@ class PerformanceCalculatorTest {
     }
 
     @Test
+    void run_totalsAndBestPaceOnlyFromKilometrePlus() {
+        ExercisePerformed intervals = exercise("DISTANCE",
+                new SetPerformed(null, null, 600, 1000, null, true),     // разминка — не считается
+                new SetPerformed(null, null, 300, 1000, null, false),    // 5:00 /км
+                new SetPerformed(null, null, 60, 400, null, false),      // 2:30 /км, но короче километра
+                new SetPerformed(null, null, 290, 1000, null, false));   // 4:50 /км — лучший
+
+        ExercisePerformance result = PerformanceCalculator.calculate(event(intervals), intervals).orElseThrow();
+
+        assertThat(result.getTotalDistanceM()).isEqualTo(2400);
+        assertThat(result.getTotalDurationSec()).isEqualTo(650);
+        assertThat(result.getBestPaceSecPerKm()).isEqualByComparingTo("290");
+    }
+
+    @Test
     void averageRpe_onlyOverSetsWhereItIsSet() {
         ExercisePerformed squat = exercise("WEIGHT_REPS",
                 new SetPerformed(new BigDecimal("100"), 5, null, null, new BigDecimal("8"), false),

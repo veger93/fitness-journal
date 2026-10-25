@@ -68,6 +68,7 @@ export function useWorkoutActions(workout: Workout) {
     queryClient.setQueryData(CURRENT_WORKOUT_KEY, null);
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     queryClient.invalidateQueries({ queryKey: ['history'] });
+    queryClient.invalidateQueries({ queryKey: ['running'] });
   };
 
   const complete = useMutation({
