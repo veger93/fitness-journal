@@ -7,6 +7,7 @@ import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { ActiveWorkoutPage } from './pages/ActiveWorkoutPage';
 import { ExercisesPage } from './pages/ExercisesPage';
+import { HistoryPage } from './pages/HistoryPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { RecordsPage } from './pages/RecordsPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -42,6 +43,8 @@ export function App() {
                 <Route path="/workout/:workoutId/summary" element={<WorkoutSummaryPage />} />
                 <Route path="/exercises" element={<ExercisesPage />} />
                 <Route path="/records" element={<RecordsPage />} />
+                <Route path="/history" element={<HistoryPage />} />
+                <Route path="/history/:workoutId" element={<WorkoutSummaryPage mode="view" />} />
                 <Route path="/profile" element={<ProfilePage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

@@ -69,22 +69,42 @@ export function describeSet(
   }
 }
 
-/** "5 км · 26:40 · 5:20 /км" — дистанция, время и темп (если время известно). */
+/**
+ * Бег одной строкой: "5 км · 37:30 · 8 км/ч".
+ * Скорость (км/ч) понятна всем и её показывает беговая дорожка; темп (мин/км) — в runParts, вторым планом.
+ */
 export function describeRun(distanceM: number | null, durationSec: number | null): string {
   const distance = formatDistance(distanceM ?? 0);
   if (!durationSec || !distanceM) {
     return distance;
   }
-  return `${distance} · ${formatClock(durationSec)} · ${formatPace(durationSec, distanceM)}`;
+  return `${distance} · ${formatClock(durationSec)} · ${formatSpeed(durationSec, distanceM)}`;
 }
 
-/** Для строки отрезка: крупно "5 км · 26:40", мелко под ним темп. */
-export function runParts(distanceM: number | null, durationSec: number | null): { main: string; pace: string | null } {
+/** Для строки отрезка: крупно "5 км · 37:30", мелко под ним "8 км/ч · 7:30 /км". */
+export function runParts(distanceM: number | null, durationSec: number | null): { main: string; sub: string | null } {
   const distance = formatDistance(distanceM ?? 0);
   if (!durationSec || !distanceM) {
-    return { main: distance, pace: null };
+    return { main: distance, sub: null };
   }
-  return { main: `${distance} · ${formatClock(durationSec)}`, pace: formatPace(durationSec, distanceM) };
+  return {
+    main: `${distance} · ${formatClock(durationSec)}`,
+    sub: `${formatSpeed(durationSec, distanceM)} · ${formatPace(durationSec, distanceM)}`,
+  };
+}
+
+/** Средняя скорость: 5000 м за 37:30 -> "8 км/ч". */
+export function formatSpeed(durationSec: number, distanceM: number): string {
+  return `${formatNumber(Math.round(speedKmh(durationSec, distanceM) * 10) / 10)} км/ч`;
+}
+
+export function speedKmh(durationSec: number, distanceM: number): number {
+  return distanceM / 1000 / (durationSec / 3600);
+}
+
+/** Беговая дорожка показывает скорость и время — дистанцию считаем сами: км/ч × часы. */
+export function distanceFromSpeed(speedKmhValue: number, durationSec: number): number {
+  return Math.round((speedKmhValue * durationSec) / 3.6);
 }
 
 /** 5000 -> "5 км", 800 -> "800 м" */
@@ -92,7 +112,7 @@ export function formatDistance(meters: number): string {
   return meters >= 1000 ? `${formatNumber(meters / 1000)} км` : `${meters} м`;
 }
 
-/** Темп — минуты на километр: 1600 с на 5000 м -> "5:20 /км". Главная цифра бегуна. */
+/** Темп — сколько минут уходит на 1 км: 1600 с на 5000 м -> "5:20 /км". Так считают бегуны на улице. */
 export function formatPace(durationSec: number, distanceM: number): string {
   return `${formatClock((durationSec / distanceM) * 1000)} /км`;
 }

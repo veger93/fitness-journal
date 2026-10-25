@@ -67,6 +67,7 @@ export function useWorkoutActions(workout: Workout) {
     navigate(path, { replace: true });
     queryClient.setQueryData(CURRENT_WORKOUT_KEY, null);
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['history'] });
   };
 
   const complete = useMutation({

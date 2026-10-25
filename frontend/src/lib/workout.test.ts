@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import type { Workout, WorkoutSet } from '../api/workouts';
 import {
   describeSet,
+  distanceFromSpeed,
   formatClock,
   formatDuration,
+  formatPace,
+  formatSpeed,
+  runParts,
   suggestNextSet,
   toRequest,
   withSetAdded,
@@ -67,10 +71,10 @@ describe('форматирование', () => {
     expect(describeSet('TIME', { weightKg: null, reps: null, durationSec: 90, distanceM: null })).toBe('1:30');
     expect(describeSet('DISTANCE', { weightKg: null, reps: null, durationSec: null, distanceM: 1500 })).toBe('1,5 км');
     expect(describeSet('DISTANCE', { weightKg: null, reps: null, durationSec: 1600, distanceM: 5000 })).toBe(
-      '5 км · 26:40 · 5:20 /км',
+      '5 км · 26:40 · 11,3 км/ч',
     );
     expect(describeSet('DISTANCE', { weightKg: null, reps: null, durationSec: 90, distanceM: 400 })).toBe(
-      '400 м · 1:30 · 3:45 /км',
+      '400 м · 1:30 · 16 км/ч',
     );
   });
 
@@ -79,6 +83,21 @@ describe('форматирование', () => {
     expect(formatClock(3725)).toBe('1:02:05');
     expect(formatDuration(42 * 60)).toBe('42 мин');
     expect(formatDuration(70 * 60)).toBe('1 ч 10 мин');
+  });
+});
+
+describe('бег', () => {
+  it('скорость и темп — одно и то же, разными словами', () => {
+    expect(formatSpeed(37 * 60 + 30, 5000)).toBe('8 км/ч');
+    expect(formatPace(37 * 60 + 30, 5000)).toBe('7:30 /км');
+  });
+
+  it('дорожка: 8 км/ч × 37:30 = 5 км', () => {
+    expect(distanceFromSpeed(8, 37 * 60 + 30)).toBe(5000);
+  });
+
+  it('строка отрезка — в две строки', () => {
+    expect(runParts(5000, 2250)).toEqual({ main: '5 км · 37:30', sub: '8 км/ч · 7:30 /км' });
   });
 });
 

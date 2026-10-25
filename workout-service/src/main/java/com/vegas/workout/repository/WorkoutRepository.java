@@ -37,7 +37,7 @@ public interface WorkoutRepository extends JpaRepository<Workout, UUID> {
     @Query(value = """
             select new com.vegas.workout.dto.WorkoutSummaryResponse(
                 w.id, w.name, w.startedAt, w.completedAt,
-                count(distinct we.id), count(s.id), sum(s.weightKg * s.reps))
+                count(distinct we.id), count(s.id), sum(s.weightKg * s.reps), sum(s.distanceM))
             from Workout w
             left join w.exercises we
             left join we.sets s on s.warmup = false
