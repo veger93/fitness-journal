@@ -64,18 +64,6 @@ export interface CatalogExercise {
   custom: boolean;
 }
 
-/** Строка истории (workout-service: WorkoutSummaryResponse) */
-export interface WorkoutHistoryItem {
-  id: string;
-  name: string;
-  startedAt: string;
-  completedAt: string;
-  exerciseCount: number;
-  workingSets: number;
-  tonnageKg: number;
-  distanceM: number;
-}
-
 export interface Page<T> {
   content: T[];
   page: number;
@@ -92,7 +80,8 @@ export const workoutsApi = {
   /** 204 (тренировки нет) клиент возвращает как undefined — превращаем в null: так понятнее и кэшируется */
   current: async () => (await api<Workout | undefined>(`${base}/current`)) ?? null,
   get: (id: string) => api<Workout>(`${base}/${id}`),
-  history: (page: number, size = 20) => api<Page<WorkoutHistoryItem>>(`${base}?page=${page}&size=${size}`),
+  /** журнал: тренировки целиком (упражнения и подходы), новые сверху */
+  journal: (page: number, size = 10) => api<Page<Workout>>(`${base}/journal?page=${page}&size=${size}`),
   start: (templateId: string | null) => api<Workout>(base, { method: 'POST', body: templateId ? { templateId } : {} }),
   begin: (id: string) => api<Workout>(`${base}/${id}/start`, { method: 'POST' }),
   complete: (id: string) => api<Workout>(`${base}/${id}/complete`, { method: 'POST' }),

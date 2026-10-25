@@ -29,6 +29,13 @@ public interface WorkoutRepository extends JpaRepository<Workout, UUID> {
     boolean existsByUserIdAndStatus(UUID userId, WorkoutStatus status);
 
     /**
+     * Журнал: страница тренировок целиком. Без @EntityGraph намеренно: fetch join коллекции + пагинация
+     * заставили бы Hibernate грузить ВСЕ строки и резать страницу в памяти (warning HHH000104).
+     * Упражнения и подходы догружаются пачками (default_batch_fetch_size в application.yml).
+     */
+    Page<Workout> findByUserIdAndStatusOrderByStartedAtDesc(UUID userId, WorkoutStatus status, Pageable pageable);
+
+    /**
      * История с пагинацией. DTO собирается прямо в запросе (select new ...):
      * в память не грузятся ни упражнения, ни подходы — только итоговые цифры.
      * "left join ... on s.warmup = false" — присоединяем только рабочие подходы.

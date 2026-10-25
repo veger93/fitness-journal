@@ -4,12 +4,14 @@ import com.vegas.common.exception.BadRequestException;
 import com.vegas.common.exception.BusinessException;
 import com.vegas.common.exception.NotFoundException;
 import com.vegas.common.model.BodyPart;
+import com.vegas.workout.dto.PageResponse;
 import com.vegas.workout.dto.SetRequest;
 import com.vegas.workout.dto.StartWorkoutRequest;
 import com.vegas.workout.dto.WorkoutExerciseResponse;
 import com.vegas.workout.dto.WorkoutResponse;
 import com.vegas.workout.entity.Equipment;
 import com.vegas.workout.entity.Exercise;
+import com.vegas.workout.entity.SetValues;
 import com.vegas.workout.entity.TrackingType;
 import com.vegas.workout.entity.Workout;
 import com.vegas.workout.entity.WorkoutExercise;
@@ -26,6 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -186,6 +190,24 @@ class WorkoutServiceTest {
 
         verify(outboxService, never()).workoutDeleted(any());
         verify(workoutRepository).delete(workout);
+    }
+
+    @Test
+    void journal_returnsWorkoutsWithSets_withoutPreviousSets() {
+        Exercise squat = exercise("Приседания со штангой", TrackingType.WEIGHT_REPS);
+        Workout workout = workoutWith(squat);
+        workout.getExercises().get(0).addSet(new SetValues(new BigDecimal("100"), 5, null, null, null, false), NOW);
+        workout.complete(NOW.plusSeconds(3600));
+        when(workoutRepository.findByUserIdAndStatusOrderByStartedAtDesc(me, WorkoutStatus.COMPLETED, PageRequest.of(0, 10)))
+                .thenReturn(new PageImpl<>(List.of(workout), PageRequest.of(0, 10), 1));
+
+        PageResponse<WorkoutResponse> page = service.journal(me, 0, 10);
+
+        assertThat(page.content()).hasSize(1);
+        WorkoutExerciseResponse exercise = page.content().get(0).exercises().get(0);
+        assertThat(exercise.sets()).hasSize(1);
+        assertThat(exercise.previousSets()).isEmpty();          // у завершённой "прошлый раз" не нужен
+        verify(workoutExerciseRepository, never()).findRecent(any(), any(), any(), any());
     }
 
     // ---------- helpers ----------

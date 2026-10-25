@@ -72,6 +72,14 @@ public class WorkoutController {
         return workoutService.history(CurrentUser.id(jwt), page, size);
     }
 
+    @GetMapping("/journal")
+    @Operation(summary = "Журнал: завершённые тренировки с упражнениями и подходами, новые сверху")
+    public PageResponse<WorkoutResponse> journal(@AuthenticationPrincipal Jwt jwt,
+                                                 @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                 @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size) {
+        return workoutService.journal(CurrentUser.id(jwt), page, size);
+    }
+
     @GetMapping("/{workoutId}")
     @Operation(summary = "Тренировка целиком")
     public WorkoutResponse getById(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID workoutId) {

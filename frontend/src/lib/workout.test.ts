@@ -9,6 +9,7 @@ import {
   formatSpeed,
   runParts,
   suggestNextSet,
+  summarizeSets,
   toRequest,
   withSetAdded,
   withSetDeleted,
@@ -98,6 +99,24 @@ describe('бег', () => {
 
   it('строка отрезка — в две строки', () => {
     expect(runParts(5000, 2250)).toEqual({ main: '5 км · 37:30', sub: '8 км/ч · 7:30 /км' });
+  });
+});
+
+describe('summarizeSets', () => {
+  it('одинаковый вес подряд — один раз', () => {
+    const warm = { ...set(0, 40, 10), warmup: true };
+    expect(summarizeSets('WEIGHT_REPS', [warm, set(1, 80, 8), set(2, 80, 8), set(3, 80, 6), set(4, 85, 5)])).toBe(
+      '80 кг × 8, 8, 6 · 85 кг × 5',
+    );
+  });
+
+  it('без веса — только повторы', () => {
+    expect(
+      summarizeSets('WEIGHT_REPS', [
+        { ...set(1, 0, 12), weightKg: null },
+        { ...set(2, 0, 10), weightKg: null },
+      ]),
+    ).toBe('12, 10 повт.');
   });
 });
 

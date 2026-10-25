@@ -1,68 +1,87 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { workoutsApi, type WorkoutHistoryItem } from '../api/workouts';
+import { workoutsApi, type Workout } from '../api/workouts';
 import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
 import { formatTonnage } from '../lib/format';
-import { formatDistance, formatDuration } from '../lib/workout';
-import { exercisesLabel } from './StartWorkoutPage';
+import { formatDistance, formatDuration, summarizeSets } from '../lib/workout';
 import styles from './ListPages.module.css';
 
-const dayTitle = new Intl.DateTimeFormat('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' });
+const dayFormat = new Intl.DateTimeFormat('ru-RU', {
+  weekday: 'short',
+  day: '2-digit',
+  month: '2-digit',
+  year: '2-digit',
+});
 
 /**
- * История тренировок, новые сверху. Подгружается страницами по 20 (useInfiniteQuery):
- * за год набирается 150+ тренировок — грузить всё сразу незачем.
+ * История как дневник: по карточке на тренировку — дата, комплекс и сразу все упражнения с весами.
+ * Чтобы вспомнить "что я делал в четверг", не нужно открывать каждую тренировку.
+ * Подгружается по 10 тренировок (useInfiniteQuery).
  */
 export function HistoryPage() {
-  const history = useInfiniteQuery({
+  const journal = useInfiniteQuery({
     queryKey: ['history'],
-    queryFn: ({ pageParam }) => workoutsApi.history(pageParam),
+    queryFn: ({ pageParam }) => workoutsApi.journal(pageParam),
     initialPageParam: 0,
     // следующая страница есть, пока не дошли до последней
     getNextPageParam: (last) => (last.page + 1 < last.totalPages ? last.page + 1 : undefined),
   });
-  const items = history.data?.pages.flatMap((page) => page.content) ?? [];
+  const workouts = journal.data?.pages.flatMap((page) => page.content) ?? [];
 
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>История</h1>
-      {history.isPending && <p className={styles.muted}>Загружаем…</p>}
-      {history.isError && <p className={styles.muted}>{history.error.message}</p>}
-      {history.data && items.length === 0 && <p className={styles.muted}>Здесь появятся завершённые тренировки.</p>}
-      {items.length > 0 && (
-        <ul className={styles.list}>
-          {items.map((item) => (
-            <li key={item.id}>
-              <HistoryRow item={item} />
-            </li>
-          ))}
-        </ul>
-      )}
-      {history.hasNextPage && (
-        <Button variant="secondary" onClick={() => history.fetchNextPage()} disabled={history.isFetchingNextPage}>
-          {history.isFetchingNextPage ? 'Загружаем…' : 'Показать ещё'}
+      {journal.isPending && <p className={styles.muted}>Загружаем…</p>}
+      {journal.isError && <p className={styles.muted}>{journal.error.message}</p>}
+      {journal.data && workouts.length === 0 && <p className={styles.muted}>Здесь появятся завершённые тренировки.</p>}
+
+      {workouts.map((workout) => (
+        <JournalDay key={workout.id} workout={workout} />
+      ))}
+
+      {journal.hasNextPage && (
+        <Button variant="secondary" onClick={() => journal.fetchNextPage()} disabled={journal.isFetchingNextPage}>
+          {journal.isFetchingNextPage ? 'Загружаем…' : 'Показать ещё'}
         </Button>
       )}
     </div>
   );
 }
 
-function HistoryRow({ item }: { item: WorkoutHistoryItem }) {
-  const durationSec = (new Date(item.completedAt).getTime() - new Date(item.startedAt).getTime()) / 1000;
+function JournalDay({ workout }: { workout: Workout }) {
+  const exercises = workout.exercises.filter((e) => e.sets.length > 0);
+  const distanceM = exercises
+    .filter((e) => e.trackingType === 'DISTANCE')
+    .flatMap((e) => e.sets.filter((s) => !s.warmup))
+    .reduce((sum, s) => sum + (s.distanceM ?? 0), 0);
   const facts = [
-    exercisesLabel(item.exerciseCount),
-    formatDuration(durationSec),
-    item.tonnageKg > 0 && formatTonnage(item.tonnageKg),
-    item.distanceM > 0 && formatDistance(item.distanceM),
+    formatDuration(workout.durationSec ?? 0),
+    workout.tonnageKg > 0 && formatTonnage(workout.tonnageKg),
+    distanceM > 0 && formatDistance(distanceM),
   ].filter(Boolean);
 
   return (
-    <Link to={`/history/${item.id}`} className={styles.historyRow}>
-      <span className={styles.historyMain}>
-        <span className={styles.historyTitle}>{item.name}</span>
-        <span className={styles.muted}>{facts.join(' · ')}</span>
-      </span>
-      <span className={styles.historyDate}>{dayTitle.format(new Date(item.startedAt))}</span>
-    </Link>
+    <Card as="article">
+      <header className={styles.dayHead}>
+        <h2 className={styles.dayTitle}>
+          {dayFormat.format(new Date(workout.startedAt ?? workout.completedAt ?? ''))}
+        </h2>
+        <span className={styles.muted}>
+          {workout.name} · {facts.join(' · ')}
+        </span>
+      </header>
+      <ul className={styles.dayExercises}>
+        {exercises.map((exercise) => (
+          <li key={exercise.id} className={styles.dayExercise}>
+            <span className={styles.dayExerciseName}>{exercise.exerciseName}</span>
+            <span>{summarizeSets(exercise.trackingType, exercise.sets)}</span>
+          </li>
+        ))}
+      </ul>
+      <Link to={`/history/${workout.id}`} className={styles.dayLink}>
+        Подробнее →
+      </Link>
+    </Card>
   );
 }
