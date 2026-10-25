@@ -138,6 +138,36 @@ export function formatDuration(totalSec: number): string {
   return m === 0 ? `${h} ч` : `${h} ч ${m} мин`;
 }
 
+/**
+ * Все рабочие подходы упражнения одной строкой — для журнала:
+ * "80 кг × 8, 8, 6 · 85 кг × 5" (одинаковый вес подряд не повторяем), "12, 10, 8 повт.", "1:30, 1:15".
+ */
+export function summarizeSets(trackingType: TrackingType, sets: WorkoutSet[]): string {
+  const working = sets.filter((s) => !s.warmup);
+  if (working.length === 0) {
+    return 'только разминка';
+  }
+  if (trackingType === 'TIME') {
+    return working.map((s) => formatClock(s.durationSec ?? 0)).join(', ');
+  }
+  if (trackingType === 'DISTANCE') {
+    return working.map((s) => describeRun(s.distanceM, s.durationSec)).join(', ');
+  }
+  if (working.every((s) => !s.weightKg)) {
+    return `${working.map((s) => s.reps).join(', ')} повт.`;
+  }
+  const groups: { weight: number; reps: (number | null)[] }[] = [];
+  for (const set of working) {
+    const last = groups.at(-1);
+    if (last && last.weight === (set.weightKg ?? 0)) {
+      last.reps.push(set.reps);
+    } else {
+      groups.push({ weight: set.weightKg ?? 0, reps: [set.reps] });
+    }
+  }
+  return groups.map((g) => `${formatNumber(g.weight)} кг × ${g.reps.join(', ')}`).join(' · ');
+}
+
 // ---------- обновление тренировки в кэше (иммутабельно: новые объекты вместо изменения старых) ----------
 
 export function withSetAdded(workout: Workout, workoutExerciseId: string, set: WorkoutSet): Workout {

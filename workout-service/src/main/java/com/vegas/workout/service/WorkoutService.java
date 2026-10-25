@@ -92,6 +92,14 @@ public class WorkoutService {
         return toResponse(findOwn(userId, workoutId));
     }
 
+    /** Журнал "по дням": тренировки с упражнениями и подходами, новые сверху. */
+    @Transactional(readOnly = true)
+    public PageResponse<WorkoutResponse> journal(UUID userId, int page, int size) {
+        return PageResponse.of(workoutRepository
+                .findByUserIdAndStatusOrderByStartedAtDesc(userId, WorkoutStatus.COMPLETED, PageRequest.of(page, size))
+                .map(this::toResponse));
+    }
+
     @Transactional(readOnly = true)
     public PageResponse<WorkoutSummaryResponse> history(UUID userId, int page, int size) {
         return PageResponse.of(workoutRepository.findHistory(

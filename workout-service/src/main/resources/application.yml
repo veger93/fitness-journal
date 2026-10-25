@@ -21,6 +21,11 @@ spring:
     open-in-view: false          # не держим соединение с БД открытым до конца HTTP-запроса
     hibernate:
       ddl-auto: validate         # схему создаёт Liquibase, Hibernate только проверяет
+    properties:
+      hibernate:
+        # ленивые связи (упражнения тренировки, подходы, упражнения каталога) грузятся пачками по 50 id
+        # одним запросом "where id in (...)", а не по запросу на каждую строку — защита от N+1 (журнал истории)
+        default_batch_fetch_size: 50
   liquibase:
     enabled: true                # при старте сервис сам накатывает новые миграции
     change-log: classpath:db/changelog/db.changelog-master.yaml
