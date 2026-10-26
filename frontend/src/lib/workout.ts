@@ -1,4 +1,4 @@
-import type { SetInput, TrackingType, Workout, WorkoutSet } from '../api/workouts';
+import type { Equipment, SetInput, TrackingType, Workout, WorkoutSet } from '../api/workouts';
 
 /**
  * Логика экрана тренировки без React: что подставить в новый подход, как показать подход,
@@ -18,15 +18,30 @@ const DEFAULT_SET: SetInput = {
 const DEFAULT_RUN: SetInput = { ...DEFAULT_SET, distanceM: 5000, durationSec: 30 * 60 };
 
 /**
+ * Стартовый вес, когда упражнение делается впервые — по снаряжению:
+ * пустой гриф 20 кг, лёгкие гантели, тренажёр с небольшого веса, свой вес — без отягощения.
+ * Дальше человек поправит под себя, а в следующий раз подставится уже его прошлый результат.
+ */
+const FIRST_TIME_WEIGHT: Record<Equipment, number> = {
+  BARBELL: 20,
+  DUMBBELL: 6,
+  MACHINE: 20,
+  BODYWEIGHT: 0,
+};
+
+/**
  * Что подставить в форму нового подхода (чтобы не набирать каждый раз):
- * 1) последний подход этого упражнения сегодня; 2) тот же по номеру подход в прошлый раз; 3) значения по умолчанию.
+ * 1) последний подход этого упражнения сегодня; 2) тот же по номеру подход в прошлый раз;
+ * 3) упражнение впервые — стартовые значения по снаряжению.
  */
 export function suggestNextSet(
   sets: WorkoutSet[],
   previousSets: WorkoutSet[],
   trackingType: TrackingType = 'WEIGHT_REPS',
+  equipment: Equipment = 'BARBELL',
 ): SetInput {
-  const defaults = trackingType === 'DISTANCE' ? DEFAULT_RUN : DEFAULT_SET;
+  const defaults =
+    trackingType === 'DISTANCE' ? DEFAULT_RUN : { ...DEFAULT_SET, weightKg: FIRST_TIME_WEIGHT[equipment] };
   const source = sets.at(-1) ?? previousSets[sets.length] ?? previousSets.at(-1);
   if (!source) {
     return { ...defaults };

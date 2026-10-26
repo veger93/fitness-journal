@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { BodyPart, WeeklyPlan, WorkoutTemplate } from '../api/workouts';
-import { bodyPartFrequency, nextPlanned, planHints, todayOf } from './plan';
+import type { Workout } from '../api/workouts';
+import { bodyPartFrequency, completedToday, nextPlanned, planHints, todayOf } from './plan';
 
 const template = (name: string, parts: BodyPart[]): WorkoutTemplate => ({
   id: name,
@@ -51,5 +52,14 @@ describe('план на неделю', () => {
     ]);
     expect(planHints([upper, lower, upper, lower, upper, lower, upper])[0]).toContain('Без дня отдыха');
     expect(planHints([upper, lower, upper, lower, null, null, null])).toEqual([]);
+  });
+
+  it('сегодняшняя тренировка по плану выполнена — только тот же комплекс и сегодня', () => {
+    const now = new Date('2026-10-26T20:00:00');
+    const done = (templateId: string, completedAt: string) =>
+      ({ id: completedAt, templateId, completedAt }) as unknown as Workout;
+    expect(completedToday([done('t-legs', '2026-10-26T18:30:00')], 't-legs', now)).not.toBeNull();
+    expect(completedToday([done('t-upper', '2026-10-26T18:30:00')], 't-legs', now)).toBeNull();
+    expect(completedToday([done('t-legs', '2026-10-25T18:30:00')], 't-legs', now)).toBeNull();
   });
 });

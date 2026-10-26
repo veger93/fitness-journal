@@ -42,6 +42,12 @@ describe('suggestNextSet', () => {
     expect(suggestNextSet([], [], 'DISTANCE')).toMatchObject({ distanceM: 5000, durationSec: 1800 });
   });
 
+  it('впервые: стартовый вес по снаряжению', () => {
+    expect(suggestNextSet([], [], 'WEIGHT_REPS', 'BARBELL').weightKg).toBe(20);
+    expect(suggestNextSet([], [], 'WEIGHT_REPS', 'DUMBBELL').weightKg).toBe(6);
+    expect(suggestNextSet([], [], 'WEIGHT_REPS', 'BODYWEIGHT').weightKg).toBe(0); // подтягивания — без "20 кг"
+  });
+
   it('упражнение впервые — значения по умолчанию', () => {
     expect(suggestNextSet([], [])).toMatchObject({ weightKg: 20, reps: 10, warmup: false });
   });
@@ -137,6 +143,7 @@ describe('обновление кэша', () => {
         exerciseId: 'x',
         exerciseName: 'Жим',
         trackingType: 'WEIGHT_REPS',
+        equipment: 'BARBELL',
         sets: [set(1, 80, 8), set(2, 80, 8)],
         previousSets: [],
       },

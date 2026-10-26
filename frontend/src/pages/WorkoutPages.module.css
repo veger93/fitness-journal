@@ -41,6 +41,11 @@
   flex: 1;
 }
 
+/* у своего комплекса справа крестик — длинное название не должно заезжать под него */
+.withDelete .template {
+  padding-right: 64px;
+}
+
 .templateDelete {
   position: absolute;
   top: var(--space-2);

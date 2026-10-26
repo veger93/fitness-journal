@@ -64,6 +64,7 @@ public class WorkoutMapper {
                 exercise.getId(),
                 exercise.getName(),
                 exercise.getTrackingType(),
+                exercise.getEquipment(),
                 toSetResponses(workoutExercise.getSets()),
                 toSetResponses(previous)
         );

@@ -23,12 +23,14 @@ interface SetDialogProps {
 /** Модалка "Добавление подхода": поля под вид упражнения (вес/время/бег), разминка, Готово/Отмена. */
 export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, onClose }: SetDialogProps) {
   const [values, setValues] = useState<SetInput>(
-    () => editing ?? suggestNextSet(exercise.sets, exercise.previousSets, exercise.trackingType),
+    () => editing ?? suggestNextSet(exercise.sets, exercise.previousSets, exercise.trackingType, exercise.equipment),
   );
   const change = (patch: Partial<SetInput>) => setValues((v) => ({ ...v, ...patch }));
 
   const number = editing ? editing.number : exercise.sets.length + 1;
   const isRun = exercise.trackingType === 'DISTANCE';
+  // ни сегодня, ни раньше — подсказка, как выбрать стартовый вес
+  const firstTime = !editing && exercise.sets.length === 0 && exercise.previousSets.length === 0;
   const planned = exercise.previousSets.length;
   const subtitle = isRun
     ? number === 1 && exercise.sets.length <= 1
@@ -56,7 +58,7 @@ export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, 
         {exercise.trackingType === 'WEIGHT_REPS' && (
           <>
             <Stepper
-              label="Вес, кг"
+              label={exercise.equipment === 'BODYWEIGHT' ? 'Доп. вес, кг (0 — без веса)' : 'Вес, кг'}
               value={values.weightKg ?? 0}
               step={2.5}
               max={9999}
@@ -81,6 +83,13 @@ export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, 
           />
         )}
         {isRun && <RunFields values={values} change={change} />}
+
+        {exercise.trackingType === 'WEIGHT_REPS' && firstTime && (
+          <p className="footnote">
+            Впервые в этом упражнении: возьмите вес, с которым 10–12 повторов даются с запасом 2–3 повтора. В следующий
+            раз приложение подставит ваш результат.
+          </p>
+        )}
 
         <label className={styles.checkbox}>
           <input type="checkbox" checked={values.warmup} onChange={(e) => change({ warmup: e.target.checked })} />

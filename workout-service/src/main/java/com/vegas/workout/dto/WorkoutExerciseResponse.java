@@ -1,5 +1,6 @@
 package com.vegas.workout.dto;
 
+import com.vegas.workout.entity.Equipment;
 import com.vegas.workout.entity.TrackingType;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public record WorkoutExerciseResponse(
         UUID exerciseId,
         String exerciseName,
         TrackingType trackingType,
+        Equipment equipment,        // штанга / гантели / тренажёр / свой вес — от этого стартовый вес нового подхода
         List<SetResponse> sets,
         List<SetResponse> previousSets
 ) {
