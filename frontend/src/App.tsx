@@ -6,6 +6,7 @@ import { AppLayout } from './components/AppLayout';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { ActiveWorkoutPage } from './pages/ActiveWorkoutPage';
+import { ExercisePage } from './pages/ExercisePage';
 import { ExercisesPage } from './pages/ExercisesPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { PlanPage } from './pages/PlanPage';
@@ -44,6 +45,7 @@ export function App() {
                 <Route path="/workout/active" element={<ActiveWorkoutPage />} />
                 <Route path="/workout/:workoutId/summary" element={<WorkoutSummaryPage />} />
                 <Route path="/exercises" element={<ExercisesPage />} />
+                <Route path="/exercises/:exerciseId" element={<ExercisePage />} />
                 <Route path="/records" element={<RecordsPage />} />
                 <Route path="/running" element={<RunningPage />} />
                 <Route path="/plan" element={<PlanPage />} />

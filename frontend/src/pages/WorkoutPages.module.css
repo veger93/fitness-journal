@@ -39,16 +39,21 @@
 
 .templateWrap .template {
   flex: 1;
+  /* без этого flex-элемент не ужмётся меньше своего содержимого и вылезет из колонки сетки */
+  min-width: 0;
 }
 
-/* у своего комплекса справа крестик — длинное название не должно заезжать под него */
-.withDelete .template {
-  padding-right: 64px;
+/* длинное слово переносится по слогам (нужен lang="ru" в index.html), а не раздвигает карточку */
+.templateName {
+  hyphens: auto;
+  overflow-wrap: break-word;
 }
 
 .templateDelete {
+  /* крестик в правом нижнем углу, на одной линии с «3 упражнения»:
+     название занимает всю ширину карточки и под него не попадает */
   position: absolute;
-  top: var(--space-2);
+  bottom: var(--space-2);
   right: var(--space-2);
   width: 44px;
   height: 44px;
