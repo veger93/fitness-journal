@@ -7,6 +7,8 @@ import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { ActiveWorkoutPage } from './pages/ActiveWorkoutPage';
 import { ExercisePage } from './pages/ExercisePage';
+import { OnboardingPage } from './pages/OnboardingPage';
+import { RequireOnboarding } from './auth/RequireOnboarding';
 import { ExercisesPage } from './pages/ExercisesPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { PlanPage } from './pages/PlanPage';
@@ -34,9 +36,19 @@ export function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route
+                path="/onboarding"
                 element={
                   <RequireAuth>
-                    <AppLayout />
+                    <OnboardingPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                element={
+                  <RequireAuth>
+                    <RequireOnboarding>
+                      <AppLayout />
+                    </RequireOnboarding>
                   </RequireAuth>
                 }
               >

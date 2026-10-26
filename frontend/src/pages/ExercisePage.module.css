@@ -4,12 +4,6 @@
   gap: var(--space-5);
 }
 
-.back {
-  align-self: flex-start;
-  font-weight: 500;
-  text-underline-offset: 4px;
-}
-
 .header {
   display: flex;
   flex-wrap: wrap;

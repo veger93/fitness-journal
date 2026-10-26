@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   analyticsApi,
   type ExerciseInsights,
@@ -13,6 +13,7 @@ import { PlateauTips } from '../components/home/PlateauTips';
 import { STATUS_BADGES } from '../components/ExerciseRow';
 import { ProgressChart } from '../components/ProgressChart';
 import { ProgressLegend } from '../components/ProgressLegend';
+import { BackLink } from '../components/ui/BackLink';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
@@ -72,7 +73,7 @@ export function ExercisePage() {
   if (!summary) {
     return (
       <div className={styles.page}>
-        <BackLink />
+        <BackLink to="/exercises">Все упражнения</BackLink>
         <h1 className={styles.title}>{name ?? 'Упражнение'}</h1>
         <p className={styles.muted}>Пока нет завершённых тренировок с этим упражнением.</p>
       </div>
@@ -84,7 +85,7 @@ export function ExercisePage() {
 
   return (
     <div className={styles.page}>
-      <BackLink />
+      <BackLink to="/exercises">Все упражнения</BackLink>
       <div className={styles.header}>
         <h1 className={styles.title}>{summary.exerciseName}</h1>
         {badge && <Badge variant={badge.variant}>{badge.label}</Badge>}
@@ -129,14 +130,6 @@ export function ExercisePage() {
         </p>
       )}
     </div>
-  );
-}
-
-function BackLink() {
-  return (
-    <Link to="/exercises" className={styles.back}>
-      ← Все упражнения
-    </Link>
   );
 }
 
