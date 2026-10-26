@@ -1,4 +1,9 @@
+import { useQuery } from '@tanstack/react-query';
+import { authApi } from '../api/auth';
+import { usersApi } from '../api/users';
 import { useAuth } from '../auth/AuthProvider';
+import { BodyWeightCard } from '../components/profile/BodyWeightCard';
+import { ProfileForm } from '../components/profile/ProfileForm';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
@@ -15,15 +20,34 @@ const THEME_OPTIONS: { value: ThemeChoice; label: string }[] = [
 export function ProfilePage() {
   const { choice, setChoice } = useTheme();
   const { logout } = useAuth();
+  const me = useQuery({ queryKey: ['me'], queryFn: authApi.me });
+  const profile = useQuery({ queryKey: ['profile'], queryFn: usersApi.profile });
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Профиль</h1>
+      <div>
+        <h1 className={styles.title}>Профиль</h1>
+        {me.data && <p className={styles.muted}>{me.data.email}</p>}
+      </div>
+
+      <Card>
+        <h2 className={styles.sectionTitle}>Физические данные</h2>
+        {profile.data ? (
+          // форма появляется только когда профиль загружен: useState в ней берёт начальные значения один раз
+          <ProfileForm profile={profile.data} submitLabel="Сохранить" withWeight={false} />
+        ) : (
+          <p className={styles.muted}>{profile.isError ? profile.error.message : 'Загружаем…'}</p>
+        )}
+      </Card>
+
+      {profile.data && <BodyWeightCard currentWeightKg={profile.data.currentWeightKg} />}
+
       <Card>
         <h2 className={styles.sectionTitle}>Оформление</h2>
         <SegmentedControl legend="Тема оформления" options={THEME_OPTIONS} value={choice} onChange={setChoice} />
         <p className={styles.muted}>«Как в системе» — тема переключится вместе с настройкой телефона или компьютера.</p>
       </Card>
+
       <Button variant="secondary" className={styles.logout} onClick={logout}>
         Выйти
       </Button>

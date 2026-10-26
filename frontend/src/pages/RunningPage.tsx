@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { analyticsApi, type RunningSummary } from '../api/analytics';
+import { BackLink } from '../components/ui/BackLink';
 import { Card } from '../components/ui/Card';
 import { StatTile } from '../components/ui/StatTile';
 import { formatChange, formatShortDate } from '../lib/format';
@@ -19,6 +20,7 @@ export function RunningPage() {
 
   return (
     <div className={styles.page}>
+      <BackLink to="/exercises">Все упражнения</BackLink>
       <h1 className={styles.title}>Бег</h1>
       {running.isPending && <p className={styles.muted}>Загружаем…</p>}
       {running.isError && <p className={styles.muted}>{running.error.message}</p>}
