@@ -5,7 +5,7 @@ import { Badge } from './ui/Badge';
 import { Sparkline } from './ui/Sparkline';
 import styles from './ExerciseRow.module.css';
 
-const BADGES: Record<
+export const STATUS_BADGES: Record<
   Exclude<ExerciseStatus, 'NORMAL'>,
   { label: string; variant: 'neutral' | 'inverse' | 'accent' }
 > = {
@@ -16,7 +16,7 @@ const BADGES: Record<
 
 /** Строка упражнения: название и пояснение · последний подход · мини-график · вердикт. Главная и "Все упражнения". */
 export function ExerciseRow({ exercise }: { exercise: ExerciseSummary }) {
-  const badge = exercise.status === 'NORMAL' ? null : BADGES[exercise.status];
+  const badge = exercise.status === 'NORMAL' ? null : STATUS_BADGES[exercise.status];
   const content = (
     <>
       <div className={styles.name}>
@@ -32,12 +32,11 @@ export function ExerciseRow({ exercise }: { exercise: ExerciseSummary }) {
       <span className={styles.badge}>{badge && <Badge variant={badge.variant}>{badge.label}</Badge>}</span>
     </>
   );
-  // бег ведёт на страницу "Бег"; силовые станут ссылками вместе с детальной страницей упражнения
-  return exercise.trackingType === 'DISTANCE' ? (
-    <Link to="/running" className={`${styles.row} ${styles.link}`}>
+  // бег ведёт на страницу "Бег" (там своя аналитика), остальные — на страницу упражнения
+  const to = exercise.trackingType === 'DISTANCE' ? '/running' : `/exercises/${exercise.exerciseId}`;
+  return (
+    <Link to={to} className={`${styles.row} ${styles.link}`}>
       {content}
     </Link>
-  ) : (
-    <div className={styles.row}>{content}</div>
   );
 }

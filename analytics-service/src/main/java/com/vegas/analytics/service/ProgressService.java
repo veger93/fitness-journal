@@ -118,7 +118,9 @@ public class ProgressService {
                 performance.getBestWeightKg(),
                 performance.getBestReps(),
                 performance.getVolumeKg(),
-                reference
+                reference,
+                performance.getWorkingSets(),
+                performance.getBestDurationSec()
         );
     }
 }

@@ -40,6 +40,18 @@ export interface ProgressPoint {
   bestReps: number | null;
   volumeKg: number;
   referenceE1rmKg: number | null;
+  workingSets: number;
+  /** лучшее время подхода — у упражнений на время (планка); у силовых null */
+  bestDurationSec: number | null;
+}
+
+/** Сравнение с обычным темпом роста для уровня спортсмена (пунктир на графике) */
+export interface ProgressReference {
+  level: string;
+  levelAssumed: boolean;
+  monthlyGainPercent: number;
+  gapPercent: number;
+  hint: string;
 }
 
 export interface ExerciseProgress {
@@ -49,6 +61,7 @@ export interface ExerciseProgress {
   currentE1rmKg: number | null;
   changePercent: number | null;
   weeklyVolumeKg: number | null;
+  reference: ProgressReference | null;
   points: ProgressPoint[];
 }
 

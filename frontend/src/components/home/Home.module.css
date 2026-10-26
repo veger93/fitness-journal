@@ -114,6 +114,8 @@
   flex-direction: column;
   gap: 2px;
   text-align: center;
+  /* узкая ячейка на телефоне: "длительность" переносится по слогам, а не вылезает */
+  hyphens: auto;
 }
 
 .planValue {

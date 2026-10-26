@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { analyticsApi, type Dashboard, type ExerciseSummary } from '../api/analytics';
 import { authApi } from '../api/auth';
 import { ExerciseTicker } from '../components/home/ExerciseTicker';
 import { SignalCards } from '../components/home/SignalCards';
 import { ProgressChart } from '../components/ProgressChart';
+import { ProgressLegend } from '../components/ProgressLegend';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { StatTile } from '../components/ui/StatTile';
@@ -163,25 +165,14 @@ function FocusChart({ exercise }: { exercise: ExerciseSummary }) {
   return (
     <Card as="section" size="section">
       <div className={styles.chartHead}>
-        <h2 className={styles.chartTitle}>{exercise.exerciseName}</h2>
+        <h2 className={styles.chartTitle}>
+          <Link to={`/exercises/${id}`} className={styles.chartLink}>
+            {exercise.exerciseName} →
+          </Link>
+        </h2>
         {lastSet && <span className={styles.muted}>последний подход: {lastSet}</span>}
       </div>
-      <div className={styles.legend}>
-        <span className={styles.legendItem}>
-          <span className={styles.lineYou} aria-hidden="true" />
-          ты
-        </span>
-        <span className={styles.legendItem}>
-          <span className={styles.lineReference} aria-hidden="true" />
-          норма для твоего уровня
-        </span>
-        {plateau?.detected && (
-          <span className={styles.legendItem}>
-            <span className={styles.zonePlateau} aria-hidden="true" />
-            плато {plateau.daysSinceProgress} дн.
-          </span>
-        )}
-      </div>
+      <ProgressLegend plateauDays={plateau?.detected ? plateau.daysSinceProgress : null} />
       {progress.data ? (
         <ProgressChart points={progress.data.points} plateauFrom={plateau?.detected ? plateau.lastProgressAt : null} />
       ) : (

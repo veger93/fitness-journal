@@ -1,0 +1,103 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.back {
+  align-self: flex-start;
+  font-weight: 500;
+  text-underline-offset: 4px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.title {
+  font-size: var(--text-h1);
+}
+
+.cardTitle {
+  font-size: var(--text-lg);
+}
+
+.muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.plain {
+  margin: 0;
+}
+
+.tiles {
+  display: grid;
+  /* на телефоне — по две плитки в ряд, а не столбик из четырёх */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+
+.chartPlaceholder {
+  height: 260px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.history {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2) 0;
+  background: var(--surface);
+  border-radius: var(--radius-card);
+}
+
+.history > li + li {
+  border-top: 1px solid var(--border);
+}
+
+/* дата · лучший подход (под ним — число подходов) · сила справа */
+.historyRow {
+  padding: var(--space-3) var(--space-5);
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.historyDate {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.historyBest {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 600;
+}
+
+.historyBest .muted {
+  font-weight: 400;
+}
+
+.historyStrength {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  /* две плитки в ряд — цифры поменьше, чтобы "116,7 кг" помещалось в одну строку.
+     Переменная наследуется, поэтому StatTile менять не нужно */
+  .tiles {
+    --text-num: 26px;
+  }
+}

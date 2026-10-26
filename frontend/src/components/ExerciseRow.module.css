@@ -11,6 +11,13 @@
 .link {
   color: inherit;
   text-decoration: none;
+  border-radius: var(--radius-card);
+}
+
+/* строка — ссылка: при наведении подчёркиваем название, как у остальных ссылок */
+.link:hover .title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .name {

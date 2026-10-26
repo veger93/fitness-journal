@@ -92,6 +92,36 @@ class ProgressServiceTest {
     }
 
     @Test
+    void progress_timeExercise_pointsCarryDurationAndSets() {
+        Instant monthAgo = Instant.parse("2026-09-01T12:00:00Z");
+        ExercisePerformance plank = ExercisePerformance.builder()
+                .userId(userId)
+                .workoutId(UUID.randomUUID())
+                .exerciseId(benchId)
+                .exerciseName("Планка")
+                .bodyPart(BodyPart.CORE)
+                .trackingType("TIME")
+                .performedAt(Instant.parse("2026-09-20T10:00:00Z"))
+                .workingSets(2)
+                .volumeKg(BigDecimal.ZERO)
+                .bestDurationSec(90)
+                .build();
+        when(performanceRepository.findByUserIdAndExerciseIdAndPerformedAtGreaterThanEqualOrderByPerformedAtAsc(
+                userId, benchId, monthAgo)).thenReturn(List.of(plank));
+
+        ExerciseProgressResponse response = progressService.progress(userId, benchId, ProgressPeriod.M1);
+
+        // у планки нет веса -> нет 1ПМ и эталона, но в истории видно время и число подходов
+        assertThat(response.currentE1rmKg()).isNull();
+        assertThat(response.reference()).isNull();
+        assertThat(response.points()).singleElement().satisfies(point -> {
+            assertThat(point.bestDurationSec()).isEqualTo(90);
+            assertThat(point.workingSets()).isEqualTo(2);
+            assertThat(point.e1rmKg()).isNull();
+        });
+    }
+
+    @Test
     void progress_noData_emptyState() {
         ExerciseProgressResponse response = progressService.progress(userId, benchId, ProgressPeriod.ALL);
 
