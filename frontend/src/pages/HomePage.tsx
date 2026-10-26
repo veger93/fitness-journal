@@ -8,6 +8,9 @@ import { Button, ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { StatTile } from '../components/ui/StatTile';
 import { useCurrentWorkout } from '../hooks/useWorkout';
+import { todayOf } from '../lib/plan';
+import { workoutsApi } from '../api/workouts';
+import { TodayPlanCard } from '../components/home/TodayPlanCard';
 import { formatChange, formatKg, formatMonth, formatExerciseResult, formatTonnage } from '../lib/format';
 import styles from './HomePage.module.css';
 
@@ -23,6 +26,8 @@ export function HomePage() {
     queryFn: analyticsApi.dashboard,
   });
   const current = useCurrentWorkout();
+  const plan = useQuery({ queryKey: ['plan'], queryFn: workoutsApi.plan });
+  const todayPlanned = plan.data?.days.find((d) => d.dayOfWeek === todayOf())?.template ?? null;
 
   return (
     <div className={styles.page}>
@@ -33,11 +38,18 @@ export function HomePage() {
             {dashboard.data ? `Прогресс за ${formatMonth(dashboard.data.month)}` : 'Прогресс'}
           </h1>
         </div>
-        {/* идёт тренировка — главное действие "вернуться к ней" */}
-        <ButtonLink to={current.data ? '/workout/active' : '/workout'}>
-          {current.data ? 'Продолжить тренировку' : 'Начать тренировку'}
-        </ButtonLink>
+        {/* идёт тренировка — главное действие "вернуться к ней"; сегодня по плану — кнопка "Начать" в карточке плана */}
+        {current.data ? (
+          <ButtonLink to="/workout/active">Продолжить тренировку</ButtonLink>
+        ) : (
+          <ButtonLink to="/workout" variant={todayPlanned ? 'secondary' : 'primary'}>
+            {todayPlanned ? 'Другая тренировка' : 'Начать тренировку'}
+          </ButtonLink>
+        )}
       </div>
+
+      {/* пока идёт тренировка, "сегодня по плану" не нужен — она уже начата */}
+      {plan.data && !current.data && <TodayPlanCard plan={plan.data} />}
 
       {dashboard.isPending && <p className={styles.muted}>Загружаем…</p>}
 

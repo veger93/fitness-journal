@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { workoutsApi, type WorkoutTemplate } from '../api/workouts';
 import { Button } from '../components/ui/Button';
@@ -21,6 +21,7 @@ export function StartWorkoutPage() {
     onSuccess: () => {
       setDeleting(null);
       queryClient.invalidateQueries({ queryKey: ['templates'] });
+      queryClient.invalidateQueries({ queryKey: ['plan'] }); // день плана с этим комплексом удалился вместе с ним
     },
   });
 
@@ -55,6 +56,9 @@ export function StartWorkoutPage() {
       <Button fullWidth onClick={() => start.mutate(null)} disabled={start.isPending}>
         Своя тренировка
       </Button>
+      <Link to="/plan" className={styles.planLink}>
+        План на неделю →
+      </Link>
       {start.isError && <p className={styles.muted}>{start.error.message}</p>}
 
       {mine.length > 0 && (

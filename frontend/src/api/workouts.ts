@@ -44,7 +44,15 @@ export interface Workout {
 export interface TemplateExercise {
   id: string;
   name: string;
+  bodyPart: BodyPart;
   trackingType: TrackingType;
+}
+
+export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
+
+/** План на неделю (workout-service: WeeklyPlanResponse): 7 дней с понедельника, template = null — отдых */
+export interface WeeklyPlan {
+  days: { dayOfWeek: DayOfWeek; template: WorkoutTemplate | null }[];
 }
 
 export interface WorkoutTemplate {
@@ -103,6 +111,9 @@ export const workoutsApi = {
   /** Свой комплекс. color — ключ из палитры бэкенда (orange, blue, green, violet). */
   createTemplate: (name: string, exerciseIds: string[], color = 'blue') =>
     api<WorkoutTemplate>('/api/templates', { method: 'POST', body: { name, color, icon: null, exerciseIds } }),
+  plan: () => api<WeeklyPlan>('/api/plan'),
+  savePlan: (days: { dayOfWeek: DayOfWeek; templateId: string | null }[]) =>
+    api<WeeklyPlan>('/api/plan', { method: 'PUT', body: { days } }),
   deleteTemplate: (id: string) => api<void>(`/api/templates/${id}`, { method: 'DELETE' }),
   exercises: (search: string) => api<CatalogExercise[]>(`/api/exercises?search=${encodeURIComponent(search)}`),
 };
