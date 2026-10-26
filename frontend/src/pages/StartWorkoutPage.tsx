@@ -114,7 +114,7 @@ function TemplateGroup({
       <div className={styles.templates}>
         {templates.map((template) => (
           // две отдельные кнопки рядом, а не кнопка в кнопке: вложенные <button> в HTML запрещены
-          <div key={template.id} className={styles.templateWrap}>
+          <div key={template.id} className={`${styles.templateWrap} ${onDelete ? styles.withDelete : ''}`}>
             <button type="button" className={styles.template} disabled={disabled} onClick={() => onPick(template.id)}>
               <span className={styles.templateName}>{template.name}</span>
               <span className={styles.muted}>{exercisesLabel(template.exercises.length)}</span>

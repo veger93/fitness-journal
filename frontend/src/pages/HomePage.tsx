@@ -8,7 +8,7 @@ import { Button, ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { StatTile } from '../components/ui/StatTile';
 import { useCurrentWorkout } from '../hooks/useWorkout';
-import { todayOf } from '../lib/plan';
+import { completedToday, todayOf } from '../lib/plan';
 import { workoutsApi } from '../api/workouts';
 import { TodayPlanCard } from '../components/home/TodayPlanCard';
 import { formatChange, formatKg, formatMonth, formatExerciseResult, formatTonnage } from '../lib/format';
@@ -27,7 +27,10 @@ export function HomePage() {
   });
   const current = useCurrentWorkout();
   const plan = useQuery({ queryKey: ['plan'], queryFn: workoutsApi.plan });
+  // последние тренировки — понять, сделана ли сегодняшняя по плану (ключ под 'history': обновится после "Завершить")
+  const recent = useQuery({ queryKey: ['history', 'recent'], queryFn: () => workoutsApi.journal(0, 5) });
   const todayPlanned = plan.data?.days.find((d) => d.dayOfWeek === todayOf())?.template ?? null;
+  const plannedPending = todayPlanned !== null && !completedToday(recent.data?.content ?? [], todayPlanned.id);
 
   return (
     <div className={styles.page}>
@@ -42,14 +45,14 @@ export function HomePage() {
         {current.data ? (
           <ButtonLink to="/workout/active">Продолжить тренировку</ButtonLink>
         ) : (
-          <ButtonLink to="/workout" variant={todayPlanned ? 'secondary' : 'primary'}>
-            {todayPlanned ? 'Другая тренировка' : 'Начать тренировку'}
+          <ButtonLink to="/workout" variant={plannedPending ? 'secondary' : 'primary'}>
+            {plannedPending ? 'Другая тренировка' : 'Начать тренировку'}
           </ButtonLink>
         )}
       </div>
 
       {/* пока идёт тренировка, "сегодня по плану" не нужен — она уже начата */}
-      {plan.data && !current.data && <TodayPlanCard plan={plan.data} />}
+      {plan.data && !current.data && <TodayPlanCard plan={plan.data} recent={recent.data?.content ?? []} />}
 
       {dashboard.isPending && <p className={styles.muted}>Загружаем…</p>}
 

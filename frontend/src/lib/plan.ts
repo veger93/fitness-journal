@@ -1,4 +1,4 @@
-import type { BodyPart, DayOfWeek, WeeklyPlan, WorkoutTemplate } from '../api/workouts';
+import type { BodyPart, DayOfWeek, WeeklyPlan, Workout, WorkoutTemplate } from '../api/workouts';
 
 export const DAYS: { day: DayOfWeek; name: string; short: string }[] = [
   { day: 'MONDAY', name: 'Понедельник', short: 'Пн' },
@@ -72,4 +72,19 @@ export function planHints(templates: (WorkoutTemplate | null)[]): string[] {
     );
   }
   return hints;
+}
+
+/**
+ * Выполнена ли сегодня тренировка по плану: завершена сегодня (по часам устройства) и начата из этого комплекса.
+ * Тренировка из другого комплекса план не закрывает — её покажем отдельно.
+ */
+export function completedToday(recent: Workout[], templateId: string, now: Date = new Date()): Workout | null {
+  return (
+    recent.find((w) => w.templateId === templateId && w.completedAt != null && sameDay(new Date(w.completedAt), now)) ??
+    null
+  );
+}
+
+function sameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }

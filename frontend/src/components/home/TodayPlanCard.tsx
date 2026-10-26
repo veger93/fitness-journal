@@ -1,18 +1,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { workoutsApi, type WeeklyPlan } from '../../api/workouts';
+import { workoutsApi, type WeeklyPlan, type Workout } from '../../api/workouts';
 import { CURRENT_WORKOUT_KEY } from '../../hooks/useWorkout';
-import { DAYS, nextPlanned, todayOf } from '../../lib/plan';
+import { DAYS, completedToday, nextPlanned, todayOf } from '../../lib/plan';
 import { exercisesLabel } from '../../pages/StartWorkoutPage';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import styles from './Home.module.css';
 
 /**
- * "Сегодня по плану" на главной. Три случая: сегодня тренировка — кнопка "Начать";
+ * "Сегодня по плану" на главной. Случаи: сегодня тренировка — кнопка "Начать", а если уже сделана — "выполнено";
  * сегодня отдых — когда следующая; плана нет — приглашение его составить.
  */
-export function TodayPlanCard({ plan }: { plan: WeeklyPlan }) {
+export function TodayPlanCard({ plan, recent }: { plan: WeeklyPlan; recent: Workout[] }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const today = todayOf();
@@ -26,6 +26,23 @@ export function TodayPlanCard({ plan }: { plan: WeeklyPlan }) {
       navigate('/workout/active');
     },
   });
+
+  const nextText = next
+    ? `Следующая тренировка — ${DAYS.find((d) => d.day === next.day)?.name.toLowerCase()}: ${next.template.name}.`
+    : null;
+
+  if (todayTemplate && completedToday(recent, todayTemplate.id)) {
+    return (
+      <Card as="section">
+        <span className={styles.signalLabel}>Сегодня по плану</span>
+        <h2 className={styles.planTitle}>{todayTemplate.name} — выполнено ✓</h2>
+        <p className={styles.signalText}>Отличная работа! {nextText}</p>
+        <Link to="/plan" className={styles.planLink}>
+          План на неделю
+        </Link>
+      </Card>
+    );
+  }
 
   if (todayTemplate) {
     return (
@@ -47,14 +64,11 @@ export function TodayPlanCard({ plan }: { plan: WeeklyPlan }) {
   }
 
   if (next) {
-    const dayName = DAYS.find((d) => d.day === next.day)?.name.toLowerCase();
     return (
       <Card as="section">
         <span className={styles.signalLabel}>Сегодня по плану</span>
         <h2 className={styles.planTitle}>День отдыха</h2>
-        <p className={styles.signalText}>
-          Следующая тренировка — {dayName}: {next.template.name}.
-        </p>
+        <p className={styles.signalText}>{nextText}</p>
         <Link to="/plan" className={styles.planLink}>
           План на неделю
         </Link>

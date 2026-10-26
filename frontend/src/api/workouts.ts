@@ -2,6 +2,7 @@ import { api } from './client';
 
 /** Типы повторяют DTO workout-service. */
 export type TrackingType = 'WEIGHT_REPS' | 'TIME' | 'DISTANCE';
+export type Equipment = 'BARBELL' | 'DUMBBELL' | 'MACHINE' | 'BODYWEIGHT';
 export type BodyPart = 'CHEST' | 'BACK' | 'LEGS' | 'SHOULDERS' | 'ARMS' | 'CORE';
 
 export interface WorkoutSet {
@@ -23,6 +24,7 @@ export interface WorkoutExercise {
   exerciseId: string; // id из каталога
   exerciseName: string;
   trackingType: TrackingType;
+  equipment: Equipment;
   sets: WorkoutSet[];
   previousSets: WorkoutSet[]; // как было в прошлый раз
 }
