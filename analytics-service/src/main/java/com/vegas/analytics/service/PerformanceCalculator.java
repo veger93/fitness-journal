@@ -57,6 +57,9 @@ public final class PerformanceCalculator {
                 .avgRpe(averageRpe(working))
                 .bestDurationSec(maxOf(working, SetPerformed::durationSec))
                 .bestDistanceM(maxOf(working, SetPerformed::distanceM))
+                .totalDistanceM(sumOf(working, SetPerformed::distanceM))
+                .totalDurationSec(sumOf(working, SetPerformed::durationSec))
+                .bestPaceSecPerKm(bestPace(working))
                 .build());
     }
 
@@ -84,6 +87,24 @@ public final class PerformanceCalculator {
     private static Integer sumReps(List<SetPerformed> sets) {
         List<Integer> reps = sets.stream().map(SetPerformed::reps).filter(Objects::nonNull).toList();
         return reps.isEmpty() ? null : reps.stream().mapToInt(Integer::intValue).sum();
+    }
+
+    /** Отрезок короче километра в "рекорд темпа" не идёт: 200 м в спринте — не то же, что 5 км. */
+    static final int PACE_MIN_DISTANCE_M = 1000;
+
+    /** Лучший (минимальный) темп — секунд на км — среди отрезков от 1 км с указанным временем. */
+    private static BigDecimal bestPace(List<SetPerformed> sets) {
+        return sets.stream()
+                .filter(set -> set.distanceM() != null && set.distanceM() >= PACE_MIN_DISTANCE_M && set.durationSec() != null)
+                .map(set -> BigDecimal.valueOf(set.durationSec() * 1000L)
+                        .divide(BigDecimal.valueOf(set.distanceM()), 1, java.math.RoundingMode.HALF_UP))
+                .min(Comparator.naturalOrder())
+                .orElse(null);
+    }
+
+    private static Integer sumOf(List<SetPerformed> sets, java.util.function.Function<SetPerformed, Integer> field) {
+        List<Integer> values = sets.stream().map(field).filter(Objects::nonNull).toList();
+        return values.isEmpty() ? null : values.stream().mapToInt(Integer::intValue).sum();
     }
 
     private static Integer maxOf(List<SetPerformed> sets, java.util.function.Function<SetPerformed, Integer> field) {

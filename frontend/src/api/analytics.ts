@@ -90,11 +90,36 @@ export interface DeloadPlan {
   notes: string[];
 }
 
+/** Страница "Бег" (analytics: RunningSummaryResponse) */
+export interface RunRecord {
+  date: string;
+  distanceM: number | null;
+  durationSec: number | null;
+  paceSecPerKm: number | null;
+  fresh: boolean;
+}
+
+export interface RunningSummary {
+  empty: boolean;
+  weeks: { weekStart: string; distanceM: number }[];
+  load: {
+    lastTwoWeeksM: number;
+    previousTwoWeeksM: number;
+    changePercent: number | null;
+    warning: boolean;
+    hint: string | null;
+  };
+  longestRun: RunRecord | null;
+  bestPace: RunRecord | null;
+  effort: { easy: number; moderate: number; hard: number; unrated: number; hint: string | null };
+}
+
 export const analyticsApi = {
   dashboard: () => api<Dashboard>('/api/analytics/dashboard'),
   progress: (exerciseId: string, period: ProgressPeriod = 'M3') =>
     api<ExerciseProgress>(`/api/analytics/exercises/${exerciseId}/progress?period=${period}`),
   insights: (exerciseId: string) => api<ExerciseInsights>(`/api/analytics/exercises/${exerciseId}/insights`),
   records: (limit = 50) => api<PersonalRecord[]>(`/api/records?limit=${limit}`),
+  running: () => api<RunningSummary>('/api/analytics/running'),
   deloadPlan: (exerciseId: string) => api<DeloadPlan>(`/api/analytics/exercises/${exerciseId}/deload-plan`),
 };

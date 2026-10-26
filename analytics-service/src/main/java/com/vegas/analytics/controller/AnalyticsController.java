@@ -5,10 +5,12 @@ import com.vegas.analytics.dto.DeloadPlanResponse;
 import com.vegas.analytics.dto.ExerciseInsightsResponse;
 import com.vegas.analytics.dto.ExerciseProgressResponse;
 import com.vegas.analytics.dto.ProgressPeriod;
+import com.vegas.analytics.dto.RunningSummaryResponse;
 import com.vegas.analytics.security.CurrentUser;
 import com.vegas.analytics.service.DashboardService;
 import com.vegas.analytics.service.ExerciseInsightsService;
 import com.vegas.analytics.service.ProgressService;
+import com.vegas.analytics.service.RunningService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -31,11 +33,18 @@ public class AnalyticsController {
     private final ProgressService progressService;
     private final ExerciseInsightsService insightsService;
     private final DashboardService dashboardService;
+    private final RunningService runningService;
 
     @GetMapping("/dashboard")
     @Operation(summary = "Главная: тоннаж за неделю, тренировки за месяц, упражнения со статусами")
     public DashboardResponse dashboard(@AuthenticationPrincipal Jwt jwt) {
         return dashboardService.dashboard(CurrentUser.id(jwt));
+    }
+
+    @GetMapping("/running")
+    @Operation(summary = "Бег: километраж по неделям, рост нагрузки, рекорды, баланс лёгких и тяжёлых пробежек")
+    public RunningSummaryResponse running(@AuthenticationPrincipal Jwt jwt) {
+        return runningService.summary(CurrentUser.id(jwt));
     }
 
     @GetMapping("/exercises/{exerciseId}/progress")

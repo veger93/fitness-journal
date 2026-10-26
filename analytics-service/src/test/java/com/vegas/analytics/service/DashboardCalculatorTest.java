@@ -155,6 +155,21 @@ class DashboardCalculatorTest {
         assertThat(exercises.get(1).lastReps()).isEqualTo(12);
     }
 
+    @Test
+    void run_kilometreSpike_isOverload_speedTrend() {
+        List<ExercisePerformance> runs = List.of(
+                RunningCalculatorTest.run(25, 5000, 1800, null), RunningCalculatorTest.run(18, 5000, 1800, null),
+                RunningCalculatorTest.run(10, 7000, 2520, null), RunningCalculatorTest.run(3, 8000, 2700, null));
+
+        ExerciseSummaryResponse run = DashboardCalculator.build(runs, List.of(), RunningCalculatorTest.NOW_FOR_DASHBOARD)
+                .exercises().get(0);
+
+        assertThat(run.status()).isEqualTo(ExerciseStatus.OVERLOAD);
+        assertThat(run.note()).isEqualTo("Километраж за 2 недели +50%");
+        assertThat(run.lastDistanceM()).isEqualTo(8000);
+        assertThat(run.trend()).extracting(BigDecimal::doubleValue).containsExactly(10.0, 10.0, 10.0, 10.7);
+    }
+
     // ---------- helpers ----------
 
     private static List<ExercisePerformance> sorted(List<ExercisePerformance> list) {

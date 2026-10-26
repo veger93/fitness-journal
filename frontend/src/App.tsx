@@ -10,6 +10,7 @@ import { ExercisesPage } from './pages/ExercisesPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { RecordsPage } from './pages/RecordsPage';
+import { RunningPage } from './pages/RunningPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { StartWorkoutPage } from './pages/StartWorkoutPage';
 import { WorkoutSummaryPage } from './pages/WorkoutSummaryPage';
@@ -43,6 +44,7 @@ export function App() {
                 <Route path="/workout/:workoutId/summary" element={<WorkoutSummaryPage />} />
                 <Route path="/exercises" element={<ExercisesPage />} />
                 <Route path="/records" element={<RecordsPage />} />
+                <Route path="/running" element={<RunningPage />} />
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/history/:workoutId" element={<WorkoutSummaryPage mode="view" />} />
                 <Route path="/profile" element={<ProfilePage />} />

@@ -94,6 +94,17 @@ public class ExercisePerformance {
     @Column(name = "best_distance_m")
     private Integer bestDistanceM;
 
+    /** Бег: вся дистанция тренировки (интервалы складываются). */
+    @Column(name = "total_distance_m")
+    private Integer totalDistanceM;
+
+    @Column(name = "total_duration_sec")
+    private Integer totalDurationSec;
+
+    /** Лучший темп (секунд на км) на отрезке от 1 км; null — таких отрезков не было. */
+    @Column(name = "best_pace_sec_per_km", precision = 6, scale = 1)
+    private BigDecimal bestPaceSecPerKm;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

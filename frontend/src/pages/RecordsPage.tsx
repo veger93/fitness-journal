@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { analyticsApi, type PersonalRecord } from '../api/analytics';
+import { Link } from 'react-router-dom';
+import { analyticsApi, type PersonalRecord, type RunningSummary } from '../api/analytics';
+import { formatClock, formatDistance } from '../lib/workout';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
@@ -24,6 +26,7 @@ const VIEWS: { value: View; label: string }[] = [
 export function RecordsPage() {
   const [view, setView] = useState<View>('best');
   const records = useQuery({ queryKey: ['records'], queryFn: () => analyticsApi.records(200) });
+  const running = useQuery({ queryKey: ['running'], queryFn: analyticsApi.running });
   const data = records.data ?? [];
 
   return (
@@ -32,12 +35,13 @@ export function RecordsPage() {
       <SegmentedControl legend="Какие рекорды показать" options={VIEWS} value={view} onChange={setView} />
       {records.isPending && <p className={styles.muted}>Загружаем…</p>}
       {records.isError && <p className={styles.muted}>{records.error.message}</p>}
-      {records.data?.length === 0 && (
+      {records.data?.length === 0 && running.data?.empty !== false && (
         <p className={styles.muted}>Рекордов пока нет. Первый появится, когда вы превзойдёте свой прошлый результат.</p>
       )}
 
-      {view === 'best' && data.length > 0 && (
+      {view === 'best' && (data.length > 0 || (running.data && !running.data.empty)) && (
         <div className={styles.records}>
+          {running.data && !running.data.empty && <RunningRecordCard running={running.data} />}
           {bestPerExercise(data).map((record) => (
             <RecordCard key={record.exerciseId} record={record} />
           ))}
@@ -106,6 +110,32 @@ function RecordCard({ record }: { record: PersonalRecord }) {
           {TYPE_LABEL[item.type]}: {item.hint}
         </p>
       ))}
+    </Card>
+  );
+}
+
+/** Рекорды бега — отдельной карточкой: у них другие величины (км и темп), а не вес. */
+function RunningRecordCard({ running }: { running: RunningSummary }) {
+  return (
+    <Card as="article">
+      <div className={styles.recordHead}>
+        <h2 className={styles.recordName}>Бег</h2>
+        <Link to="/running" className={styles.muted}>
+          подробнее →
+        </Link>
+      </div>
+      {running.longestRun?.distanceM != null && (
+        <p className={styles.runLine}>
+          <span className={styles.muted}>Самая длинная</span>
+          <span className={styles.recordSetSmall}>{formatDistance(running.longestRun.distanceM)}</span>
+        </p>
+      )}
+      {running.bestPace?.paceSecPerKm != null && (
+        <p className={styles.runLine}>
+          <span className={styles.muted}>Лучший темп</span>
+          <span className={styles.recordSetSmall}>{formatClock(running.bestPace.paceSecPerKm)} /км</span>
+        </p>
+      )}
     </Card>
   );
 }
