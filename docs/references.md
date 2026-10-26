@@ -79,6 +79,23 @@
     — "тест разговором": можно говорить спокойно / да, но с трудом / нельзя — соответствует интенсивности
     около вентиляционных порогов. Наши кнопки "Легко / Средне / Тяжело" — эти три ответа.
 
+14. **Schoenfeld B.J., Ogborn D., Krieger J.W.**
+    Effects of resistance training frequency on measures of muscle hypertrophy: a systematic review and meta-analysis.
+    *Sports Medicine*, 2016, 46(11): 1689–1697. https://pubmed.ncbi.nlm.nih.gov/27102172/
+    — тренировать группу мышц 2 раза в неделю выгоднее для роста, чем 1 раз.
+
+15. **Grgic J., Schoenfeld B.J., Latella C.**
+    Resistance training frequency and skeletal muscle hypertrophy: a review of available evidence.
+    *Journal of Science and Medicine in Sport*, 2019, 22(3): 361–370. https://doi.org/10.1016/j.jsams.2018.09.223
+    — при одинаковом недельном объёме частота почти не влияет на рост: важнее суммарный объём за неделю.
+    Поэтому подсказка в плане мягкая: "2 раза в неделю обычно удобнее набрать объём", а не "1 раз — плохо".
+
+16. **Ratamess N.A., Alvar B.A., Evetoch T.K., Housh T.J., Kibler W.B., Kraemer W.J., Triplett N.T.**
+    (American College of Sports Medicine) Progression models in resistance training for healthy adults.
+    *Medicine & Science in Sports & Exercise*, 2009, 41(3): 687–708. https://doi.org/10.1249/MSS.0b013e3181915670
+    — частота: новичкам 2–3 тренировки всего тела в неделю, среднему уровню 3–4, опытным 4–5(6) со сплитом;
+    неделя повторяется, нагрузку повышают постепенно.
+
 > Перед публикацией описания проекта выходные данные стоит сверить с первоисточниками.
 
 ## Где что используется
@@ -100,3 +117,6 @@
 | Подсказка "добавьте лёгких", если лёгких пробежек меньше половины | `RunningCalculator.effort` | порог 50% — эвристика проекта, мягче 80% из [11] (там элита) |
 | Предупреждение о росте километража > 30% за 2 недели (база от 5 км) | `RunningCalculator.load` | [12]; минимальная база — эвристика проекта |
 | Рекорд темпа — только на отрезках от 1 км | `PerformanceCalculator.bestPace` | эвристика проекта |
+| План — повторяющаяся неделя: комплекс на день недели | `WeeklyPlanService` | [16] |
+| Подсказка "группа мышц 1 раз в неделю — можно 2" | `PlanPage` (фронт) | [14], смягчено по [15] |
+| Подсказка про дни отдыха при 7 тренировках в неделю | `PlanPage` (фронт) | [16] (до 5–6 дней у опытных) |
