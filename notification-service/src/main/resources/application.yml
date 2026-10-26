@@ -44,6 +44,8 @@ springdoc:
     path: /swagger-ui.html
 
 app:
+  # адрес фронта — для ссылок в письмах; на сервере задаётся переменной окружения
+  web-url: ${APP_WEB_URL:http://localhost:5173}
   kafka:
     topics:
       user-events: user-events

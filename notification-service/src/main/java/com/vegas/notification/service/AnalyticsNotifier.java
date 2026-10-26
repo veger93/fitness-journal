@@ -5,7 +5,7 @@ import com.vegas.common.event.OverloadRiskEvent;
 import com.vegas.common.event.PersonalRecordEvent;
 import com.vegas.common.event.PlateauDetectedEvent;
 import com.vegas.notification.entity.NotificationType;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.ZoneOffset;
@@ -17,10 +17,20 @@ import java.time.temporal.IsoFields;
  * один ключ = одно письмо, сколько бы раз событие ни пришло.
  */
 @Service
-@RequiredArgsConstructor
 public class AnalyticsNotifier {
 
     private final NotificationService notificationService;
+    /** Адрес веб-приложения — для ссылок в письмах (локально http://localhost:5173) */
+    private final String webUrl;
+
+    /**
+     * Конструктор вручную, а не @RequiredArgsConstructor: Lombok не переносит @Value с поля на параметр конструктора,
+     * и Spring не знал бы, откуда взять строку.
+     */
+    public AnalyticsNotifier(NotificationService notificationService, @Value("${app.web-url}") String webUrl) {
+        this.notificationService = notificationService;
+        this.webUrl = webUrl;
+    }
 
     /** Рекорд привязан к тренировке и упражнению. */
     public void personalRecord(PersonalRecordEvent event) {
@@ -47,7 +57,7 @@ public class AnalyticsNotifier {
     public void monthlyReport(MonthlyReportReadyEvent event) {
         notificationService.send(event.userId(), NotificationType.MONTHLY_REPORT,
                 "REPORT:" + event.month(),
-                greeting -> NotificationTemplates.monthlyReport(greeting, event));
+                greeting -> NotificationTemplates.monthlyReport(greeting, event, webUrl + "/reports/" + event.month()));
     }
 
     static String isoWeek(OverloadRiskEvent event) {

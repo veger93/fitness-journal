@@ -85,7 +85,8 @@ public final class NotificationTemplates {
         return new EmailMessage("Пора немного отдохнуть: " + event.exerciseName(), body + SIGNATURE);
     }
 
-    public static EmailMessage monthlyReport(String greeting, MonthlyReportReadyEvent event) {
+    /** reportUrl — ссылка на страницу отчёта в приложении: /reports/2026-09 */
+    public static EmailMessage monthlyReport(String greeting, MonthlyReportReadyEvent event, String reportUrl) {
         String month = monthName(event.month());
         StringBuilder body = new StringBuilder()
                 .append(greeting).append(", итоги за ").append(month).append(":\n\n")
@@ -104,7 +105,7 @@ public final class NotificationTemplates {
             footnotes.add("Поднято за месяц — сумма «вес × повторы» по всем рабочим подходам.");
             body.append("*".repeat(footnotes.size())).append('\n');
         }
-        body.append("\nПодробный отчёт — в приложении.\n");
+        body.append("\nПодробный отчёт: ").append(reportUrl).append('\n');
         appendFootnotes(body, footnotes);
         return new EmailMessage("Итоги месяца: " + month, body + SIGNATURE);
     }
