@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { WeeklyPlan, WorkoutTemplate } from '../api/workouts';
-import { planDays, sameDays, toTimeInput, toggleDay } from './reminders';
+import { planDays, restDaysAmong, toTimeInput, toggleDay } from './reminders';
 
 const template = { id: 't1', name: 'Верх' } as WorkoutTemplate;
 
@@ -22,9 +22,11 @@ describe('reminders', () => {
     expect(toggleDay(['MONDAY', 'FRIDAY'], 'MONDAY')).toEqual(['FRIDAY']);
   });
 
-  it('сравнение дней без учёта порядка', () => {
-    expect(sameDays(['MONDAY', 'FRIDAY'], ['FRIDAY', 'MONDAY'])).toBe(true);
-    expect(sameDays(['MONDAY'], ['MONDAY', 'FRIDAY'])).toBe(false);
+  it('дни отдыха среди выбранных вручную', () => {
+    const plan: WeeklyPlan = { days: [{ dayOfWeek: 'MONDAY', template }] };
+    expect(restDaysAmong(['MONDAY', 'TUESDAY'], plan)).toEqual(['TUESDAY']);
+    // плана нет — не предупреждаем
+    expect(restDaysAmong(['MONDAY', 'TUESDAY'], { days: [] })).toEqual([]);
   });
 
   it('время для поля ввода', () => {

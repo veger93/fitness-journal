@@ -16,8 +16,13 @@ export interface AppNotification {
   read: boolean;
 }
 
+/** PLAN — напоминать в дни плана на неделю, CUSTOM — в выбранные вручную */
+export type ReminderMode = 'PLAN' | 'CUSTOM';
+
 export interface NotificationSettings {
   remindersEnabled: boolean;
+  reminderMode: ReminderMode;
+  /** используется только в режиме CUSTOM */
   reminderDays: DayOfWeek[];
   /** "19:00:00" — Jackson отдаёт LocalTime с секундами, принимает и "19:00" */
   reminderTime: string | null;

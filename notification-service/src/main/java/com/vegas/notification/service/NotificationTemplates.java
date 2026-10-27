@@ -15,6 +15,7 @@ import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * Тексты писем. Простой текст без HTML: его проще тестировать и он одинаково выглядит в любом почтовике.
@@ -110,10 +111,19 @@ public final class NotificationTemplates {
         return new EmailMessage("Итоги месяца: " + month, body + SIGNATURE);
     }
 
-    public static EmailMessage workoutReminder(String greeting, LocalDate day) {
+    /**
+     * templateName — комплекс из плана на этот день. Пусто — в плане день отдыха (или плана нет),
+     * а напоминание пришло по вручную выбранным дням: тогда "по плану" не пишем — это была бы неправда.
+     */
+    public static EmailMessage workoutReminder(String greeting, LocalDate day, Optional<String> templateName) {
         String weekday = day.getDayOfWeek().getDisplayName(TextStyle.FULL, RU);
-        String body = greeting + ", сегодня (" + weekday + ") по плану тренировка. Хорошей работы!\n\n"
-                + "Дни и время напоминаний можно поменять или выключить в профиле.";
+        String footer = "\n\nДни и время напоминаний можно поменять или выключить в профиле.";
+        if (templateName.isPresent()) {
+            String body = greeting + ", сегодня (" + weekday + ") по плану тренировка: " + templateName.get()
+                    + ". Хорошей работы!" + footer;
+            return new EmailMessage("Сегодня по плану: " + templateName.get(), body + SIGNATURE);
+        }
+        String body = greeting + ", напоминаем о тренировке сегодня (" + weekday + "). Хорошей работы!" + footer;
         return new EmailMessage("Сегодня тренировка", body + SIGNATURE);
     }
 

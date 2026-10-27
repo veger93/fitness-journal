@@ -1,7 +1,10 @@
 package com.vegas.notification.service;
 
 import com.vegas.notification.entity.NotificationSettings;
+import com.vegas.notification.entity.ReminderMode;
+import com.vegas.notification.entity.WeeklyPlan;
 
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -9,7 +12,9 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Когда пора напоминать. Чистые функции без Spring и БД: всё, что нужно, передаётся параметрами,
@@ -33,13 +38,27 @@ public final class ReminderRules {
     }
 
     /**
+     * В какие дни напоминать. PLAN — дни плана на неделю (нет плана — нет напоминаний: напоминать не о чем),
+     * CUSTOM — дни, выбранные вручную.
+     */
+    public static Set<DayOfWeek> reminderDays(NotificationSettings settings, Optional<WeeklyPlan> plan) {
+        if (settings.getReminderMode() == ReminderMode.CUSTOM) {
+            return settings.getReminderDays();
+        }
+        Set<DayOfWeek> days = EnumSet.noneOf(DayOfWeek.class);
+        plan.ifPresent(p -> p.getDays().forEach(day -> days.add(day.dayOfWeek())));
+        return days;
+    }
+
+    /**
      * Напоминание по расписанию.
      *
+     * @param days дни напоминаний — результат {@link #reminderDays}
      * @return локальная дата тренировки, о которой пора напомнить (она же — часть ключа дублей),
      *         или empty, если сейчас напоминать не нужно
      */
-    public static Optional<LocalDate> scheduledReminderDue(NotificationSettings settings, Instant now,
-                                                           Optional<Instant> lastWorkoutAt) {
+    public static Optional<LocalDate> scheduledReminderDue(NotificationSettings settings, Set<DayOfWeek> days,
+                                                           Instant now, Optional<Instant> lastWorkoutAt) {
         if (!settings.isRemindersEnabled() || settings.getReminderTime() == null) {
             return Optional.empty();
         }
@@ -48,7 +67,7 @@ public final class ReminderRules {
 
         // проверяем и вчера: напоминание на 23:30 + окно 2 часа заканчивается уже завтра
         for (LocalDate day : new LocalDate[]{today, today.minusDays(1)}) {
-            if (!settings.getReminderDays().contains(day.getDayOfWeek())) {
+            if (!days.contains(day.getDayOfWeek())) {
                 continue;
             }
             // ZonedDateTime.of сам разруливает переход на летнее время (несуществующее 02:30 сдвинет на 03:30)

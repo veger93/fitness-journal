@@ -2,10 +2,12 @@ package com.vegas.notification.scheduler;
 
 import com.vegas.notification.entity.NotificationSettings;
 import com.vegas.notification.entity.NotificationType;
+import com.vegas.notification.entity.WeeklyPlan;
 import com.vegas.notification.repository.NotificationSettingsRepository;
 import com.vegas.notification.service.NotificationService;
 import com.vegas.notification.service.NotificationTemplates;
 import com.vegas.notification.service.ReminderRules;
+import com.vegas.notification.service.WeeklyPlanSyncService;
 import com.vegas.notification.service.WorkoutActivityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,9 +15,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Два планировщика напоминаний. Решение "пора или нет" — в ReminderRules, здесь только обход пользователей.
@@ -38,6 +42,7 @@ public class ReminderScheduler {
 
     private final NotificationSettingsRepository settingsRepository;
     private final WorkoutActivityService activityService;
+    private final WeeklyPlanSyncService planService;
     private final NotificationService notificationService;
     private final Clock clock;
 
@@ -47,10 +52,13 @@ public class ReminderScheduler {
         for (NotificationSettings settings : settingsRepository.findByRemindersEnabledTrue()) {
             safely(settings, () -> {
                 Optional<Instant> last = activityService.lastWorkoutAt(settings.getUserId());
-                ReminderRules.scheduledReminderDue(settings, now, last).ifPresent(day ->
+                Optional<WeeklyPlan> plan = planService.find(settings.getUserId());
+                Set<DayOfWeek> days = ReminderRules.reminderDays(settings, plan);
+                ReminderRules.scheduledReminderDue(settings, days, now, last).ifPresent(day ->
                         notificationService.send(settings.getUserId(), NotificationType.WORKOUT_REMINDER,
                                 "REMINDER:" + day,
-                                greeting -> NotificationTemplates.workoutReminder(greeting, day)));
+                                greeting -> NotificationTemplates.workoutReminder(greeting, day,
+                                        plan.flatMap(p -> p.templateFor(day.getDayOfWeek())))));
             });
         }
     }

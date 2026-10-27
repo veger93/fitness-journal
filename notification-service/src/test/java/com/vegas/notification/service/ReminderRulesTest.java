@@ -1,12 +1,16 @@
 package com.vegas.notification.service;
 
 import com.vegas.notification.entity.NotificationSettings;
+import com.vegas.notification.entity.PlannedWorkout;
+import com.vegas.notification.entity.ReminderMode;
+import com.vegas.notification.entity.WeeklyPlan;
 import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -22,16 +26,16 @@ class ReminderRulesTest {
     void reminder_dueAtLocalTime_inUserZone() {
         NotificationSettings s = reminders(LocalTime.of(19, 0), "Asia/Yekaterinburg");
 
-        assertThat(ReminderRules.scheduledReminderDue(s, at("2026-10-19T13:59:00Z"), Optional.empty())).isEmpty();
-        assertThat(ReminderRules.scheduledReminderDue(s, at("2026-10-19T14:00:30Z"), Optional.empty())).contains(MONDAY);
+        assertThat(ReminderRules.scheduledReminderDue(s, s.getReminderDays(), at("2026-10-19T13:59:00Z"), Optional.empty())).isEmpty();
+        assertThat(ReminderRules.scheduledReminderDue(s, s.getReminderDays(), at("2026-10-19T14:00:30Z"), Optional.empty())).contains(MONDAY);
     }
 
     @Test
     void reminder_notSentAfterWindow() {
         NotificationSettings s = reminders(LocalTime.of(19, 0), "Asia/Yekaterinburg");
 
-        assertThat(ReminderRules.scheduledReminderDue(s, at("2026-10-19T15:59:00Z"), Optional.empty())).contains(MONDAY);
-        assertThat(ReminderRules.scheduledReminderDue(s, at("2026-10-19T16:00:00Z"), Optional.empty())).isEmpty();
+        assertThat(ReminderRules.scheduledReminderDue(s, s.getReminderDays(), at("2026-10-19T15:59:00Z"), Optional.empty())).contains(MONDAY);
+        assertThat(ReminderRules.scheduledReminderDue(s, s.getReminderDays(), at("2026-10-19T16:00:00Z"), Optional.empty())).isEmpty();
     }
 
     @Test
@@ -39,7 +43,7 @@ class ReminderRulesTest {
         NotificationSettings s = reminders(LocalTime.of(19, 0), "Asia/Yekaterinburg");
 
         // вторник
-        assertThat(ReminderRules.scheduledReminderDue(s, at("2026-10-20T14:00:00Z"), Optional.empty())).isEmpty();
+        assertThat(ReminderRules.scheduledReminderDue(s, s.getReminderDays(), at("2026-10-20T14:00:00Z"), Optional.empty())).isEmpty();
     }
 
     @Test
@@ -48,9 +52,9 @@ class ReminderRulesTest {
         Instant now = at("2026-10-19T14:01:00Z");
 
         // 10:00 по Екатеринбургу того же дня
-        assertThat(ReminderRules.scheduledReminderDue(s, now, Optional.of(at("2026-10-19T05:00:00Z")))).isEmpty();
+        assertThat(ReminderRules.scheduledReminderDue(s, s.getReminderDays(), now, Optional.of(at("2026-10-19T05:00:00Z")))).isEmpty();
         // вчера — напоминаем
-        assertThat(ReminderRules.scheduledReminderDue(s, now, Optional.of(at("2026-10-18T12:00:00Z")))).contains(MONDAY);
+        assertThat(ReminderRules.scheduledReminderDue(s, s.getReminderDays(), now, Optional.of(at("2026-10-18T12:00:00Z")))).contains(MONDAY);
     }
 
     @Test
@@ -58,7 +62,7 @@ class ReminderRulesTest {
         NotificationSettings s = reminders(LocalTime.of(23, 30), "UTC");
 
         // уже вторник 00:30, но это напоминание на понедельник 23:30
-        assertThat(ReminderRules.scheduledReminderDue(s, at("2026-10-20T00:30:00Z"), Optional.empty())).contains(MONDAY);
+        assertThat(ReminderRules.scheduledReminderDue(s, s.getReminderDays(), at("2026-10-20T00:30:00Z"), Optional.empty())).contains(MONDAY);
     }
 
     @Test
@@ -93,19 +97,42 @@ class ReminderRulesTest {
         NotificationSettings s = NotificationSettings.defaults(UUID.randomUUID());
         Optional<Instant> last = Optional.of(at("2026-01-01T00:00:00Z"));
 
-        assertThat(ReminderRules.scheduledReminderDue(s, at("2026-10-19T14:00:00Z"), last)).isEmpty();
+        assertThat(ReminderRules.scheduledReminderDue(s, s.getReminderDays(), at("2026-10-19T14:00:00Z"), last)).isEmpty();
         assertThat(ReminderRules.inactivityDue(s, at("2026-10-19T14:00:00Z"), last)).isEmpty();
+    }
+
+    @Test
+    void reminderDays_planMode_takesDaysFromPlan() {
+        NotificationSettings s = NotificationSettings.defaults(UUID.randomUUID());
+        s.update(true, ReminderMode.PLAN, Set.of(DayOfWeek.SUNDAY), LocalTime.of(19, 0), false, 7, "UTC");
+        WeeklyPlan plan = new WeeklyPlan(s.getUserId());
+        plan.replace(List.of(new PlannedWorkout(DayOfWeek.MONDAY, "Верх"), new PlannedWorkout(DayOfWeek.WEDNESDAY, "Низ")),
+                at("2026-10-18T10:00:00Z"));
+
+        // дни, выбранные вручную (воскресенье), в режиме PLAN не участвуют
+        assertThat(ReminderRules.reminderDays(s, Optional.of(plan))).containsExactlyInAnyOrder(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY);
+        // плана нет — напоминать не о чем
+        assertThat(ReminderRules.reminderDays(s, Optional.empty())).isEmpty();
+    }
+
+    @Test
+    void reminderDays_customMode_ignoresPlan() {
+        NotificationSettings s = reminders(LocalTime.of(19, 0), "UTC");
+        WeeklyPlan plan = new WeeklyPlan(s.getUserId());
+        plan.replace(List.of(new PlannedWorkout(DayOfWeek.FRIDAY, "Верх")), at("2026-10-18T10:00:00Z"));
+
+        assertThat(ReminderRules.reminderDays(s, Optional.of(plan))).containsExactlyInAnyOrder(DayOfWeek.MONDAY, DayOfWeek.THURSDAY);
     }
 
     static NotificationSettings reminders(LocalTime time, String zone) {
         NotificationSettings s = NotificationSettings.defaults(UUID.randomUUID());
-        s.update(true, Set.of(DayOfWeek.MONDAY, DayOfWeek.THURSDAY), time, false, 7, zone);
+        s.update(true, ReminderMode.CUSTOM, Set.of(DayOfWeek.MONDAY, DayOfWeek.THURSDAY), time, false, 7, zone);
         return s;
     }
 
     static NotificationSettings inactivity(int days) {
         NotificationSettings s = NotificationSettings.defaults(UUID.randomUUID());
-        s.update(false, null, null, true, days, "UTC");
+        s.update(false, ReminderMode.PLAN, null, null, true, days, "UTC");
         return s;
     }
 

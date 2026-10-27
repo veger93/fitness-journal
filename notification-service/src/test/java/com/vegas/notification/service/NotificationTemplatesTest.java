@@ -95,11 +95,22 @@ class NotificationTemplatesTest {
     }
 
     @Test
-    void workoutReminder_namesWeekday() {
-        EmailMessage message = NotificationTemplates.workoutReminder("Сергей", java.time.LocalDate.parse("2026-10-19"));
+    void workoutReminder_fromPlan_namesTemplate() {
+        EmailMessage message = NotificationTemplates.workoutReminder("Сергей", java.time.LocalDate.parse("2026-10-19"),
+                java.util.Optional.of("Верх"));
+
+        assertThat(message.subject()).isEqualTo("Сегодня по плану: Верх");
+        assertThat(message.body()).startsWith("Сергей, сегодня (понедельник) по плану тренировка: Верх.");
+    }
+
+    @Test
+    void workoutReminder_restDayInPlan_doesNotClaimPlan() {
+        EmailMessage message = NotificationTemplates.workoutReminder("Сергей", java.time.LocalDate.parse("2026-10-20"),
+                java.util.Optional.empty());
 
         assertThat(message.subject()).isEqualTo("Сегодня тренировка");
-        assertThat(message.body()).startsWith("Сергей, сегодня (понедельник) по плану тренировка.");
+        assertThat(message.body()).startsWith("Сергей, напоминаем о тренировке сегодня (вторник).")
+                .doesNotContain("по плану");
     }
 
     @Test

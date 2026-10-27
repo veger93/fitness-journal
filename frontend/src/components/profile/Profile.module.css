@@ -107,3 +107,30 @@
   font: inherit;
   font-size: var(--text-md);
 }
+
+.warning {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--chip);
+  font-size: var(--text-sm);
+}
+
+.planList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.planList > li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+
+.planList > li + li {
+  border-top: 1px solid var(--border);
+}

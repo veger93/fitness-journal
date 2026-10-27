@@ -1,11 +1,13 @@
 package com.vegas.workout.service;
 
+import com.vegas.common.event.WeeklyPlanUpdatedEvent;
 import com.vegas.common.exception.BadRequestException;
 import com.vegas.common.exception.NotFoundException;
 import com.vegas.workout.dto.WeeklyPlanRequest;
 import com.vegas.workout.dto.WeeklyPlanResponse;
 import com.vegas.workout.entity.WeeklyPlanDay;
 import com.vegas.workout.entity.WorkoutTemplate;
+import com.vegas.workout.event.OutboxService;
 import com.vegas.workout.mapper.WorkoutTemplateMapper;
 import com.vegas.workout.repository.WeeklyPlanDayRepository;
 import com.vegas.workout.repository.WorkoutTemplateRepository;
@@ -18,7 +20,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,6 +43,10 @@ class WeeklyPlanServiceTest {
     private WeeklyPlanDayRepository planRepository;
     @Mock
     private WorkoutTemplateRepository templateRepository;
+    @Mock
+    private OutboxService outboxService;
+
+    private static final Instant NOW = Instant.parse("2026-10-27T10:00:00Z");
 
     private final WorkoutTemplateMapper templateMapper = Mappers.getMapper(WorkoutTemplateMapper.class);
     private WeeklyPlanService service;
@@ -45,7 +55,8 @@ class WeeklyPlanServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new WeeklyPlanService(planRepository, templateRepository, templateMapper);
+        service = new WeeklyPlanService(planRepository, templateRepository, templateMapper, outboxService,
+                Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     @Test
@@ -76,6 +87,34 @@ class WeeklyPlanServiceTest {
         verify(planRepository).saveAll(saved.capture());
         assertThat(saved.getValue()).extracting(WeeklyPlanDay::getDayOfWeek).containsExactly(DayOfWeek.MONDAY);
         assertThat(plan.days().get(0).template().name()).isEqualTo("Верх");
+
+        // в outbox — план целиком: только дни с тренировкой, с названием комплекса
+        verify(outboxService).weeklyPlanUpdated(new WeeklyPlanUpdatedEvent(me,
+                List.of(new WeeklyPlanUpdatedEvent.PlannedDay(DayOfWeek.MONDAY, "Верх")), NOW));
+    }
+
+    @Test
+    void templateDeleted_usedInPlan_publishesPlanWithoutIt() {
+        WorkoutTemplate upper = template(me, "Верх");
+        WorkoutTemplate legs = template(me, "Ноги");
+        when(planRepository.findByUserId(me)).thenReturn(List.of(
+                new WeeklyPlanDay(me, DayOfWeek.MONDAY, upper),
+                new WeeklyPlanDay(me, DayOfWeek.THURSDAY, legs)));
+
+        service.templateDeleted(me, legs.getId());
+
+        verify(outboxService).weeklyPlanUpdated(new WeeklyPlanUpdatedEvent(me,
+                List.of(new WeeklyPlanUpdatedEvent.PlannedDay(DayOfWeek.MONDAY, "Верх")), NOW));
+    }
+
+    @Test
+    void templateDeleted_notInPlan_noEvent() {
+        when(planRepository.findByUserId(me)).thenReturn(List.of(
+                new WeeklyPlanDay(me, DayOfWeek.MONDAY, template(me, "Верх"))));
+
+        service.templateDeleted(me, UUID.randomUUID());
+
+        verifyNoInteractions(outboxService);
     }
 
     @Test
