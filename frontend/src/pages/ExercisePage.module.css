@@ -95,3 +95,9 @@
     --text-num: 26px;
   }
 }
+
+.historyLink {
+  align-self: flex-start;
+  font-weight: 500;
+  text-underline-offset: 4px;
+}

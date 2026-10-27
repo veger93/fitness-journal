@@ -11,6 +11,7 @@ import java.util.UUID;
  * weightKg × reps — подход для заголовка карточки ("145 кг × 5"): подход рекорда веса, если он есть.
  */
 public record PersonalRecordResponse(
+        UUID workoutId,     // в какой тренировке — для значка рекорда в истории
         UUID exerciseId,
         String exerciseName,
         Instant achievedAt,

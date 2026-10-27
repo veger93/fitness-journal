@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { notificationsApi, type AppNotification } from '../api/notifications';
 import { Badge } from '../components/ui/Badge';
-import { Card } from '../components/ui/Card';
+import { EmptyState } from '../components/ui/EmptyState';
 import { NOTIFICATION_LABELS, toFeedItem } from '../lib/notifications';
 import styles from './NotificationsPage.module.css';
 
@@ -48,10 +48,7 @@ export function NotificationsPage() {
       {list.isPending && <p className={styles.muted}>Загружаем…</p>}
       {list.isError && <p className={styles.muted}>{list.error.message}</p>}
       {list.data?.content.length === 0 && (
-        <Card variant="inverse" size="section">
-          <h2 className={styles.cardTitle}>Пока тихо</h2>
-          <p className={styles.onInverse}>Здесь появятся новые рекорды, подсказки при плато и итоги месяца.</p>
-        </Card>
+        <EmptyState title="Пока тихо" text="Здесь появятся новые рекорды, подсказки при плато и итоги месяца." />
       )}
       {list.data && list.data.content.length > 0 && (
         <ul className={styles.list}>

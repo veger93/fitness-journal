@@ -199,7 +199,7 @@ class DashboardCalculatorTest {
     }
 
     private static PersonalRecordResponse record(UUID exerciseId, int daysAgo, String deltaKg) {
-        return new PersonalRecordResponse(exerciseId, "Становая", NOW.minus(Duration.ofDays(daysAgo)),
+        return new PersonalRecordResponse(UUID.randomUUID(), exerciseId, "Становая", NOW.minus(Duration.ofDays(daysAgo)),
                 new BigDecimal("150"), 3, List.of(new RecordItemResponse(RecordType.WEIGHT, new BigDecimal("150"), 3,
                 new BigDecimal("150"), new BigDecimal("145"), new BigDecimal(deltaKg), null)));
     }

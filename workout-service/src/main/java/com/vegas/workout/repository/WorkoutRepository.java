@@ -36,6 +36,27 @@ public interface WorkoutRepository extends JpaRepository<Workout, UUID> {
     Page<Workout> findByUserIdAndStatusOrderByStartedAtDesc(UUID userId, WorkoutStatus status, Pageable pageable);
 
     /**
+     * Журнал с фильтром "тренировки, где было это упражнение".
+     * exists, а не join: join дал бы по строке на каждое совпадение (дубли тренировок) и сломал бы подсчёт страниц.
+     * countQuery Spring Data вывел бы сам, но явный — понятнее и не зависит от его догадок.
+     */
+    @Query(value = """
+            select w from Workout w
+            where w.userId = :userId and w.status = :status
+              and exists (select 1 from WorkoutExercise we where we.workout = w and we.exercise.id = :exerciseId)
+            order by w.startedAt desc
+            """,
+            countQuery = """
+            select count(w) from Workout w
+            where w.userId = :userId and w.status = :status
+              and exists (select 1 from WorkoutExercise we where we.workout = w and we.exercise.id = :exerciseId)
+            """)
+    Page<Workout> findJournalWithExercise(@Param("userId") UUID userId,
+                                          @Param("status") WorkoutStatus status,
+                                          @Param("exerciseId") UUID exerciseId,
+                                          Pageable pageable);
+
+    /**
      * История с пагинацией. DTO собирается прямо в запросе (select new ...):
      * в память не грузятся ни упражнения, ни подходы — только итоговые цифры.
      * "left join ... on s.warmup = false" — присоединяем только рабочие подходы.

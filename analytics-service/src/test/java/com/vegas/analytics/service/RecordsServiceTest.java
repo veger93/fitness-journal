@@ -36,14 +36,17 @@ class RecordsServiceTest {
 
     @Test
     void heavierAndStronger_isOneCardWithTwoBadges_weightFirst() {
+        ExercisePerformance record = perf(deadlift, "2026-10-01", "145", 5);
         when(performanceRepository.findByUserIdOrderByPerformedAtAsc(userId)).thenReturn(List.of(
                 perf(deadlift, "2026-09-26", "142.5", 5),
-                perf(deadlift, "2026-10-01", "145", 5)));
+                record));
 
         List<PersonalRecordResponse> cards = recordsService.records(userId, 50);
 
         assertThat(cards).hasSize(1);
         PersonalRecordResponse card = cards.get(0);
+        // по workoutId история находит тренировку и ставит значок рекорда
+        assertThat(card.workoutId()).isEqualTo(record.getWorkoutId());
         assertThat(card.weightKg()).isEqualByComparingTo("145");
         assertThat(card.reps()).isEqualTo(5);
         assertThat(card.records()).extracting(RecordItemResponse::type).containsExactly(RecordType.WEIGHT, RecordType.E1RM);

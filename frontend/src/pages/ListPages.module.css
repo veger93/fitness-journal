@@ -55,6 +55,57 @@
   font-weight: 600;
 }
 
+.dayTitleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* строка упражнения из фильтра — чуть заметнее остальных */
+.dayExerciseActive {
+  background: var(--chip);
+  margin: 0 calc(-1 * var(--space-2));
+  padding-left: var(--space-2);
+  padding-right: var(--space-2);
+  border-radius: 8px;
+}
+
+.recordMark {
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+/* ---------- история: фильтр, месяцы, пусто ---------- */
+
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-width: 360px;
+}
+
+.select {
+  min-height: 48px;
+  width: 100%;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-card);
+  background: var(--input-bg);
+  color: var(--text);
+  font: var(--text-md) var(--font-body);
+}
+
+.month {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.monthTitle {
+  font-size: var(--text-lg);
+}
+
 .dayLink {
   align-self: flex-start;
   font-size: var(--text-sm);

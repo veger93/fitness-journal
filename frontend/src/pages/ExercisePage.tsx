@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import {
   analyticsApi,
   type ExerciseInsights,
@@ -123,6 +123,9 @@ export function ExercisePage() {
         <h2 className={styles.cardTitle}>История</h2>
         <p className={styles.muted}>Лучший подход каждой тренировки{timed ? '' : ' и сила* по нему'}.</p>
         <History summary={summary} progress={progress.data} />
+        <Link to={`/history?exercise=${summary.exerciseId}`} className={styles.historyLink}>
+          Все тренировки с этим упражнением →
+        </Link>
       </section>
 
       {!timed && (

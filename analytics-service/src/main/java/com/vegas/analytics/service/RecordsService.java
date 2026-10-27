@@ -93,7 +93,7 @@ public class RecordsService {
 
             if (!items.isEmpty()) {
                 RecordItemResponse headline = items.get(0); // вес идёт первым, если он есть
-                cards.add(new WorkoutCard(current.getWorkoutId(), new PersonalRecordResponse(exerciseId,
+                cards.add(new WorkoutCard(current.getWorkoutId(), new PersonalRecordResponse(current.getWorkoutId(), exerciseId,
                         current.getExerciseName(), current.getPerformedAt(), headline.weightKg(), headline.reps(), items)));
             }
         }

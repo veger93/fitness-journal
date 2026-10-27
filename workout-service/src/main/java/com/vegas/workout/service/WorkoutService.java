@@ -95,10 +95,13 @@ public class WorkoutService {
 
     /** Журнал "по дням": тренировки с упражнениями и подходами, новые сверху. */
     @Transactional(readOnly = true)
-    public PageResponse<WorkoutResponse> journal(UUID userId, int page, int size) {
-        return PageResponse.of(workoutRepository
-                .findByUserIdAndStatusOrderByStartedAtDesc(userId, WorkoutStatus.COMPLETED, PageRequest.of(page, size))
-                .map(this::toResponse));
+    /** @param exerciseId null — все тренировки; иначе только те, где было это упражнение */
+    public PageResponse<WorkoutResponse> journal(UUID userId, UUID exerciseId, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        var workouts = exerciseId == null
+                ? workoutRepository.findByUserIdAndStatusOrderByStartedAtDesc(userId, WorkoutStatus.COMPLETED, pageRequest)
+                : workoutRepository.findJournalWithExercise(userId, WorkoutStatus.COMPLETED, exerciseId, pageRequest);
+        return PageResponse.of(workouts.map(this::toResponse));
     }
 
     @Transactional(readOnly = true)

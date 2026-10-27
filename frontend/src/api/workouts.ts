@@ -114,7 +114,9 @@ export const workoutsApi = {
   current: async () => (await api<Workout | undefined>(`${base}/current`)) ?? null,
   get: (id: string) => api<Workout>(`${base}/${id}`),
   /** журнал: тренировки целиком (упражнения и подходы), новые сверху */
-  journal: (page: number, size = 10) => api<Page<Workout>>(`${base}/journal?page=${page}&size=${size}`),
+  /** exerciseId — только тренировки, где было это упражнение */
+  journal: (page: number, size = 10, exerciseId?: string) =>
+    api<Page<Workout>>(`${base}/journal?page=${page}&size=${size}${exerciseId ? `&exerciseId=${exerciseId}` : ''}`),
   start: (templateId: string | null) => api<Workout>(base, { method: 'POST', body: templateId ? { templateId } : {} }),
   begin: (id: string) => api<Workout>(`${base}/${id}/start`, { method: 'POST' }),
   complete: (id: string) => api<Workout>(`${base}/${id}/complete`, { method: 'POST' }),

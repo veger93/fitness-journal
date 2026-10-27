@@ -203,13 +203,23 @@ class WorkoutServiceTest {
         when(workoutRepository.findByUserIdAndStatusOrderByStartedAtDesc(me, WorkoutStatus.COMPLETED, PageRequest.of(0, 10)))
                 .thenReturn(new PageImpl<>(List.of(workout), PageRequest.of(0, 10), 1));
 
-        PageResponse<WorkoutResponse> page = service.journal(me, 0, 10);
+        PageResponse<WorkoutResponse> page = service.journal(me, null, 0, 10);
 
         assertThat(page.content()).hasSize(1);
         WorkoutExerciseResponse exercise = page.content().get(0).exercises().get(0);
         assertThat(exercise.sets()).hasSize(1);
         assertThat(exercise.previousSets()).isEmpty();          // у завершённой "прошлый раз" не нужен
         verify(workoutExerciseRepository, never()).findRecent(any(), any(), any(), any());
+    }
+
+    @Test
+    void journal_withExercise_usesFilteredQuery() {
+        UUID squatId = UUID.randomUUID();
+        when(workoutRepository.findJournalWithExercise(me, WorkoutStatus.COMPLETED, squatId, PageRequest.of(0, 10)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        assertThat(service.journal(me, squatId, 0, 10).content()).isEmpty();
+        verify(workoutRepository, never()).findByUserIdAndStatusOrderByStartedAtDesc(any(), any(), any());
     }
 
     // ---------- helpers ----------
