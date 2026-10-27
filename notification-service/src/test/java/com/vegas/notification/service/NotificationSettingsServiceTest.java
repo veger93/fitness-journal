@@ -4,6 +4,7 @@ import com.vegas.common.exception.BadRequestException;
 import com.vegas.notification.dto.NotificationSettingsRequest;
 import com.vegas.notification.dto.NotificationSettingsResponse;
 import com.vegas.notification.entity.NotificationSettings;
+import com.vegas.notification.entity.ReminderMode;
 import com.vegas.notification.repository.NotificationSettingsRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +42,7 @@ class NotificationSettingsServiceTest {
         NotificationSettingsResponse settings = service.get(USER);
 
         assertThat(settings.remindersEnabled()).isFalse();
+        assertThat(settings.reminderMode()).isEqualTo(ReminderMode.PLAN);
         assertThat(settings.inactivityDays()).isEqualTo(NotificationSettings.DEFAULT_INACTIVITY_DAYS);
         assertThat(settings.timeZone()).isEqualTo("UTC");
         verify(repository, never()).save(any());
@@ -52,7 +54,7 @@ class NotificationSettingsServiceTest {
         when(repository.findById(USER)).thenReturn(Optional.of(existing));
 
         NotificationSettingsResponse result = service.update(USER, new NotificationSettingsRequest(
-                true, Set.of(DayOfWeek.MONDAY, DayOfWeek.THURSDAY), LocalTime.of(19, 0), true, 5, "Europe/Moscow"));
+                true, ReminderMode.CUSTOM, Set.of(DayOfWeek.MONDAY, DayOfWeek.THURSDAY), LocalTime.of(19, 0), true, 5, "Europe/Moscow"));
 
         assertThat(result.reminderDays()).containsExactlyInAnyOrder(DayOfWeek.MONDAY, DayOfWeek.THURSDAY);
         assertThat(existing.getTimeZone()).isEqualTo("Europe/Moscow");
@@ -62,21 +64,28 @@ class NotificationSettingsServiceTest {
     @Test
     void remindersWithoutDays_areRejected() {
         assertThatThrownBy(() -> NotificationSettingsService.validate(new NotificationSettingsRequest(
-                true, Set.of(), LocalTime.of(19, 0), false, 7, "UTC")))
+                true, ReminderMode.CUSTOM, Set.of(), LocalTime.of(19, 0), false, 7, "UTC")))
                 .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void planMode_withoutDays_isValid() {
+        // дни берутся из плана на неделю — выбирать их вручную не нужно
+        NotificationSettingsService.validate(new NotificationSettingsRequest(
+                true, ReminderMode.PLAN, Set.of(), LocalTime.of(19, 0), false, 7, "UTC"));
     }
 
     @Test
     void remindersWithoutTime_areRejected() {
         assertThatThrownBy(() -> NotificationSettingsService.validate(new NotificationSettingsRequest(
-                true, Set.of(DayOfWeek.MONDAY), null, false, 7, "UTC")))
+                true, ReminderMode.CUSTOM, Set.of(DayOfWeek.MONDAY), null, false, 7, "UTC")))
                 .isInstanceOf(BadRequestException.class);
     }
 
     @Test
     void unknownTimeZone_isRejected() {
         assertThatThrownBy(() -> NotificationSettingsService.validate(new NotificationSettingsRequest(
-                false, null, null, false, 7, "Mars/Olympus")))
+                false, ReminderMode.PLAN, null, null, false, 7, "Mars/Olympus")))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Mars/Olympus");
     }

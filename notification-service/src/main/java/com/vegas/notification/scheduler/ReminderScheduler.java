@@ -2,10 +2,12 @@ package com.vegas.notification.scheduler;
 
 import com.vegas.notification.entity.NotificationSettings;
 import com.vegas.notification.entity.NotificationType;
+import com.vegas.notification.entity.WeeklyPlan;
 import com.vegas.notification.repository.NotificationSettingsRepository;
 import com.vegas.notification.service.NotificationService;
 import com.vegas.notification.service.NotificationTemplates;
 import com.vegas.notification.service.ReminderRules;
+import com.vegas.notification.service.WeeklyPlanSyncService;
 import com.vegas.notification.service.WorkoutActivityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,16 +15,20 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Два планировщика напоминаний. Решение "пора или нет" — в ReminderRules, здесь только обход пользователей.
  *
  * Дубли: каждую минуту одно и то же напоминание "пора" — отправит его только первый запуск,
  * дальше NotificationService увидит ключ в журнале. Ключи:
- *   REMINDER:2026-10-19             — одно напоминание на день тренировки;
+ *   REMINDER:2026-10-19T19:00       — одно напоминание на день и время (сменили время — придёт снова);
  *   INACTIVITY:<дата последней>     — одно на перерыв: потренировался — дата сменилась — новый перерыв.
  *
  * Ограничения MVP (осознанные):
@@ -38,6 +44,7 @@ public class ReminderScheduler {
 
     private final NotificationSettingsRepository settingsRepository;
     private final WorkoutActivityService activityService;
+    private final WeeklyPlanSyncService planService;
     private final NotificationService notificationService;
     private final Clock clock;
 
@@ -47,10 +54,13 @@ public class ReminderScheduler {
         for (NotificationSettings settings : settingsRepository.findByRemindersEnabledTrue()) {
             safely(settings, () -> {
                 Optional<Instant> last = activityService.lastWorkoutAt(settings.getUserId());
-                ReminderRules.scheduledReminderDue(settings, now, last).ifPresent(day ->
+                Optional<WeeklyPlan> plan = planService.find(settings.getUserId());
+                Set<DayOfWeek> days = ReminderRules.reminderDays(settings, plan);
+                ReminderRules.scheduledReminderDue(settings, days, now, last).ifPresent(day ->
                         notificationService.send(settings.getUserId(), NotificationType.WORKOUT_REMINDER,
-                                "REMINDER:" + day,
-                                greeting -> NotificationTemplates.workoutReminder(greeting, day)));
+                                reminderKey(day, settings.getReminderTime()),
+                                greeting -> NotificationTemplates.workoutReminder(greeting, day,
+                                        plan.flatMap(p -> p.templateFor(day.getDayOfWeek())))));
             });
         }
     }
@@ -68,6 +78,15 @@ public class ReminderScheduler {
                                         last.get().atZone(ZoneId.of(settings.getTimeZone())).toLocalDate())));
             });
         }
+    }
+
+    /**
+     * Одно напоминание на день и время: "REMINDER:2026-10-27T19:00".
+     * Время в ключе — чтобы после смены времени в настройках напоминание пришло ещё раз в тот же день.
+     * Без него новое время молча не срабатывало: ключ дня уже был в журнале.
+     */
+    static String reminderKey(LocalDate day, LocalTime time) {
+        return "REMINDER:" + day + "T" + time;
     }
 
     /** Ошибка у одного пользователя (например, почта недоступна) не должна остановить обход остальных. */

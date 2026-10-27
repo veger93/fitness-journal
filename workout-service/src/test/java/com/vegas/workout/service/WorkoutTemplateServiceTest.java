@@ -42,6 +42,8 @@ class WorkoutTemplateServiceTest {
     private WorkoutTemplateRepository templateRepository;
     @Mock
     private ExerciseRepository exerciseRepository;
+    @Mock
+    private WeeklyPlanService weeklyPlanService;
 
     private final WorkoutTemplateMapper templateMapper = Mappers.getMapper(WorkoutTemplateMapper.class);
 
@@ -57,7 +59,7 @@ class WorkoutTemplateServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new WorkoutTemplateService(templateRepository, exerciseRepository, templateMapper);
+        service = new WorkoutTemplateService(templateRepository, exerciseRepository, templateMapper, weeklyPlanService);
         squat = systemExercise("Приседания со штангой");
         bench = systemExercise("Жим лёжа");
         foreignCustom = exercise(someoneElse, "Чужое упражнение");

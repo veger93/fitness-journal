@@ -10,6 +10,7 @@ const notification = (type: AppNotification['type'], body: string): AppNotificat
   status: 'SENT',
   createdAt: '2026-10-27T10:00:00Z',
   read: false,
+  reason: null,
 });
 
 describe('toFeedItem', () => {

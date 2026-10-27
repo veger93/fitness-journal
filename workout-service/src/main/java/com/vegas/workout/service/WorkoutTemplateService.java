@@ -29,6 +29,7 @@ public class WorkoutTemplateService {
     private final WorkoutTemplateRepository templateRepository;
     private final ExerciseRepository exerciseRepository;
     private final WorkoutTemplateMapper templateMapper;
+    private final WeeklyPlanService weeklyPlanService;
 
     @Transactional(readOnly = true)
     public List<WorkoutTemplateResponse> list(UUID userId) {
@@ -57,13 +58,19 @@ public class WorkoutTemplateService {
         ensureNameFree(userId, name, templateId);
         List<Exercise> exercises = resolveExercises(userId, request.exerciseIds());
 
+        boolean renamed = !template.getName().equals(name);
         template.update(name, request.color(), request.icon(), exercises);
+        if (renamed) {
+            weeklyPlanService.templateRenamed(userId, templateId);
+        }
         return templateMapper.toResponse(template);
     }
 
     @Transactional
     public void delete(UUID userId, UUID templateId) {
-        templateRepository.delete(findOwn(userId, templateId));
+        WorkoutTemplate template = findOwn(userId, templateId);
+        weeklyPlanService.templateDeleted(userId, templateId);
+        templateRepository.delete(template);
     }
 
     /** Скопировать комплекс (обычно готовый) в "Мои комплексы", чтобы менять под себя. */

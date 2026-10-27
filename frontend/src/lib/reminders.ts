@@ -17,8 +17,13 @@ export function toggleDay(days: DayOfWeek[], day: DayOfWeek): DayOfWeek[] {
   return DAYS.map((d) => d.day).filter((d) => next.has(d));
 }
 
-export function sameDays(a: DayOfWeek[], b: DayOfWeek[]): boolean {
-  return a.length === b.length && a.every((d) => b.includes(d));
+/**
+ * Выбранные вручную дни, на которые в плане отдых. Напоминание в эти дни придёт, но без "по плану" —
+ * показываем это заранее, чтобы не было сюрпризом. Нет плана — предупреждать не о чем.
+ */
+export function restDaysAmong(days: DayOfWeek[], plan: WeeklyPlan | undefined): DayOfWeek[] {
+  const planned = planDays(plan);
+  return planned.length === 0 ? [] : days.filter((d) => !planned.includes(d));
 }
 
 /** Сервер отдаёт время как "19:00:00", поле <input type="time"> ждёт "19:00" */

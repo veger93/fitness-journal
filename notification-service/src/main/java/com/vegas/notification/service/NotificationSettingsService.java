@@ -4,6 +4,7 @@ import com.vegas.common.exception.BadRequestException;
 import com.vegas.notification.dto.NotificationSettingsRequest;
 import com.vegas.notification.dto.NotificationSettingsResponse;
 import com.vegas.notification.entity.NotificationSettings;
+import com.vegas.notification.entity.ReminderMode;
 import com.vegas.notification.repository.NotificationSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,15 +32,21 @@ public class NotificationSettingsService {
         validate(request);
         NotificationSettings settings = repository.findById(userId)
                 .orElseGet(() -> repository.save(NotificationSettings.defaults(userId)));
-        settings.update(request.remindersEnabled(), request.reminderDays(), request.reminderTime(),
+        settings.update(request.remindersEnabled(), request.reminderMode(), request.reminderDays(), request.reminderTime(),
                 request.inactivityEnabled(), request.inactivityDays(), request.timeZone());
         return NotificationSettingsResponse.from(settings);
     }
 
     static void validate(NotificationSettingsRequest request) {
-        if (request.remindersEnabled()
-                && (request.reminderDays() == null || request.reminderDays().isEmpty() || request.reminderTime() == null)) {
-            throw new BadRequestException("Для напоминаний нужно выбрать дни недели и время");
+        if (request.remindersEnabled()) {
+            if (request.reminderTime() == null) {
+                throw new BadRequestException("Для напоминаний нужно выбрать время");
+            }
+            // в режиме PLAN дни берутся из плана на неделю — выбирать их не нужно
+            if (request.reminderMode() == ReminderMode.CUSTOM
+                    && (request.reminderDays() == null || request.reminderDays().isEmpty())) {
+                throw new BadRequestException("Для напоминаний нужно выбрать дни недели");
+            }
         }
         try {
             ZoneId.of(request.timeZone());

@@ -3,6 +3,8 @@ package com.vegas.notification.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -33,6 +35,10 @@ public class NotificationSettings {
     @Column(name = "reminders_enabled", nullable = false)
     private boolean remindersEnabled;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reminder_mode", nullable = false, length = 10)
+    private ReminderMode reminderMode = ReminderMode.PLAN;
+
     @Convert(converter = DaysOfWeekConverter.class)
     @Column(name = "reminder_days", length = 70)
     private Set<DayOfWeek> reminderDays = EnumSet.noneOf(DayOfWeek.class);
@@ -60,9 +66,10 @@ public class NotificationSettings {
         return settings;
     }
 
-    public void update(boolean remindersEnabled, Set<DayOfWeek> reminderDays, LocalTime reminderTime,
-                       boolean inactivityEnabled, int inactivityDays, String timeZone) {
+    public void update(boolean remindersEnabled, ReminderMode reminderMode, Set<DayOfWeek> reminderDays,
+                       LocalTime reminderTime, boolean inactivityEnabled, int inactivityDays, String timeZone) {
         this.remindersEnabled = remindersEnabled;
+        this.reminderMode = reminderMode;
         // EnumSet.copyOf(Collection) падает на пустой коллекции — поэтому сначала пустой set, потом addAll
         this.reminderDays = EnumSet.noneOf(DayOfWeek.class);
         if (reminderDays != null) {

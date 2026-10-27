@@ -1,6 +1,7 @@
 package com.vegas.workout.event;
 
 import com.vegas.common.event.EventTypes;
+import com.vegas.common.event.WeeklyPlanUpdatedEvent;
 import com.vegas.workout.entity.Workout;
 import com.vegas.outbox.OutboxWriter;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,15 @@ public class OutboxService {
     @Transactional(propagation = Propagation.MANDATORY)
     public void workoutDeleted(Workout workout) {
         save(workout.getId(), EventTypes.WORKOUT_DELETED, workout.getUserId(), WorkoutEvents.deleted(workout));
+    }
+
+    /**
+     * aggregateId = userId: у плана нет своего id, план — это "неделя пользователя".
+     * Тот же ключ (userId), что у тренировок, — значит, события плана и тренировок пользователя идут по порядку.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void weeklyPlanUpdated(WeeklyPlanUpdatedEvent event) {
+        save(event.userId(), EventTypes.WEEKLY_PLAN_UPDATED, event.userId(), event);
     }
 
     /** Ключ сообщения = userId: все события одного пользователя попадут в одну партицию и придут по порядку. */

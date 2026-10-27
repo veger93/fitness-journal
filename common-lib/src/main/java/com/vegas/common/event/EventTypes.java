@@ -12,6 +12,8 @@ public final class EventTypes {
 
     public static final String WORKOUT_COMPLETED = "WorkoutCompleted";
     public static final String WORKOUT_DELETED = "WorkoutDeleted";
+    /** workout-service -> notification-service: напоминания "как в плане на неделю" */
+    public static final String WEEKLY_PLAN_UPDATED = "WeeklyPlanUpdated";
     public static final String USER_PROFILE_UPDATED = "UserProfileUpdated";
     public static final String USER_REGISTERED = "UserRegistered";
 

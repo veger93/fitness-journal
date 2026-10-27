@@ -2,8 +2,10 @@ package com.vegas.notification.scheduler;
 
 import com.vegas.notification.entity.NotificationSettings;
 import com.vegas.notification.entity.NotificationType;
+import com.vegas.notification.entity.ReminderMode;
 import com.vegas.notification.repository.NotificationSettingsRepository;
 import com.vegas.notification.service.NotificationService;
+import com.vegas.notification.service.WeeklyPlanSyncService;
 import com.vegas.notification.service.WorkoutActivityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,12 +42,14 @@ class ReminderSchedulerTest {
     private WorkoutActivityService activityService;
     @Mock
     private NotificationService notificationService;
+    @Mock
+    private WeeklyPlanSyncService planService;
 
     private ReminderScheduler scheduler;
 
     @BeforeEach
     void setUp() {
-        scheduler = new ReminderScheduler(settingsRepository, activityService, notificationService,
+        scheduler = new ReminderScheduler(settingsRepository, activityService, planService, notificationService,
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
@@ -58,13 +62,13 @@ class ReminderSchedulerTest {
         scheduler.sendScheduledReminders();
 
         verify(notificationService).send(eq(settings.getUserId()), eq(NotificationType.WORKOUT_REMINDER),
-                eq("REMINDER:2026-10-19"), any());
+                eq("REMINDER:2026-10-19T19:00"), any());
     }
 
     @Test
     void inactivity_usesLastWorkoutAsDedupeKey() {
         NotificationSettings settings = NotificationSettings.defaults(UUID.randomUUID());
-        settings.update(false, null, null, true, 7, "UTC");
+        settings.update(false, ReminderMode.PLAN, null, null, true, 7, "UTC");
         Instant last = Instant.parse("2026-10-05T18:00:00Z");
         when(settingsRepository.findByInactivityEnabledTrue()).thenReturn(List.of(settings));
         when(activityService.lastWorkoutAt(settings.getUserId())).thenReturn(Optional.of(last));
@@ -82,7 +86,7 @@ class ReminderSchedulerTest {
         when(settingsRepository.findByRemindersEnabledTrue()).thenReturn(List.of(first, second));
         when(activityService.lastWorkoutAt(any())).thenReturn(Optional.empty());
         // первый вызов (первый пользователь) падает, второй проходит
-        doThrow(new IllegalStateException("SMTP down")).doNothing().when(notificationService)
+        doThrow(new IllegalStateException("SMTP down")).doReturn(Optional.empty()).when(notificationService)
                 .send(any(), any(), any(), any());
 
         scheduler.sendScheduledReminders();
@@ -104,7 +108,7 @@ class ReminderSchedulerTest {
 
     private static NotificationSettings reminderAt19() {
         NotificationSettings settings = NotificationSettings.defaults(UUID.randomUUID());
-        settings.update(true, Set.of(DayOfWeek.MONDAY), LocalTime.of(19, 0), false, 7, "UTC");
+        settings.update(true, ReminderMode.CUSTOM, Set.of(DayOfWeek.MONDAY), LocalTime.of(19, 0), false, 7, "UTC");
         return settings;
     }
 }

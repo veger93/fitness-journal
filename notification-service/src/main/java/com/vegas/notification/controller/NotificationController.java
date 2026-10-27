@@ -8,6 +8,7 @@ import com.vegas.notification.dto.UnreadCountResponse;
 import com.vegas.notification.security.CurrentUser;
 import com.vegas.notification.service.NotificationHistoryService;
 import com.vegas.notification.service.NotificationSettingsService;
+import com.vegas.notification.service.TestReminderService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -32,6 +33,7 @@ public class NotificationController {
 
     private final NotificationSettingsService settingsService;
     private final NotificationHistoryService historyService;
+    private final TestReminderService testReminderService;
 
     @Operation(summary = "История уведомлений, новые сверху")
     @GetMapping
@@ -55,6 +57,16 @@ public class NotificationController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void markAllRead(@AuthenticationPrincipal Jwt jwt) {
         historyService.markAllRead(CurrentUser.id(jwt));
+    }
+
+    /**
+     * Ответ — запись журнала: status SENT (письмо ушло) или SKIPPED (не ушло, причина — почему).
+     * Почтовый сервер недоступен -> 503 (см. GlobalExceptionHandler).
+     */
+    @Operation(summary = "Прислать тестовое напоминание прямо сейчас")
+    @PostMapping("/settings/test")
+    public NotificationResponse testReminder(@AuthenticationPrincipal Jwt jwt) {
+        return testReminderService.send(CurrentUser.id(jwt));
     }
 
     @Operation(summary = "Настройки напоминаний")

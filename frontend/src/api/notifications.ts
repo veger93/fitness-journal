@@ -14,10 +14,17 @@ export interface AppNotification {
   status: 'SENT' | 'SKIPPED';
   createdAt: string;
   read: boolean;
+  /** почему не отправлено (для SKIPPED) */
+  reason: string | null;
 }
+
+/** PLAN — напоминать в дни плана на неделю, CUSTOM — в выбранные вручную */
+export type ReminderMode = 'PLAN' | 'CUSTOM';
 
 export interface NotificationSettings {
   remindersEnabled: boolean;
+  reminderMode: ReminderMode;
+  /** используется только в режиме CUSTOM */
   reminderDays: DayOfWeek[];
   /** "19:00:00" — Jackson отдаёт LocalTime с секундами, принимает и "19:00" */
   reminderTime: string | null;
@@ -41,6 +48,8 @@ export const notificationsApi = {
   list: (page = 0, size = 20) => api<Page<AppNotification>>(`${base}?page=${page}&size=${size}`),
   unreadCount: () => api<{ count: number }>(`${base}/unread-count`),
   markAllRead: () => api<void>(`${base}/read`, { method: 'POST' }),
+  /** прислать напоминание прямо сейчас — проверить, что письма доходят */
+  testReminder: () => api<AppNotification>(`${base}/settings/test`, { method: 'POST' }),
   settings: () => api<NotificationSettings>(`${base}/settings`),
   updateSettings: (body: NotificationSettings) =>
     api<NotificationSettings>(`${base}/settings`, { method: 'PUT', body }),

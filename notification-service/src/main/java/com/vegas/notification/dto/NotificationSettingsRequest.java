@@ -1,5 +1,6 @@
 package com.vegas.notification.dto;
 
+import com.vegas.notification.entity.ReminderMode;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -13,10 +14,12 @@ import java.util.Set;
  * Настройки целиком (PUT заменяет всё). Простые проверки — аннотациями,
  * проверки "поле зависит от поля" — в NotificationSettingsService.
  *
+ * reminderMode — PLAN (дни из плана на неделю) или CUSTOM (reminderDays).
  * reminderTime — локальное время пользователя ("19:00"), timeZone — IANA, например "Europe/Moscow".
  */
 public record NotificationSettingsRequest(
         @NotNull Boolean remindersEnabled,
+        @NotNull ReminderMode reminderMode,
         Set<DayOfWeek> reminderDays,
         LocalTime reminderTime,
         @NotNull Boolean inactivityEnabled,

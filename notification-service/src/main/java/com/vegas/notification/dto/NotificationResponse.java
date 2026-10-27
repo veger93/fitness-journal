@@ -15,10 +15,11 @@ public record NotificationResponse(
         String body,
         NotificationStatus status,
         Instant createdAt,
-        boolean read
+        boolean read,
+        String reason   // почему не отправлено (для SKIPPED), иначе null
 ) {
     public static NotificationResponse from(Notification n) {
         return new NotificationResponse(n.getId(), n.getType(), n.getSubject(), n.getBody(), n.getStatus(),
-                n.getCreatedAt(), n.isRead());
+                n.getCreatedAt(), n.isRead(), n.getReason());
     }
 }
