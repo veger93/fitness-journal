@@ -14,9 +14,11 @@ public record NotificationResponse(
         String subject,
         String body,
         NotificationStatus status,
-        Instant createdAt
+        Instant createdAt,
+        boolean read
 ) {
     public static NotificationResponse from(Notification n) {
-        return new NotificationResponse(n.getId(), n.getType(), n.getSubject(), n.getBody(), n.getStatus(), n.getCreatedAt());
+        return new NotificationResponse(n.getId(), n.getType(), n.getSubject(), n.getBody(), n.getStatus(),
+                n.getCreatedAt(), n.isRead());
     }
 }

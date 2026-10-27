@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db/changelog/changes/003-create-notifications.sql
   - include:
       file: db/changelog/changes/004-create-workout-activity.sql
+  - include:
+      file: db/changelog/changes/005-notifications-read-at.sql

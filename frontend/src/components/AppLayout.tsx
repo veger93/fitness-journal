@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
+import { NotificationBell } from './NotificationBell';
 import styles from './AppLayout.module.css';
 
 const NAV = [
@@ -31,6 +32,7 @@ export function AppLayout() {
               </NavLink>
             ))}
           </nav>
+          <NotificationBell />
         </header>
         <main>
           <Outlet />
