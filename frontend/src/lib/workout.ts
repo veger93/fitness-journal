@@ -1,4 +1,4 @@
-import type { Equipment, SetInput, TrackingType, Workout, WorkoutSet } from '../api/workouts';
+import type { Deload, Equipment, SetInput, TrackingType, Workout, WorkoutSet } from '../api/workouts';
 
 /**
  * Логика экрана тренировки без React: что подставить в новый подход, как показать подход,
@@ -31,6 +31,7 @@ const FIRST_TIME_WEIGHT: Record<Equipment, number> = {
 
 /**
  * Что подставить в форму нового подхода (чтобы не набирать каждый раз):
+ * 0) идёт разгрузка — её вес и повторы, а не "как в прошлый раз" (иначе подсказка тянула бы обратно к тяжёлому);
  * 1) последний подход этого упражнения сегодня; 2) тот же по номеру подход в прошлый раз;
  * 3) упражнение впервые — стартовые значения по снаряжению.
  */
@@ -39,9 +40,17 @@ export function suggestNextSet(
   previousSets: WorkoutSet[],
   trackingType: TrackingType = 'WEIGHT_REPS',
   equipment: Equipment = 'BARBELL',
+  deload: Deload | null = null,
 ): SetInput {
   const defaults =
     trackingType === 'DISTANCE' ? DEFAULT_RUN : { ...DEFAULT_SET, weightKg: FIRST_TIME_WEIGHT[equipment] };
+  if (deload && trackingType === 'WEIGHT_REPS') {
+    return {
+      ...defaults,
+      weightKg: deload.workingWeightKg ?? sets.at(-1)?.weightKg ?? defaults.weightKg,
+      reps: deload.reps,
+    };
+  }
   const source = sets.at(-1) ?? previousSets[sets.length] ?? previousSets.at(-1);
   if (!source) {
     return { ...defaults };

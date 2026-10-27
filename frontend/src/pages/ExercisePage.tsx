@@ -8,6 +8,7 @@ import {
   type ExerciseSummary,
   type ProgressPeriod,
 } from '../api/analytics';
+import { workoutsApi } from '../api/workouts';
 import { DeloadPlanContent } from '../components/home/DeloadPlanContent';
 import { PlateauTips } from '../components/home/PlateauTips';
 import { STATUS_BADGES } from '../components/ExerciseRow';
@@ -189,10 +190,13 @@ function Tiles({
  * плато — приёмы, которые помогают сдвинуться.
  */
 function Advice({ summary, insights }: { summary: ExerciseSummary; insights: ExerciseInsights }) {
-  if (summary.status === 'OVERLOAD') {
+  const deloads = useQuery({ queryKey: ['deloads'], queryFn: workoutsApi.deloads });
+  const deloading = deloads.data?.some((d) => d.exerciseId === summary.exerciseId) ?? false;
+  // идёт разгрузка — блок остаётся, даже если перегрузка уже ушла: из него разгрузку можно закончить
+  if (summary.status === 'OVERLOAD' || deloading) {
     return (
       <Card as="section" variant="accent" size="section">
-        <h2 className={styles.cardTitle}>Пора неделю полегче</h2>
+        <h2 className={styles.cardTitle}>{deloading ? 'Разгрузка' : 'Пора неделю полегче'}</h2>
         <DeloadPlanContent exerciseId={summary.exerciseId} />
       </Card>
     );

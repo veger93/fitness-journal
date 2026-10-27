@@ -1,5 +1,6 @@
 package com.vegas.workout.mapper;
 
+import com.vegas.workout.dto.DeloadResponse;
 import com.vegas.workout.dto.SetResponse;
 import com.vegas.workout.dto.WorkoutExerciseResponse;
 import com.vegas.workout.dto.WorkoutResponse;
@@ -20,14 +21,23 @@ import java.util.UUID;
 @Component
 public class WorkoutMapper {
 
+    /** Для завершённых тренировок: подсказки (прошлые подходы, разгрузка) не нужны. */
+    public WorkoutResponse toResponse(Workout workout) {
+        return toResponse(workout, Map.of(), Map.of());
+    }
+
     /**
      * @param previousSets exerciseId -> подходы этого упражнения в прошлой тренировке
+     * @param deloads      exerciseId -> активная разгрузка
      */
-    public WorkoutResponse toResponse(Workout workout, Map<UUID, List<WorkoutSet>> previousSets) {
+    public WorkoutResponse toResponse(Workout workout, Map<UUID, List<WorkoutSet>> previousSets,
+                                      Map<UUID, DeloadResponse> deloads) {
         List<WorkoutExerciseResponse> exercises = workout.getExercises().stream()
-                .map(workoutExercise -> toExerciseResponse(
-                        workoutExercise,
-                        previousSets.getOrDefault(workoutExercise.getExercise().getId(), List.of())))
+                .map(workoutExercise -> {
+                    UUID exerciseId = workoutExercise.getExercise().getId();
+                    return toExerciseResponse(workoutExercise, previousSets.getOrDefault(exerciseId, List.of()),
+                            deloads.get(exerciseId));
+                })
                 .toList();
 
         return new WorkoutResponse(
@@ -57,7 +67,8 @@ public class WorkoutMapper {
         );
     }
 
-    private WorkoutExerciseResponse toExerciseResponse(WorkoutExercise workoutExercise, List<WorkoutSet> previous) {
+    private WorkoutExerciseResponse toExerciseResponse(WorkoutExercise workoutExercise, List<WorkoutSet> previous,
+                                                       DeloadResponse deload) {
         Exercise exercise = workoutExercise.getExercise();
         return new WorkoutExerciseResponse(
                 workoutExercise.getId(),
@@ -66,7 +77,8 @@ public class WorkoutMapper {
                 exercise.getTrackingType(),
                 exercise.getEquipment(),
                 toSetResponses(workoutExercise.getSets()),
-                toSetResponses(previous)
+                toSetResponses(previous),
+                deload
         );
     }
 

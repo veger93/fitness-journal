@@ -63,6 +63,8 @@ class WorkoutServiceTest {
     private ExerciseRepository exerciseRepository;
     @Mock
     private OutboxService outboxService;
+    @Mock
+    private DeloadService deloadService;
 
     private WorkoutService service;
 
@@ -72,7 +74,7 @@ class WorkoutServiceTest {
     @BeforeEach
     void setUp() {
         service = new WorkoutService(workoutRepository, workoutExerciseRepository, templateRepository,
-                exerciseRepository, new WorkoutMapper(), outboxService, CLOCK);
+                exerciseRepository, new WorkoutMapper(), outboxService, CLOCK, deloadService);
     }
 
     // ---------- start ----------

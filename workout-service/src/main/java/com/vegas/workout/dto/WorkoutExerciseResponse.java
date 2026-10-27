@@ -10,7 +10,7 @@ import java.util.UUID;
  * id — это id упражнения ВНУТРИ тренировки (для URL .../exercises/{id}/sets),
  * exerciseId — id упражнения из каталога.
  * previousSets — подходы из прошлой тренировки с этим упражнением
- * ("Прошлый раз на этом подходе: 80 кг × 8"). Только у идущей тренировки.
+ * ("Прошлый раз на этом подходе: 80 кг × 8"). Только у идущей тренировки, как и deload.
  */
 public record WorkoutExerciseResponse(
         UUID id,
@@ -19,6 +19,7 @@ public record WorkoutExerciseResponse(
         TrackingType trackingType,
         Equipment equipment,        // штанга / гантели / тренажёр / свой вес — от этого стартовый вес нового подхода
         List<SetResponse> sets,
-        List<SetResponse> previousSets
+        List<SetResponse> previousSets,
+        DeloadResponse deload        // активная разгрузка по упражнению — подсказка подхода берёт вес и схему отсюда; иначе null
 ) {
 }
