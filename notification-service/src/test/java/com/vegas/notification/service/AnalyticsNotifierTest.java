@@ -4,9 +4,9 @@ import com.vegas.common.event.MonthlyReportReadyEvent;
 import com.vegas.common.event.OverloadRiskEvent;
 import com.vegas.common.event.PlateauDetectedEvent;
 import com.vegas.notification.entity.NotificationType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -27,8 +27,13 @@ class AnalyticsNotifierTest {
 
     @Mock
     private NotificationService notificationService;
-    @InjectMocks
     private AnalyticsNotifier notifier;
+
+    @BeforeEach
+    void setUp() {
+        // создаём руками: адрес фронта — обычная строка, Mockito её не подставит
+        notifier = new AnalyticsNotifier(notificationService, "http://localhost:5173");
+    }
 
     @Test
     void plateauKey_dependsOnStartOfPlateau() {

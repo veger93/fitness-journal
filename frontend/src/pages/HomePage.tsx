@@ -13,6 +13,8 @@ import { useCurrentWorkout } from '../hooks/useWorkout';
 import { completedToday, todayOf } from '../lib/plan';
 import { workoutsApi } from '../api/workouts';
 import { TodayPlanCard } from '../components/home/TodayPlanCard';
+import { MonthSummary } from '../components/report/MonthSummary';
+import { currentMonth } from '../lib/month';
 import { formatChange, formatKg, formatMonth, formatExerciseResult, formatTonnage } from '../lib/format';
 import styles from './HomePage.module.css';
 
@@ -42,6 +44,9 @@ export function HomePage() {
           <h1 className={styles.title}>
             {dashboard.data ? `Прогресс за ${formatMonth(dashboard.data.month)}` : 'Прогресс'}
           </h1>
+          <Link to={`/reports/${currentMonth()}`} className={styles.reportLink}>
+            Отчёт за месяц →
+          </Link>
         </div>
         {/* идёт тренировка — главное действие "вернуться к ней"; сегодня по плану — кнопка "Начать" в карточке плана */}
         {current.data ? (
@@ -55,6 +60,8 @@ export function HomePage() {
 
       {/* пока идёт тренировка, "сегодня по плану" не нужен — она уже начата */}
       {plan.data && !current.data && <TodayPlanCard plan={plan.data} recent={recent.data?.content ?? []} />}
+
+      <MonthSummary />
 
       {dashboard.isPending && <p className={styles.muted}>Загружаем…</p>}
 

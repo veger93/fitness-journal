@@ -1,0 +1,183 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.title {
+  font-size: var(--text-h1);
+}
+
+.cardTitle {
+  font-size: var(--text-lg);
+}
+
+.muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.onInverse {
+  margin: 0;
+  opacity: 0.85;
+}
+
+.up {
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.monthNav {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-weight: 500;
+}
+
+.monthNav a {
+  text-underline-offset: 4px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ---------- таблица по упражнениям ---------- */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.table th,
+.table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table th:first-child {
+  text-align: left;
+  white-space: normal;
+}
+
+.table thead th {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.table tbody tr {
+  border-top: 1px solid var(--border);
+}
+
+.table tbody th {
+  font-weight: 600;
+}
+
+.table tbody th a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.table tbody th a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- окно "Итоги месяца" ---------- */
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2);
+}
+
+.compareCell {
+  background: var(--bg);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compareValue {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
+}
+
+/* На телефоне пять колонок не помещаются: каждая строка — карточка, подписи берём из data-label */
+@media (max-width: 640px) {
+  /* плитки по две в ряд — цифры поменьше, как на странице упражнения */
+  .tiles {
+    --text-num: 22px;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table th,
+  .table td {
+    display: block;
+  }
+
+  /* строка-карточка: название сверху, под ним четыре колонки "подпись над значением" */
+  .table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .table tbody th {
+    grid-column: 1 / -1;
+    padding: 0;
+  }
+
+  .table td {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+  }
+}
+
+/* ---------- плашка на главной ---------- */
+
+.banner {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.bannerActions {
+  display: flex;
+  gap: var(--space-2);
+}

@@ -72,14 +72,16 @@ class NotificationTemplatesTest {
         MonthlyReportReadyEvent event = new MonthlyReportReadyEvent(UUID.randomUUID(), "2026-09",
                 new BigDecimal("3.40"), new BigDecimal("45200.0"), new BigDecimal("-5.0"), 12, 4);
 
-        EmailMessage message = NotificationTemplates.monthlyReport("Сергей", event);
+        EmailMessage message = NotificationTemplates.monthlyReport("Сергей", event,
+                "http://localhost:5173/reports/2026-09");
 
         assertThat(message.subject()).isEqualTo("Итоги месяца: сентябрь 2026");
         assertThat(message.body())
                 .contains("• Тренировок: 12")
                 .contains("• Рекордов: 4")
                 .contains("• Сила: +3.4%*")
-                .contains("• Поднято за месяц: 45200 кг (-5%)**");
+                .contains("• Поднято за месяц: 45200 кг (-5%)**")
+                .contains("Подробный отчёт: http://localhost:5173/reports/2026-09");
     }
 
     @Test
@@ -87,7 +89,7 @@ class NotificationTemplatesTest {
         MonthlyReportReadyEvent event = new MonthlyReportReadyEvent(UUID.randomUUID(), "2026-01",
                 null, null, null, 2, 0);
 
-        assertThat(NotificationTemplates.monthlyReport("Привет", event).body())
+        assertThat(NotificationTemplates.monthlyReport("Привет", event, "http://x/reports/2026-01").body())
                 .doesNotContain("Сила")
                 .doesNotContain("*");
     }

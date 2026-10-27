@@ -8,6 +8,7 @@ import { LoginPage } from './pages/LoginPage';
 import { ActiveWorkoutPage } from './pages/ActiveWorkoutPage';
 import { ExercisePage } from './pages/ExercisePage';
 import { OnboardingPage } from './pages/OnboardingPage';
+import { ReportPage } from './pages/ReportPage';
 import { RequireOnboarding } from './auth/RequireOnboarding';
 import { ExercisesPage } from './pages/ExercisesPage';
 import { HistoryPage } from './pages/HistoryPage';
@@ -64,6 +65,8 @@ export function App() {
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/history/:workoutId" element={<WorkoutSummaryPage mode="view" />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/reports" element={<ReportPage />} />
+                <Route path="/reports/:month" element={<ReportPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
