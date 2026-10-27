@@ -3,6 +3,7 @@ import { useDeferredValue, useState } from 'react';
 import { workoutsApi } from '../../api/workouts';
 import { Dialog } from '../ui/Dialog';
 import { TextField } from '../ui/TextField';
+import { NewExerciseForm } from './NewExerciseForm';
 import styles from './Workout.module.css';
 
 interface AddExerciseDialogProps {
@@ -13,11 +14,25 @@ interface AddExerciseDialogProps {
   onClose: () => void;
 }
 
+/** Поиск по каталогу. Нет нужного — тут же создаём своё упражнение и сразу добавляем в тренировку. */
 export function AddExerciseDialog({ existingIds, adding, onAdd, onClose }: AddExerciseDialogProps) {
   const [search, setSearch] = useState('');
+  const [creating, setCreating] = useState(false);
   // useDeferredValue: пока печатаешь, список обновляется "с отставанием" и не дёргает сервер на каждую букву так часто
   const deferred = useDeferredValue(search.trim());
   const exercises = useQuery({ queryKey: ['exercises', deferred], queryFn: () => workoutsApi.exercises(deferred) });
+
+  if (creating) {
+    return (
+      <Dialog open onClose={onClose} title="Своё упражнение">
+        <NewExerciseForm
+          initialName={search.trim()}
+          onCreated={(exercise) => onAdd(exercise.id)}
+          onCancel={() => setCreating(false)}
+        />
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open onClose={onClose} title="Добавить упражнение">
@@ -40,7 +55,10 @@ export function AddExerciseDialog({ existingIds, adding, onAdd, onClose }: AddEx
                 disabled={adding || already}
                 onClick={() => onAdd(exercise.id)}
               >
-                <span>{exercise.name}</span>
+                <span>
+                  {exercise.name}
+                  {exercise.custom && <span className={styles.muted}> · своё</span>}
+                </span>
                 {already && <span className={styles.muted}>уже в тренировке</span>}
               </button>
             </li>
@@ -49,6 +67,9 @@ export function AddExerciseDialog({ existingIds, adding, onAdd, onClose }: AddEx
         {exercises.data?.length === 0 && <li className={styles.muted}>Ничего не нашлось</li>}
         {exercises.isPending && <li className={styles.muted}>Ищем…</li>}
       </ul>
+      <button type="button" className={styles.createLink} onClick={() => setCreating(true)}>
+        Нет нужного? Создать своё упражнение
+      </button>
     </Dialog>
   );
 }

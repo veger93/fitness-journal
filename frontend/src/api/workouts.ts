@@ -70,8 +70,19 @@ export interface CatalogExercise {
   id: string;
   name: string;
   bodyPart: BodyPart;
+  equipment: Equipment;
   trackingType: TrackingType;
   custom: boolean;
+}
+
+/** POST /api/exercises — своё упражнение (workout-service: ExerciseRequest) */
+export interface NewExercise {
+  name: string;
+  bodyPart: BodyPart;
+  equipment: Equipment;
+  trackingType: TrackingType;
+  icon: string | null;
+  note: string | null;
 }
 
 export interface Page<T> {
@@ -117,5 +128,6 @@ export const workoutsApi = {
   savePlan: (days: { dayOfWeek: DayOfWeek; templateId: string | null }[]) =>
     api<WeeklyPlan>('/api/plan', { method: 'PUT', body: { days } }),
   deleteTemplate: (id: string) => api<void>(`/api/templates/${id}`, { method: 'DELETE' }),
+  createExercise: (body: NewExercise) => api<CatalogExercise>('/api/exercises', { method: 'POST', body }),
   exercises: (search: string) => api<CatalogExercise[]>(`/api/exercises?search=${encodeURIComponent(search)}`),
 };
