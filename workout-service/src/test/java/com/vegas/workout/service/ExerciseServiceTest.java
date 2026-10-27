@@ -78,6 +78,18 @@ class ExerciseServiceTest {
         verify(exerciseRepository, never()).save(any());
     }
 
+    @Test
+    void create_sameNameAsCatalog_isRejected() {
+        when(exerciseRepository.existsByOwnerIdIsNullAndNameIgnoreCase("жим лёжа")).thenReturn(true);
+
+        // иначе прогресс одного и того же упражнения разъехался бы по двум графикам
+        assertThatThrownBy(() -> service.create(me, request("жим лёжа")))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("уже есть в каталоге");
+
+        verify(exerciseRepository, never()).save(any());
+    }
+
     // ---------- getById ----------
 
     @Test

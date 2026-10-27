@@ -42,11 +42,18 @@ public class ExerciseService {
         return exerciseMapper.toResponse(findVisible(userId, exerciseId));
     }
 
+    /**
+     * Копию упражнения из каталога создать нельзя: "Жим лёжа" системный и "жим лёжа" свой —
+     * это два разных упражнения для аналитики, и прогресс разъехался бы по двум графикам.
+     */
     @Transactional
     public ExerciseResponse create(UUID userId, ExerciseRequest request) {
         String name = request.name().trim();
         if (exerciseRepository.existsByOwnerIdAndNameIgnoreCase(userId, name)) {
             throw new BusinessException("У вас уже есть упражнение «" + name + "»");
+        }
+        if (exerciseRepository.existsByOwnerIdIsNullAndNameIgnoreCase(name)) {
+            throw new BusinessException("«" + name + "» уже есть в каталоге — найдите его поиском");
         }
         Exercise exercise = Exercise.custom(userId, name, request.bodyPart(), request.equipment(),
                 request.trackingType(), request.icon(), request.note());
@@ -63,6 +70,9 @@ public class ExerciseService {
         String name = request.name().trim();
         if (exerciseRepository.existsByOwnerIdAndNameIgnoreCaseAndIdNot(userId, name, exerciseId)) {
             throw new BusinessException("У вас уже есть упражнение «" + name + "»");
+        }
+        if (exerciseRepository.existsByOwnerIdIsNullAndNameIgnoreCase(name)) {
+            throw new BusinessException("«" + name + "» уже есть в каталоге — найдите его поиском");
         }
         exercise.update(name, request.bodyPart(), request.equipment(),
                 request.trackingType(), request.icon(), request.note());

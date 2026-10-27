@@ -127,7 +127,8 @@ function RemindersForm({ initial, plan }: { initial: NotificationSettings; plan:
       <Button variant="secondary" disabled={save.isPending} onClick={onSave}>
         {save.isSuccess ? 'Сохранено ✓' : 'Сохранить'}
       </Button>
-      <TestReminder />
+      {/* проверка — только сразу после сохранения включённых напоминаний: в обычном профиле лишняя кнопка не нужна */}
+      {save.isSuccess && save.data.remindersEnabled && <TestReminder />}
       <p className="footnote">
         Если в этот день тренировка уже записана, напоминание не придёт. Рекорды, плато, перегрузки и итоги месяца
         приходят всегда. Часовой пояс: {deviceTimeZone()}.
@@ -199,8 +200,8 @@ function CustomDays({
 }
 
 /**
- * Прислать напоминание сейчас: проверка, что вся цепочка работает (адрес почты, почтовый сервер).
- * Сохранять настройки для этого не нужно — проверяется доставка, а не расписание.
+ * Пробное напоминание: проверка, что вся цепочка работает (адрес почты, почтовый сервер).
+ * Показывается один раз — после сохранения настроек, когда человек как раз хочет убедиться, что всё настроено.
  */
 function TestReminder() {
   const queryClient = useQueryClient();
@@ -212,7 +213,7 @@ function TestReminder() {
   return (
     <div className={styles.days}>
       <button type="button" className={styles.linkButton} disabled={test.isPending} onClick={() => test.mutate()}>
-        {test.isPending ? 'Отправляем…' : 'Проверить: прислать напоминание сейчас'}
+        {test.isPending ? 'Отправляем…' : 'Прислать пробное напоминание сейчас'}
       </button>
       {test.isSuccess && test.data.status === 'SENT' && (
         <p className={styles.muted}>Письмо отправлено — оно же появилось в уведомлениях.</p>

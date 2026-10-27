@@ -13,6 +13,9 @@ export function NotificationBell() {
     queryKey: ['notifications', 'unread'],
     queryFn: notificationsApi.unreadCount,
     refetchInterval: REFRESH_MS,
+    // вернулся на вкладку (например, из почты) — сразу перепроверяем, не дожидаясь минуты
+    // и не глядя на общий staleTime 30 с: число на колокольчике должно быть свежим
+    refetchOnWindowFocus: 'always',
   });
   const count = unread.data?.count ?? 0;
 
