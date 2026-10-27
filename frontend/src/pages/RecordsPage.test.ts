@@ -3,6 +3,7 @@ import type { PersonalRecord } from '../api/analytics';
 import { bestPerExercise, groupByMonth } from './RecordsPage';
 
 const record = (exerciseId: string, achievedAt: string, weightKg: number): PersonalRecord => ({
+  workoutId: `w-${achievedAt}`,
   exerciseId,
   exerciseName: exerciseId,
   achievedAt,

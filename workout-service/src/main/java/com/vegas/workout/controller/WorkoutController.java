@@ -73,11 +73,12 @@ public class WorkoutController {
     }
 
     @GetMapping("/journal")
-    @Operation(summary = "Журнал: завершённые тренировки с упражнениями и подходами, новые сверху")
+    @Operation(summary = "Журнал: завершённые тренировки с упражнениями и подходами, новые сверху (?exerciseId= — только с этим упражнением)")
     public PageResponse<WorkoutResponse> journal(@AuthenticationPrincipal Jwt jwt,
+                                                 @RequestParam(required = false) UUID exerciseId,
                                                  @RequestParam(defaultValue = "0") @Min(0) int page,
                                                  @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size) {
-        return workoutService.journal(CurrentUser.id(jwt), page, size);
+        return workoutService.journal(CurrentUser.id(jwt), exerciseId, page, size);
     }
 
     @GetMapping("/{workoutId}")

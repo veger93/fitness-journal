@@ -5,6 +5,7 @@ import { analyticsApi, type PersonalRecord, type RunningSummary } from '../api/a
 import { formatClock, formatDistance } from '../lib/workout';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
+import { EmptyState } from '../components/ui/EmptyState';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { formatKg, formatSet, formatShortDate } from '../lib/format';
 import styles from './ListPages.module.css';
@@ -36,7 +37,11 @@ export function RecordsPage() {
       {records.isPending && <p className={styles.muted}>Загружаем…</p>}
       {records.isError && <p className={styles.muted}>{records.error.message}</p>}
       {records.data?.length === 0 && running.data?.empty !== false && (
-        <p className={styles.muted}>Рекордов пока нет. Первый появится, когда вы превзойдёте свой прошлый результат.</p>
+        <EmptyState
+          title="Рекордов пока нет"
+          text="Первый появится, когда вы превзойдёте свой прошлый результат в любом упражнении."
+          action={{ to: '/workout', label: 'Начать тренировку' }}
+        />
       )}
 
       {view === 'best' && (data.length > 0 || (running.data && !running.data.empty)) && (

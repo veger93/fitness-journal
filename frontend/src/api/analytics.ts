@@ -76,6 +76,8 @@ export interface ExerciseInsights {
 
 /** Карточка в ленте рекордов (analytics: PersonalRecordResponse) */
 export interface PersonalRecord {
+  /** тренировка, в которой поставлен рекорд — для значка в истории */
+  workoutId: string;
   exerciseId: string;
   exerciseName: string;
   achievedAt: string;
