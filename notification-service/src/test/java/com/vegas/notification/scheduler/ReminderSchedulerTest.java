@@ -62,7 +62,7 @@ class ReminderSchedulerTest {
         scheduler.sendScheduledReminders();
 
         verify(notificationService).send(eq(settings.getUserId()), eq(NotificationType.WORKOUT_REMINDER),
-                eq("REMINDER:2026-10-19"), any());
+                eq("REMINDER:2026-10-19T19:00"), any());
     }
 
     @Test
@@ -86,7 +86,7 @@ class ReminderSchedulerTest {
         when(settingsRepository.findByRemindersEnabledTrue()).thenReturn(List.of(first, second));
         when(activityService.lastWorkoutAt(any())).thenReturn(Optional.empty());
         // первый вызов (первый пользователь) падает, второй проходит
-        doThrow(new IllegalStateException("SMTP down")).doNothing().when(notificationService)
+        doThrow(new IllegalStateException("SMTP down")).doReturn(Optional.empty()).when(notificationService)
                 .send(any(), any(), any(), any());
 
         scheduler.sendScheduledReminders();

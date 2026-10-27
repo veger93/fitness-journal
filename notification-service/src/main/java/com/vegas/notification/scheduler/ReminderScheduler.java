@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.Set;
@@ -26,7 +28,7 @@ import java.util.Set;
  *
  * Дубли: каждую минуту одно и то же напоминание "пора" — отправит его только первый запуск,
  * дальше NotificationService увидит ключ в журнале. Ключи:
- *   REMINDER:2026-10-19             — одно напоминание на день тренировки;
+ *   REMINDER:2026-10-19T19:00       — одно напоминание на день и время (сменили время — придёт снова);
  *   INACTIVITY:<дата последней>     — одно на перерыв: потренировался — дата сменилась — новый перерыв.
  *
  * Ограничения MVP (осознанные):
@@ -56,7 +58,7 @@ public class ReminderScheduler {
                 Set<DayOfWeek> days = ReminderRules.reminderDays(settings, plan);
                 ReminderRules.scheduledReminderDue(settings, days, now, last).ifPresent(day ->
                         notificationService.send(settings.getUserId(), NotificationType.WORKOUT_REMINDER,
-                                "REMINDER:" + day,
+                                reminderKey(day, settings.getReminderTime()),
                                 greeting -> NotificationTemplates.workoutReminder(greeting, day,
                                         plan.flatMap(p -> p.templateFor(day.getDayOfWeek())))));
             });
@@ -76,6 +78,15 @@ public class ReminderScheduler {
                                         last.get().atZone(ZoneId.of(settings.getTimeZone())).toLocalDate())));
             });
         }
+    }
+
+    /**
+     * Одно напоминание на день и время: "REMINDER:2026-10-27T19:00".
+     * Время в ключе — чтобы после смены времени в настройках напоминание пришло ещё раз в тот же день.
+     * Без него новое время молча не срабатывало: ключ дня уже был в журнале.
+     */
+    static String reminderKey(LocalDate day, LocalTime time) {
+        return "REMINDER:" + day + "T" + time;
     }
 
     /** Ошибка у одного пользователя (например, почта недоступна) не должна остановить обход остальных. */

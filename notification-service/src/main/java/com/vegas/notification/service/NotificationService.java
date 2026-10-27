@@ -55,12 +55,14 @@ public class NotificationService {
 
     /**
      * @param template собирает письмо; получает обращение к пользователю (имя или "Привет")
+     * @return запись журнала (SENT или SKIPPED); empty — такое уведомление уже было (дубль по ключу)
      */
     @Transactional
-    public void send(UUID userId, NotificationType type, String dedupeKey, Function<String, EmailMessage> template) {
+    public Optional<Notification> send(UUID userId, NotificationType type, String dedupeKey,
+                                       Function<String, EmailMessage> template) {
         if (notificationRepository.existsByUserIdAndDedupeKey(userId, dedupeKey)) {
             log.debug("Notification {} for user {} already handled", dedupeKey, userId);
-            return;
+            return Optional.empty();
         }
 
         Optional<Recipient> recipient = recipientRepository.findById(userId);
@@ -69,8 +71,8 @@ public class NotificationService {
         if (recipient.isEmpty()) {
             // записываем как SKIPPED: видно в журнале, и при повторе события не будем пытаться снова
             log.warn("No recipient for user {}, notification {} skipped", userId, dedupeKey);
-            notificationRepository.save(Notification.skipped(userId, type, dedupeKey, message, NO_RECIPIENT, clock.instant()));
-            return;
+            return Optional.of(notificationRepository.save(
+                    Notification.skipped(userId, type, dedupeKey, message, NO_RECIPIENT, clock.instant())));
         }
 
         SimpleMailMessage mail = new SimpleMailMessage();
@@ -80,7 +82,8 @@ public class NotificationService {
         mail.setText(message.body());
         mailSender.send(mail);
 
-        notificationRepository.save(Notification.sent(userId, type, dedupeKey, message, clock.instant()));
+        Notification saved = notificationRepository.save(Notification.sent(userId, type, dedupeKey, message, clock.instant()));
         log.info("Notification {} sent to user {}", dedupeKey, userId);
+        return Optional.of(saved);
     }
 }

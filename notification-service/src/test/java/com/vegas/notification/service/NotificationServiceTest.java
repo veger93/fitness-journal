@@ -57,6 +57,8 @@ class NotificationServiceTest {
     @Test
     void sendsEmailAndSavesJournal() {
         when(recipientRepository.findById(USER)).thenReturn(Optional.of(new Recipient(USER, "s@mail.ru", "Сергей")));
+        // настоящий save возвращает сохранённый объект — мок по умолчанию вернул бы null
+        when(notificationRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         service.send(USER, NotificationType.MONTHLY_REPORT, KEY, greeting -> new EmailMessage("Тема", greeting + ", текст"));
 
@@ -85,8 +87,12 @@ class NotificationServiceTest {
     @Test
     void noRecipient_isSkippedWithoutEmail() {
         when(recipientRepository.findById(USER)).thenReturn(Optional.empty());
+        when(notificationRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        service.send(USER, NotificationType.MONTHLY_REPORT, KEY, greeting -> new EmailMessage("Тема", greeting));
+        Optional<Notification> result = service.send(USER, NotificationType.MONTHLY_REPORT, KEY,
+                greeting -> new EmailMessage("Тема", greeting));
+
+        assertThat(result).isPresent();
 
         verifyNoInteractions(mailSender);
         Notification saved = savedNotification();

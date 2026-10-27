@@ -127,6 +127,7 @@ function RemindersForm({ initial, plan }: { initial: NotificationSettings; plan:
       <Button variant="secondary" disabled={save.isPending} onClick={onSave}>
         {save.isSuccess ? 'Сохранено ✓' : 'Сохранить'}
       </Button>
+      <TestReminder />
       <p className="footnote">
         Если в этот день тренировка уже записана, напоминание не придёт. Рекорды, плато, перегрузки и итоги месяца
         приходят всегда. Часовой пояс: {deviceTimeZone()}.
@@ -194,5 +195,32 @@ function CustomDays({
         </p>
       )}
     </fieldset>
+  );
+}
+
+/**
+ * Прислать напоминание сейчас: проверка, что вся цепочка работает (адрес почты, почтовый сервер).
+ * Сохранять настройки для этого не нужно — проверяется доставка, а не расписание.
+ */
+function TestReminder() {
+  const queryClient = useQueryClient();
+  const test = useMutation({
+    mutationFn: notificationsApi.testReminder,
+    // письмо попало и в ленту — колокольчик должен это показать
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+  return (
+    <div className={styles.days}>
+      <button type="button" className={styles.linkButton} disabled={test.isPending} onClick={() => test.mutate()}>
+        {test.isPending ? 'Отправляем…' : 'Проверить: прислать напоминание сейчас'}
+      </button>
+      {test.isSuccess && test.data.status === 'SENT' && (
+        <p className={styles.muted}>Письмо отправлено — оно же появилось в уведомлениях.</p>
+      )}
+      {test.isSuccess && test.data.status === 'SKIPPED' && (
+        <p className={styles.error}>Письмо не отправлено: {test.data.reason}</p>
+      )}
+      {test.isError && <p className={styles.error}>{test.error.message}</p>}
+    </div>
   );
 }
