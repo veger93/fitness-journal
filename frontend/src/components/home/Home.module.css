@@ -108,6 +108,8 @@
 
 .planCell {
   background: var(--bg);
+  /* ячейка всегда на фоне страницы — цвет текста свой, а не от карточки (на оранжевой был бы белый по светлому) */
+  color: var(--text);
   border-radius: var(--radius-card);
   padding: var(--space-3);
   display: flex;
@@ -143,4 +145,30 @@
   .signal {
     min-height: 0;
   }
+}
+
+/* ---------- режим разгрузки ---------- */
+
+.deloadActive {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.textButton {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
 }

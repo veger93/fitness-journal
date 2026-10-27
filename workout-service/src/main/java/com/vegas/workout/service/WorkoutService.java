@@ -50,6 +50,7 @@ public class WorkoutService {
     private final WorkoutMapper workoutMapper;
     private final OutboxService outboxService;
     private final Clock clock;
+    private final DeloadService deloadService;
 
     // ---------- тренировка ----------
 
@@ -183,9 +184,13 @@ public class WorkoutService {
                 .orElseThrow(() -> new NotFoundException("Тренировка не найдена"));
     }
 
+    /** Идущей тренировке нужны подсказки: прошлые подходы и активные разгрузки. Завершённой — нет. */
     private WorkoutResponse toResponse(Workout workout) {
-        Map<UUID, List<WorkoutSet>> previous = workout.isInProgress() ? findPreviousSets(workout) : Map.of();
-        return workoutMapper.toResponse(workout, previous);
+        if (!workout.isInProgress()) {
+            return workoutMapper.toResponse(workout);
+        }
+        return workoutMapper.toResponse(workout, findPreviousSets(workout),
+                deloadService.activeByExercise(workout.getUserId()));
     }
 
     /**

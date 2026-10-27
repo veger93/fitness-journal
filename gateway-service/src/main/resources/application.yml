@@ -15,7 +15,7 @@ spring:
           - id: workout-service
             uri: ${WORKOUT_SERVICE_URL:http://localhost:8082}
             predicates:
-              - Path=/api/exercises/**,/api/templates/**,/api/workouts/**,/api/plan/**
+              - Path=/api/exercises/**,/api/templates/**,/api/workouts/**,/api/plan/**,/api/deloads/**
           - id: analytics-service
             uri: ${ANALYTICS_SERVICE_URL:http://localhost:8083}
             predicates:

@@ -27,6 +27,15 @@ const set = (number: number, weightKg: number, reps: number): WorkoutSet => ({
 });
 
 describe('suggestNextSet', () => {
+  it('разгрузка важнее прошлых подходов: облегчённый вес и повторы из плана', () => {
+    const deload = { exerciseId: 'e', workingWeightKg: 70, sets: 3, reps: 5, startedAt: '', endsAt: '' };
+
+    expect(suggestNextSet([set(1, 100, 5)], [set(1, 100, 5)], 'WEIGHT_REPS', 'BARBELL', deload)).toMatchObject({
+      weightKg: 70,
+      reps: 5,
+    });
+  });
+
   it('повторяет последний подход сегодня', () => {
     expect(suggestNextSet([set(1, 80, 8), set(2, 82.5, 6)], [set(1, 70, 10)])).toMatchObject({
       weightKg: 82.5,
@@ -146,6 +155,7 @@ describe('обновление кэша', () => {
         equipment: 'BARBELL',
         sets: [set(1, 80, 8), set(2, 80, 8)],
         previousSets: [],
+        deload: null,
       },
     ],
   };

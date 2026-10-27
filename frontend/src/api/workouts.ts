@@ -27,6 +27,18 @@ export interface WorkoutExercise {
   equipment: Equipment;
   sets: WorkoutSet[];
   previousSets: WorkoutSet[]; // как было в прошлый раз
+  /** активная разгрузка: подсказка подхода берёт вес и повторы отсюда */
+  deload: Deload | null;
+}
+
+/** Режим разгрузки по упражнению (workout-service: DeloadResponse) */
+export interface Deload {
+  exerciseId: string;
+  workingWeightKg: number | null;
+  sets: number;
+  reps: number;
+  startedAt: string;
+  endsAt: string;
 }
 
 export interface Workout {
@@ -128,6 +140,13 @@ export const workoutsApi = {
   savePlan: (days: { dayOfWeek: DayOfWeek; templateId: string | null }[]) =>
     api<WeeklyPlan>('/api/plan', { method: 'PUT', body: { days } }),
   deleteTemplate: (id: string) => api<void>(`/api/templates/${id}`, { method: 'DELETE' }),
+  deloads: () => api<Deload[]>('/api/deloads'),
+  /** PUT: повторный старт заменяет текущую разгрузку, а не создаёт вторую */
+  startDeload: (
+    exerciseId: string,
+    body: { workingWeightKg: number | null; sets: number; reps: number; days: number },
+  ) => api<Deload>(`/api/exercises/${exerciseId}/deload`, { method: 'PUT', body }),
+  stopDeload: (exerciseId: string) => api<void>(`/api/exercises/${exerciseId}/deload`, { method: 'DELETE' }),
   createExercise: (body: NewExercise) => api<CatalogExercise>('/api/exercises', { method: 'POST', body }),
   exercises: (search: string) => api<CatalogExercise[]>(`/api/exercises?search=${encodeURIComponent(search)}`),
 };

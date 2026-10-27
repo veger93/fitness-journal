@@ -21,3 +21,5 @@ databaseChangeLog:
       file: db/changelog/changes/009-workouts-planned-start.sql
   - include:
       file: db/changelog/changes/010-create-weekly-plan.sql
+  - include:
+      file: db/changelog/changes/011-create-deload-periods.sql
