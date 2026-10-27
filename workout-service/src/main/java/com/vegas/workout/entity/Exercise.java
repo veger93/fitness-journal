@@ -16,6 +16,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
@@ -70,6 +71,15 @@ public class Exercise {
     @ElementCollection
     @CollectionTable(name = "exercise_muscles", joinColumns = @JoinColumn(name = "exercise_id"))
     private Set<ExerciseMuscle> muscles = new HashSet<>();
+
+    /**
+     * Ключ картинки упражнения (файлы на фронте: /exercises/<ключ>-1.svg и -2.svg — начало и конец движения).
+     * @Formula — поле не хранится в таблице exercises: Hibernate сам подставляет подзапрос в SELECT.
+     * Только для чтения; картинки добавляются миграциями в exercise_media.
+     */
+    @Formula("(select m.storage_key from exercise_media m"
+            + " where m.exercise_id = id and m.media_type = 'IMAGE' and m.gender is null)")
+    private String imageKey;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -78,6 +78,35 @@ export interface WorkoutTemplate {
   exercises: TemplateExercise[];
 }
 
+export type MuscleGroup =
+  | 'CHEST'
+  | 'FRONT_DELTS'
+  | 'SIDE_DELTS'
+  | 'REAR_DELTS'
+  | 'BICEPS'
+  | 'TRICEPS'
+  | 'FOREARMS'
+  | 'ABS'
+  | 'OBLIQUES'
+  | 'LATS'
+  | 'UPPER_BACK'
+  | 'TRAPS'
+  | 'LOWER_BACK'
+  | 'GLUTES'
+  | 'QUADS'
+  | 'HAMSTRINGS'
+  | 'ADDUCTORS'
+  | 'CALVES';
+
+/** PRIMARY — основная работа, SECONDARY — помогают */
+export type MuscleRole = 'PRIMARY' | 'SECONDARY';
+
+export interface ExerciseMuscle {
+  muscle: MuscleGroup;
+  role: MuscleRole;
+}
+
+/** GET /api/exercises (workout-service: ExerciseResponse) */
 export interface CatalogExercise {
   id: string;
   name: string;
@@ -85,6 +114,10 @@ export interface CatalogExercise {
   equipment: Equipment;
   trackingType: TrackingType;
   custom: boolean;
+  /** у своих упражнений пусто */
+  muscles: ExerciseMuscle[];
+  /** картинки /exercises/<imageKey>-1.svg и -2.svg; null — картинки нет (свои упражнения, бег, планка) */
+  imageKey: string | null;
 }
 
 /** POST /api/exercises — своё упражнение (workout-service: ExerciseRequest) */
@@ -151,4 +184,5 @@ export const workoutsApi = {
   stopDeload: (exerciseId: string) => api<void>(`/api/exercises/${exerciseId}/deload`, { method: 'DELETE' }),
   createExercise: (body: NewExercise) => api<CatalogExercise>('/api/exercises', { method: 'POST', body }),
   exercises: (search: string) => api<CatalogExercise[]>(`/api/exercises?search=${encodeURIComponent(search)}`),
+  exercise: (id: string) => api<CatalogExercise>(`/api/exercises/${id}`),
 };

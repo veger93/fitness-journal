@@ -9,8 +9,7 @@ import java.util.UUID;
 
 /**
  * custom=true — своё упражнение пользователя (можно редактировать), false — системное.
- * muscles — для подсветки на карте тела; у своих упражнений пустой список,
- * тогда фронт подсвечивает всю bodyPart.
+ * muscles — какие мышцы работают (карточка "как выполнять"); у своих упражнений пустой список.
  */
 public record ExerciseResponse(
         UUID id,
@@ -21,6 +20,7 @@ public record ExerciseResponse(
         String icon,
         String note,
         boolean custom,
-        List<MuscleResponse> muscles
+        List<MuscleResponse> muscles,
+        String imageKey     // картинка "начало → конец" (иллюстрации Everkinetic); null — картинки нет
 ) {
 }

@@ -1,5 +1,5 @@
 import type { ProgressPoint } from '../api/analytics';
-import type { TrackingType } from '../api/workouts';
+import type { ExerciseMuscle, MuscleGroup, TrackingType } from '../api/workouts';
 import { formatKg, formatSet } from './format';
 import { formatClock } from './workout';
 
@@ -52,4 +52,38 @@ export function setsLabel(count: number): string {
 export function bestDuration(points: ProgressPoint[]): number | null {
   const durations = points.map((p) => p.bestDurationSec).filter((d): d is number => d != null);
   return durations.length > 0 ? Math.max(...durations) : null;
+}
+
+export const MUSCLE_NAMES: Record<MuscleGroup, string> = {
+  CHEST: 'грудь',
+  FRONT_DELTS: 'передняя дельта',
+  SIDE_DELTS: 'средняя дельта',
+  REAR_DELTS: 'задняя дельта',
+  BICEPS: 'бицепс',
+  TRICEPS: 'трицепс',
+  FOREARMS: 'предплечья',
+  ABS: 'пресс',
+  OBLIQUES: 'косые мышцы живота',
+  LATS: 'широчайшие',
+  UPPER_BACK: 'верх спины',
+  TRAPS: 'трапеции',
+  LOWER_BACK: 'поясница',
+  GLUTES: 'ягодицы',
+  QUADS: 'квадрицепс',
+  HAMSTRINGS: 'задняя поверхность бедра',
+  ADDUCTORS: 'приводящие мышцы бедра',
+  CALVES: 'икры',
+};
+
+/** "грудь, трицепс" по роли; пустая строка — мышц этой роли нет */
+export function musclesText(muscles: ExerciseMuscle[], role: ExerciseMuscle['role']): string {
+  return muscles
+    .filter((m) => m.role === role)
+    .map((m) => MUSCLE_NAMES[m.muscle])
+    .join(', ');
+}
+
+/** Картинка упражнения: 1 и 2 — два положения движения. Файлы лежат в public/exercises — отдаёт сам фронт, без API */
+export function exerciseImageUrl(imageKey: string, phase: 1 | 2): string {
+  return `/exercises/${imageKey}-${phase}.svg`;
 }
