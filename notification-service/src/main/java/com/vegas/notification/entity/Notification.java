@@ -52,6 +52,14 @@ public class Notification {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    /** Когда пользователь увидел уведомление в ленте приложения. null — ещё не прочитано. */
+    @Column(name = "read_at")
+    private Instant readAt;
+
+    public boolean isRead() {
+        return readAt != null;
+    }
+
     public static Notification sent(UUID userId, NotificationType type, String dedupeKey, EmailMessage message, Instant now) {
         return create(userId, type, dedupeKey, message, NotificationStatus.SENT, null, now);
     }

@@ -31,6 +31,54 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1);
+  margin-left: auto;
+}
+
+/* ---------- колокольчик ---------- */
+
+.bell {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+}
+
+.bell:hover,
+.bellActive {
+  color: var(--text);
+  background: var(--chip);
+}
+
+.badge {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+/* на телефоне меню уходит на вторую строку, а колокольчик остаётся рядом с логотипом */
+@media (max-width: 640px) {
+  .bell {
+    order: 2;
+  }
+
+  .nav {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+  }
 }
 
 .link {

@@ -4,6 +4,7 @@ import { usersApi } from '../api/users';
 import { useAuth } from '../auth/AuthProvider';
 import { BodyWeightCard } from '../components/profile/BodyWeightCard';
 import { ProfileForm } from '../components/profile/ProfileForm';
+import { RemindersCard } from '../components/profile/RemindersCard';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
@@ -41,6 +42,8 @@ export function ProfilePage() {
       </Card>
 
       {profile.data && <BodyWeightCard currentWeightKg={profile.data.currentWeightKg} />}
+
+      <RemindersCard />
 
       <Card>
         <h2 className={styles.sectionTitle}>Оформление</h2>
