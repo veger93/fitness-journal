@@ -26,4 +26,7 @@ public interface WorkoutExerciseRepository extends JpaRepository<WorkoutExercise
                                      @Param("exerciseId") UUID exerciseId,
                                      @Param("status") WorkoutStatus status,
                                      Limit limit);
+
+    /** Есть ли это упражнение хоть в одной тренировке (любого статуса). exercise.id — вложенное свойство. */
+    boolean existsByExerciseId(UUID exerciseId);
 }

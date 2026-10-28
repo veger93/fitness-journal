@@ -15,6 +15,9 @@ import com.vegas.workout.entity.TrackingType;
 import com.vegas.workout.mapper.ExerciseMapper;
 import com.vegas.workout.repository.ExerciseRepository;
 import com.vegas.workout.repository.ExerciseTechniqueRepository;
+import com.vegas.workout.repository.WorkoutExerciseRepository;
+import com.vegas.workout.repository.WorkoutTemplateRepository;
+import com.vegas.workout.dto.DeleteExerciseResponse;
 import com.vegas.workout.entity.ExerciseTechnique;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +29,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.BeanUtils;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -46,6 +52,14 @@ class ExerciseServiceTest {
     @Mock
     private ExerciseTechniqueRepository techniqueRepository;
 
+    @Mock
+    private WorkoutExerciseRepository workoutExerciseRepository;
+
+    @Mock
+    private WorkoutTemplateRepository templateRepository;
+
+    private final Instant now = Instant.parse("2026-10-28T10:00:00Z");
+
     private final ExerciseMapper exerciseMapper = Mappers.getMapper(ExerciseMapper.class);
 
     private ExerciseService service;
@@ -56,7 +70,8 @@ class ExerciseServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ExerciseService(exerciseRepository, techniqueRepository, exerciseMapper);
+        service = new ExerciseService(exerciseRepository, techniqueRepository, workoutExerciseRepository, templateRepository,
+                exerciseMapper, Clock.fixed(now, ZoneOffset.UTC));
     }
 
     // ---------- create ----------
@@ -77,7 +92,7 @@ class ExerciseServiceTest {
 
     @Test
     void create_duplicateName_throwsConflict() {
-        when(exerciseRepository.existsByOwnerIdAndNameIgnoreCase(me, "Мой жим")).thenReturn(true);
+        when(exerciseRepository.existsByOwnerIdAndNameIgnoreCaseAndArchivedAtIsNull(me, "Мой жим")).thenReturn(true);
 
         assertThatThrownBy(() -> service.create(me, request("Мой жим")))
                 .isInstanceOf(BusinessException.class);
@@ -95,6 +110,73 @@ class ExerciseServiceTest {
                 .hasMessageContaining("уже есть в каталоге");
 
         verify(exerciseRepository, never()).save(any());
+    }
+
+    @Test
+    void create_nameOfDeletedExercise_restoresItWithHistory() {
+        Exercise deleted = customExercise(me, "Мой жим");
+        deleted.archive(now);
+        when(exerciseRepository.findFirstByOwnerIdAndNameIgnoreCaseAndArchivedAtIsNotNull(me, "Мой жим"))
+                .thenReturn(Optional.of(deleted));
+
+        service.create(me, request("Мой жим"));
+
+        // то же упражнение (с тем же id и историей), а не новое
+        assertThat(deleted.isArchived()).isFalse();
+        assertThat(deleted.getEquipment()).isEqualTo(Equipment.DUMBBELL);
+        verify(exerciseRepository, never()).save(any());
+    }
+
+    // ---------- delete ----------
+
+    @Test
+    void delete_unusedExercise_isDeletedCompletely() {
+        Exercise mine = customExercise(me, "Мой жим");
+        when(exerciseRepository.findWithMusclesById(exerciseId)).thenReturn(Optional.of(mine));
+
+        DeleteExerciseResponse response = service.delete(me, exerciseId);
+
+        assertThat(response.result()).isEqualTo(DeleteExerciseResponse.Result.DELETED);
+        verify(exerciseRepository).delete(mine);
+    }
+
+    @Test
+    void delete_exerciseWithWorkouts_isArchivedNotDeleted() {
+        Exercise mine = customExercise(me, "Мой жим");
+        when(exerciseRepository.findWithMusclesById(exerciseId)).thenReturn(Optional.of(mine));
+        when(workoutExerciseRepository.existsByExerciseId(exerciseId)).thenReturn(true);
+
+        DeleteExerciseResponse response = service.delete(me, exerciseId);
+
+        assertThat(response.result()).isEqualTo(DeleteExerciseResponse.Result.ARCHIVED);
+        assertThat(mine.getArchivedAt()).isEqualTo(now);
+        verify(exerciseRepository, never()).delete(any(Exercise.class));
+    }
+
+    @Test
+    void delete_exerciseInTemplate_isArchived() {
+        Exercise mine = customExercise(me, "Мой жим");
+        when(exerciseRepository.findWithMusclesById(exerciseId)).thenReturn(Optional.of(mine));
+        when(templateRepository.existsByExercisesId(exerciseId)).thenReturn(true);
+
+        assertThat(service.delete(me, exerciseId).result()).isEqualTo(DeleteExerciseResponse.Result.ARCHIVED);
+        verify(exerciseRepository, never()).delete(any(Exercise.class));
+    }
+
+    @Test
+    void delete_systemExercise_isForbidden() {
+        when(exerciseRepository.findWithMusclesById(exerciseId)).thenReturn(Optional.of(systemExercise()));
+
+        assertThatThrownBy(() -> service.delete(me, exerciseId)).isInstanceOf(ForbiddenException.class);
+        verify(exerciseRepository, never()).delete(any(Exercise.class));
+    }
+
+    @Test
+    void delete_someoneElsesExercise_isNotFound() {
+        when(exerciseRepository.findWithMusclesById(exerciseId))
+                .thenReturn(Optional.of(customExercise(someoneElse, "Чужой жим")));
+
+        assertThatThrownBy(() -> service.delete(me, exerciseId)).isInstanceOf(NotFoundException.class);
     }
 
     // ---------- getById ----------

@@ -19,6 +19,7 @@ import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
 import { Dialog } from '../ui/Dialog';
 import { TextField } from '../ui/TextField';
+import { DeleteExerciseButton } from './DeleteExerciseButton';
 import { NewExerciseForm } from './NewExerciseForm';
 import styles from './Workout.module.css';
 
@@ -42,6 +43,8 @@ export function AddExerciseDialog({ existingIds, adding, onAdd, onClose }: AddEx
   const [search, setSearch] = useState('');
   const [bodyPart, setBodyPart] = useState<BodyPart | null>(null);
   const [equipment, setEquipment] = useState<Equipment | null>(null);
+  // "Мои упражнения" — отдельная категория рядом с частями тела: там удобно найти и удалить лишнее
+  const [mine, setMine] = useState(false);
   const [creating, setCreating] = useState(false);
   // открытая карточка; фильтры при этом не сбрасываем — "←" вернёт туда же
   const [info, setInfo] = useState<CatalogExercise | null>(null);
@@ -70,6 +73,7 @@ export function AddExerciseDialog({ existingIds, adding, onAdd, onClose }: AddEx
         <Button fullWidth disabled={adding || already} onClick={() => onAdd(info.id)}>
           {already ? 'Уже в тренировке' : 'Добавить в тренировку'}
         </Button>
+        {info.custom && <DeleteExerciseButton exercise={info} onDeleted={() => setInfo(null)} />}
       </Dialog>
     );
   }
@@ -77,10 +81,12 @@ export function AddExerciseDialog({ existingIds, adding, onAdd, onClose }: AddEx
   const all = catalog.data ?? [];
   const searching = search.trim() !== '';
   const inBodyPart = bodyPart ? all.filter((e) => e.bodyPart === bodyPart) : [];
-  const list = filterCatalog(all, { search, bodyPart, equipment });
+  const list = filterCatalog(all, { search, bodyPart, equipment, customOnly: mine });
+  const inCategory = (bodyPart !== null || mine) && !searching;
   const back = () => {
     setBodyPart(null);
     setEquipment(null);
+    setMine(false);
   };
 
   const row = (exercise: CatalogExercise) => (
@@ -98,8 +104,8 @@ export function AddExerciseDialog({ existingIds, adding, onAdd, onClose }: AddEx
     <Dialog
       open
       onClose={onClose}
-      onBack={bodyPart && !searching ? back : undefined}
-      title={bodyPart && !searching ? BODY_PART_NAMES[bodyPart] : 'Добавить упражнение'}
+      onBack={inCategory ? back : undefined}
+      title={!inCategory ? 'Добавить упражнение' : mine ? 'Мои упражнения' : BODY_PART_NAMES[bodyPart!]}
     >
       <TextField
         label="Поиск"
@@ -119,15 +125,23 @@ export function AddExerciseDialog({ existingIds, adding, onAdd, onClose }: AddEx
         </ul>
       )}
 
-      {catalog.data && !searching && !bodyPart && (
+      {catalog.data && !searching && !inCategory && (
         <Categories
           catalog={all}
+          onPickMine={() => setMine(true)}
           recent={dashboard.data ? recentExercises(dashboard.data.exercises, all) : []}
           existingIds={existingIds}
           adding={adding}
           onAdd={onAdd}
           onPick={setBodyPart}
         />
+      )}
+
+      {catalog.data && mine && !searching && (
+        <ul className={styles.catalog}>
+          {list.map(row)}
+          {list.length === 0 && <li className={styles.muted}>Своих упражнений нет</li>}
+        </ul>
       )}
 
       {catalog.data && !searching && bodyPart && (
@@ -161,6 +175,7 @@ function Categories({
   adding,
   onAdd,
   onPick,
+  onPickMine,
 }: {
   catalog: CatalogExercise[];
   recent: CatalogExercise[];
@@ -168,8 +183,10 @@ function Categories({
   adding: boolean;
   onAdd: (exerciseId: string) => void;
   onPick: (bodyPart: BodyPart) => void;
+  onPickMine: () => void;
 }) {
   const counts = countByBodyPart(catalog);
+  const customCount = catalog.filter((e) => e.custom).length;
   return (
     <>
       {recent.length > 0 && (
@@ -199,6 +216,12 @@ function Categories({
             </button>
           ))}
         </div>
+        {customCount > 0 && (
+          <button type="button" className={styles.mineButton} onClick={onPickMine}>
+            <span className={styles.tileName}>Мои упражнения</span>
+            <span className={styles.muted}>{exercisesCount(customCount)} ›</span>
+          </button>
+        )}
       </section>
     </>
   );

@@ -26,4 +26,7 @@ public interface WorkoutTemplateRepository extends JpaRepository<WorkoutTemplate
     boolean existsByOwnerIdAndNameIgnoreCase(UUID ownerId, String name);
 
     boolean existsByOwnerIdAndNameIgnoreCaseAndIdNot(UUID ownerId, String name, UUID id);
+
+    /** Стоит ли упражнение хоть в одном комплексе: exercises — коллекция, Spring Data сделает JOIN сам. */
+    boolean existsByExercisesId(UUID exerciseId);
 }

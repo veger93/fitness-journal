@@ -32,6 +32,8 @@ export interface CatalogFilter {
   search: string;
   bodyPart: BodyPart | null;
   equipment: Equipment | null;
+  /** только свои упражнения ("Мои упражнения") */
+  customOnly?: boolean;
 }
 
 /**
@@ -46,6 +48,7 @@ export function filterCatalog(exercises: CatalogExercise[], filter: CatalogFilte
   }
   return exercises.filter(
     (e) =>
+      (!filter.customOnly || e.custom) &&
       (filter.bodyPart === null || e.bodyPart === filter.bodyPart) &&
       (filter.equipment === null || e.equipment === filter.equipment),
   );

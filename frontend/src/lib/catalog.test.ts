@@ -45,6 +45,12 @@ describe('filterCatalog', () => {
     expect(result.map((e) => e.id)).toEqual(['1', '2', '3', '5']);
   });
 
+  it('только свои упражнения', () => {
+    const withCustom = [...catalog, { ...ex('6', 'Мой жим', 'CHEST', 'BARBELL'), custom: true }];
+    const result = filterCatalog(withCustom, { search: '', bodyPart: null, equipment: null, customOnly: true });
+    expect(result.map((e) => e.id)).toEqual(['6']);
+  });
+
   it('без фильтров — весь каталог', () => {
     expect(filterCatalog(catalog, { search: '  ', bodyPart: null, equipment: null })).toHaveLength(5);
   });

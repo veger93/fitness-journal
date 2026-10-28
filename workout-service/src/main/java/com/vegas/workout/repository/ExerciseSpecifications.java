@@ -24,6 +24,11 @@ public final class ExerciseSpecifications {
         );
     }
 
+    /** WHERE archived_at IS NULL — удалённые (архивные) свои упражнения в каталоге не показываем. */
+    public static Specification<Exercise> notArchived() {
+        return (root, query, cb) -> cb.isNull(root.get("archivedAt"));
+    }
+
     public static Specification<Exercise> hasBodyPart(BodyPart bodyPart) {
         return (root, query, cb) -> bodyPart == null ? null : cb.equal(root.get("bodyPart"), bodyPart);
     }
