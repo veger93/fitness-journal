@@ -57,16 +57,22 @@ GitHub Actions для публичного репозитория — **бесп
 
 Сервер — это арендованный компьютер в дата-центре, на нём круглосуточно работают наши контейнеры.
 
-**Рекомендую Timeweb Cloud, Москва** (оплата российской картой и СБП, своё зеркало Docker Hub,
-понятная панель на русском). Альтернативы с похожими ценами: Selectel, Beget, RuVDS.
+Провайдер — любой с дата-центром в России, оплатой российской картой/СБП и образом Ubuntu 24.04.
+Цены сильно отличаются (данные servercalc.ru на 25.10.2026, перед оплатой сверить на сайте провайдера):
+
+| Провайдер | 4 ГБ | 8 ГБ |
+|---|---|---|
+| FirstVDS | 2 vCPU / 4 ГБ / 60 ГБ SSD — ~920 ₽ | **4 vCPU / 8 ГБ / 80 ГБ SSD — ~1580 ₽** |
+| Beget | 2 vCPU / 4 ГБ — ~1140 ₽ | — |
+| VDSina | 2 vCPU / 4 ГБ / 100 ГБ NVMe — ~1200 ₽ | 4 vCPU / 8 ГБ / 150 ГБ NVMe — ~2400 ₽ |
+| Timeweb Cloud | 2 vCPU / 4 ГБ — ~3840 ₽ | 4 vCPU / 8 ГБ — ~7000 ₽ |
 
 Сколько памяти нужно — мы измерили, запустив весь стек: в простое ≈ 1,7 ГБ
 (4 сервиса по ~270 МБ, gateway 140 МБ, Kafka ~320 МБ, Postgres ~120 МБ).
+**8 ГБ — рекомендую** (с запасом, без возни с нехваткой памяти); 4 ГБ — бюджетный старт + файл подкачки 2 ГБ.
 
-| Конфигурация | Цена (Timeweb, осень 2026) | Когда |
-|---|---|---|
-| 2 vCPU / 4 ГБ / 50 ГБ NVMe | ~1200 ₽/мес | старт, мало пользователей; + файл подкачки 2 ГБ (команда ниже) |
-| **4 vCPU / 8 ГБ / 80 ГБ NVMe** | **~2000 ₽/мес** | **рекомендую**: с запасом, без возни с нехваткой памяти |
+Зеркала Docker Hub из шага ниже (`dockerhub.timeweb.cloud`, `mirror.gcr.io`) публичные — работают на сервере
+любого провайдера.
 
 Конфигурацию можно поднять позже в панели одной кнопкой — данные останутся.
 
@@ -80,12 +86,12 @@ GitHub Actions для публичного репозитория — **бесп
 
 ```powershell
 ssh-keygen -t ed25519 -C "sergey-laptop"     # Enter, Enter, Enter
-type $env:USERPROFILE\.ssh\id_ed25519.pub    # это вставить в панель Timeweb при создании сервера
+type $env:USERPROFILE\.ssh\id_ed25519.pub    # это вставить в панель провайдера при создании сервера
 ```
 
 ### Первая настройка сервера
 
-Подключаемся (IP — из панели Timeweb):
+Подключаемся (IP — из панели провайдера):
 
 ```bash
 ssh root@<IP-сервера>
@@ -147,7 +153,6 @@ nano .env       # содержимое — по образцу deploy/.env.examp
 Домен — это адрес сайта (`vegas-fit.ru` — здесь и дальше пример, имя выбираешь сам). Покупается у регистратора на год, потом продлевается.
 
 - Где: **REG.RU** или **RU-CENTER (nic.ru)** — крупнейшие, оплата картой/СБП.
-  Можно и в Timeweb — тогда домен и сервер в одном кабинете.
 - Сколько: домен `.ru` — порядка 1–1,5 тыс. ₽ в год; в 2026 продление у многих регистраторов
   подорожало (например, у Webnames — до 1390 ₽). Смотри цену **продления**, а не только первого года.
 - Для `.ru` нужны паспортные данные владельца (требование регистратора `.ru`).
@@ -203,7 +208,7 @@ Settings → **Secrets and variables** → **Actions**:
 |---|---|
 | `ssh: handshake failed` / `unable to authenticate` | проверить `SSH_USER`, ключ скопирован целиком |
 | `denied: permission_denied` при push в ghcr.io | Settings → Actions → General → Workflow permissions → **Read and write permissions** |
-| `pull access denied` / таймаут при скачивании образа | на сервере: `docker pull ghcr.io/veger93/vegas-web:latest`; если ghcr.io не открывается из России — написать мне, переложим образы в реестр Timeweb |
+| `pull access denied` / таймаут при скачивании образа | на сервере: `docker pull ghcr.io/veger93/vegas-web:latest`; если ghcr.io не открывается из России — написать мне, переложим образы в российский реестр (например, Yandex Container Registry) |
 | сайт открывается без HTTPS / ошибка сертификата | домен ещё не указывает на IP (DNS не обновился) — подождать и `docker compose restart web` |
 
 Полезные команды на сервере (`su - deploy && cd ~/vegas`):
@@ -231,7 +236,60 @@ docker compose restart notification-service
 0 4 * * * cd ~/vegas && mkdir -p backups && docker compose exec -T postgres pg_dumpall -U vegas | gzip > backups/$(date +\%F).sql.gz && find backups -mtime +14 -delete
 ```
 
-Скачать к себе (PowerShell): `scp deploy@<IP>:~/vegas/backups/2026-11-01.sql.gz .`
+Скачать к себе (PowerShell): `scp root@<IP>:/home/deploy/vegas/backups/2026-11-01.sql.gz .`
+
+## 9. Работа с сервером
+
+### Вход по ключу вместо пароля
+
+Пароль root перебирают боты со всего интернета — после настройки ключа вход по паролю выключаем.
+
+```powershell
+# на своём компьютере (PowerShell), один раз
+ssh-keygen -t ed25519 -C "sergey-pc"            # Enter на все вопросы
+type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh root@<IP> "cat >> ~/.ssh/authorized_keys"
+ssh root@<IP>                                   # должно пустить БЕЗ пароля
+```
+
+Только убедившись, что без пароля пускает, — на сервере:
+
+```bash
+echo "PasswordAuthentication no" > /etc/ssh/sshd_config.d/00-no-password.conf
+systemctl restart ssh
+```
+
+Если ключ потерян — вход через VNC-консоль в панели провайдера (она не зависит от SSH).
+
+### Полезные команды (на сервере)
+
+```bash
+cd /home/deploy/vegas
+docker compose ps                                   # что запущено, healthy ли
+docker compose logs -f --tail=100 workout-service   # логи сервиса (Ctrl+C — выйти)
+docker compose logs --since=1h gateway | grep -i error
+docker stats --no-stream                            # память и CPU по контейнерам
+docker compose restart notification-service         # перезапуск одного сервиса
+docker compose up -d                                # применить изменения .env
+df -h && free -h                                    # диск и память сервера
+```
+
+Графики CPU/трафика и перезагрузка сервера — в панели провайдера.
+
+### DBeaver: база через SSH-туннель
+
+Postgres слушает только `127.0.0.1` сервера — из интернета его не видно. DBeaver заходит на сервер по SSH
+и уже оттуда подключается к базе («туннель»).
+
+1. DBeaver → **Новое подключение → PostgreSQL**.
+2. Вкладка **Main**: Host `localhost`, Port `5432`, Database `workout_db` (или `user_db`, `analytics_db`,
+   `notification_db`), Username / Password — `DB_USER` / `DB_PASSWORD` из `.env` на сервере
+   (посмотреть: `grep DB_ /home/deploy/vegas/.env`). Галочка **Show all databases** — все базы в одном подключении.
+3. Вкладка **SSH**: Use SSH Tunnel, Host `<IP>`, Port `22`, User `root`, Authentication **Public Key**,
+   Private key — `C:\Users\<ты>\.ssh\id_ed25519`.
+4. **Test Connection**.
+
+Это продакшен: читать — сколько угодно, менять данные руками — только понимая последствия
+(и после свежего бэкапа). Схему меняем только миграциями Liquibase.
 
 ## Проверка на своём компьютере
 
