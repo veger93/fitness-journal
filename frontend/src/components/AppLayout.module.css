@@ -68,16 +68,16 @@
   text-align: center;
 }
 
-/* на телефоне меню уходит на вторую строку, а колокольчик остаётся рядом с логотипом */
-@media (max-width: 640px) {
-  .bell {
-    order: 2;
+/* на телефоне меню в шапке не нужно — разделы в нижней панели (TabBar);
+   снизу у страницы запас под панель, чтобы она не закрывала последнюю кнопку.
+   768px, а не 640: на планшете меню в шапке уже не помещается в одну строку */
+@media (max-width: 768px) {
+  .nav {
+    display: none;
   }
 
-  .nav {
-    order: 3;
-    width: 100%;
-    margin-left: 0;
+  .page {
+    padding: var(--space-4) var(--space-4) calc(96px + env(safe-area-inset-bottom));
   }
 }
 

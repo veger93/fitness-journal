@@ -1,0 +1,89 @@
+/*
+ * Нижняя панель вкладок — тёмная "капсула" над экраном (вариант B).
+ * Видна на телефоне и планшете (≤ 768px): там же, где шапка не вмещает меню.
+ * env(safe-area-inset-bottom) — отступ под "полоской" iPhone внизу экрана (нужен viewport-fit=cover в index.html).
+ * Другие варианты (в т.ч. C с круглой кнопкой "Тренировка") — в коммите 8658b5c, см. docs/ideas.md.
+ */
+.bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .bar {
+    position: fixed;
+    z-index: 10;
+    left: var(--space-3);
+    right: var(--space-3);
+    bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-1);
+    border-radius: var(--radius-pill);
+    background: var(--surface-inverse);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+  }
+}
+
+.tab {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  color: var(--text-on-inverse);
+  opacity: 0.7;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* выбранная вкладка — светлая "таблетка" с подписью */
+.active {
+  opacity: 1;
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* у невыбранных подпись скрыта только визуально: экранный диктор её читает (display:none убрал бы у ссылки имя) */
+.tab:not(.active) .label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.icon svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* идёт тренировка */
+.dot {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent-strong);
+  box-shadow: 0 0 0 2px var(--surface-inverse);
+}
+
+.active .dot {
+  box-shadow: 0 0 0 2px var(--surface);
+}
