@@ -16,6 +16,8 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "app.jwt")
 public record JwtProperties(
         @NotBlank String secret,
-        @NotNull Duration accessTokenTtl
+        @NotNull Duration accessTokenTtl,   // короткий: 15 минут. Украли — вред ограничен временем
+        @NotNull Duration refreshTokenTtl,  // длинный: дни. Лежит в httpOnly-cookie, JavaScript его не видит
+        boolean cookieSecure                // Secure-флаг cookie: только по HTTPS. Локально (http) — false
 ) {
 }

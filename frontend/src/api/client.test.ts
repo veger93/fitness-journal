@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { api, ApiError, configureApiClient } from './client';
+import { api, ApiError, configureApiClient, refreshAccessToken } from './client';
 
 function mockFetch(status: number, body?: unknown) {
   const fetchMock = vi
@@ -32,13 +32,51 @@ describe('api', () => {
     );
   });
 
-  it('401 с токеном — разлогинивает', async () => {
-    mockFetch(401);
+  it('401 и refresh не удался — разлогинивает', async () => {
+    const fetchMock = mockFetch(401);
     const onUnauthorized = vi.fn();
     configureApiClient({ getToken: () => 'expired', onUnauthorized });
 
     await expect(api('/api/users/me')).rejects.toBeInstanceOf(ApiError);
     expect(onUnauthorized).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[1][0]).toBe('/api/auth/refresh');
+  });
+
+  it('401 — молча обновляет токен по cookie и повторяет запрос', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ accessToken: 'fresh' }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: '1' }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const onTokenRefreshed = vi.fn();
+    const onUnauthorized = vi.fn();
+    configureApiClient({ getToken: () => 'expired', onTokenRefreshed, onUnauthorized });
+
+    await expect(api('/api/users/me')).resolves.toEqual({ id: '1' });
+    expect(onTokenRefreshed).toHaveBeenCalledWith('fresh');
+    expect(onUnauthorized).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls[2][1].headers.Authorization).toBe('Bearer fresh');
+  });
+
+  it('401 на логине — это неверный пароль, а не истёкший токен: refresh не вызываем', async () => {
+    const fetchMock = mockFetch(401, { status: 401, error: 'Unauthorized', message: 'Неверный email или пароль' });
+    configureApiClient({ getToken: () => 'old', onUnauthorized: () => {} });
+
+    await expect(api('/api/auth/login', { method: 'POST', body: {} })).rejects.toHaveProperty(
+      'message',
+      'Неверный email или пароль',
+    );
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('параллельные обновления — один запрос refresh на всех', async () => {
+    const fetchMock = mockFetch(200, { accessToken: 'fresh' });
+
+    const tokens = await Promise.all([refreshAccessToken(), refreshAccessToken(), refreshAccessToken()]);
+
+    expect(tokens).toEqual(['fresh', 'fresh', 'fresh']);
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 
   it('сервис не запущен — понятное сообщение', async () => {

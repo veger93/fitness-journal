@@ -8,6 +8,7 @@ import com.vegas.user.entity.User;
 import com.vegas.user.entity.UserProfile;
 import com.vegas.user.event.OutboxService;
 import com.vegas.user.exception.InvalidCredentialsException;
+import com.vegas.user.exception.InvalidRefreshTokenException;
 import com.vegas.user.repository.UserProfileRepository;
 import com.vegas.user.repository.UserRepository;
 import com.vegas.user.security.JwtService;
@@ -29,13 +30,14 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final OutboxService outboxService;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * @Transactional: пользователь и его профиль сохраняются вместе.
      * Если что-то упадёт посередине — откатится всё, "пользователя без профиля" не останется.
      */
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public AuthTokens register(RegisterRequest request) {
         String email = User.normalizeEmail(request.email());
         if (userRepository.existsByEmail(email)) {
             throw new BusinessException("Пользователь с таким email уже зарегистрирован");
@@ -48,11 +50,12 @@ public class AuthService {
         // notification-service узнает email нового пользователя
         outboxService.userRegistered(user);
 
-        return toAuthResponse(user);
+        return issueTokens(user);
     }
 
-    @Transactional(readOnly = true)
-    public AuthResponse login(LoginRequest request) {
+    /** Не readOnly: при входе в БД записывается новый refresh-токен */
+    @Transactional
+    public AuthTokens login(LoginRequest request) {
         User user = userRepository.findByEmail(User.normalizeEmail(request.email()))
                 // у Google-пользователя пароля нет -> войти по паролю нельзя
                 .filter(u -> u.getPasswordHash() != null)
@@ -60,10 +63,31 @@ public class AuthService {
                 .filter(u -> passwordEncoder.matches(request.password(), u.getPasswordHash()))
                 .orElseThrow(InvalidCredentialsException::new);
 
-        return toAuthResponse(user);
+        return issueTokens(user);
     }
 
-    private AuthResponse toAuthResponse(User user) {
+    /**
+     * Обмен refresh-токена из cookie на новую пару. Пароль не нужен — поэтому refresh-токен
+     * и хранится там, где JavaScript (а значит, и XSS) до него не дотянется.
+     */
+    @Transactional(noRollbackFor = InvalidRefreshTokenException.class)
+    public AuthTokens refresh(String refreshToken) {
+        RefreshTokenService.Rotation rotation = refreshTokenService.rotate(refreshToken);
+        // пользователя могли удалить, пока жил токен
+        User user = userRepository.findById(rotation.userId()).orElseThrow(InvalidRefreshTokenException::new);
+        return new AuthTokens(accessResponse(user), rotation.refreshToken());
+    }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        refreshTokenService.revoke(refreshToken);
+    }
+
+    private AuthTokens issueTokens(User user) {
+        return new AuthTokens(accessResponse(user), refreshTokenService.issueNewFamily(user.getId()));
+    }
+
+    private AuthResponse accessResponse(User user) {
         return AuthResponse.bearer(
                 jwtService.generateAccessToken(user),
                 jwtService.getAccessTokenTtl().toSeconds(),

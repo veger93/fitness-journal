@@ -28,5 +28,8 @@ export const authApi = {
       body: { email, password, displayName: displayName.trim() || null },
     }),
 
+  /** Отозвать refresh-токен и удалить cookie. Access-токен фронт просто забывает */
+  logout: () => api<void>('/api/auth/logout', { method: 'POST' }),
+
   me: () => api<UserResponse>('/api/users/me'),
 };
