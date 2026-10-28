@@ -81,6 +81,10 @@ public class Exercise {
             + " where m.exercise_id = id and m.media_type = 'IMAGE' and m.gender is null)")
     private String imageKey;
 
+    /** Своё упражнение "удалено", но по нему есть история: из каталога пропадает, тренировки и графики остаются */
+    @Column(name = "archived_at")
+    private Instant archivedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -107,6 +111,19 @@ public class Exercise {
         this.trackingType = trackingType;
         this.icon = icon;
         this.note = note;
+    }
+
+    public void archive(Instant now) {
+        this.archivedAt = now;
+    }
+
+    /** Пользователь снова создаёт упражнение с тем же названием — возвращаем старое вместе с историей */
+    public void restore() {
+        this.archivedAt = null;
+    }
+
+    public boolean isArchived() {
+        return archivedAt != null;
     }
 
     public boolean isCustom() {

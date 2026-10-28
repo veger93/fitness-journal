@@ -257,3 +257,46 @@
   color: var(--text-on-inverse);
   font: 600 12px var(--font-display);
 }
+
+/* ---------- удаление своего упражнения ---------- */
+
+.confirmBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--bg);
+}
+
+.confirmText {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+/* .confirmBox впереди — специфичность выше, чем у .primary кнопки: цвет точно перебьётся */
+.confirmBox .dangerButton {
+  background: var(--danger-text);
+  color: var(--surface);
+}
+
+/* строка "Мои упражнения" под плитками — на всю ширину */
+.mineButton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 56px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.mineButton > span {
+  white-space: nowrap;
+}

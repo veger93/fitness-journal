@@ -128,6 +128,11 @@ export interface ExerciseTechnique {
   mistakes: string[];
 }
 
+/** DELETE /api/exercises/{id}: DELETED — удалено совсем, ARCHIVED — есть история, только спрятано из каталога */
+export interface DeleteExerciseResult {
+  result: 'DELETED' | 'ARCHIVED';
+}
+
 /** POST /api/exercises — своё упражнение (workout-service: ExerciseRequest) */
 export interface NewExercise {
   name: string;
@@ -191,6 +196,7 @@ export const workoutsApi = {
   ) => api<Deload>(`/api/exercises/${exerciseId}/deload`, { method: 'PUT', body }),
   stopDeload: (exerciseId: string) => api<void>(`/api/exercises/${exerciseId}/deload`, { method: 'DELETE' }),
   createExercise: (body: NewExercise) => api<CatalogExercise>('/api/exercises', { method: 'POST', body }),
+  deleteExercise: (id: string) => api<DeleteExerciseResult>(`/api/exercises/${id}`, { method: 'DELETE' }),
   exercises: (search: string) => api<CatalogExercise[]>(`/api/exercises?search=${encodeURIComponent(search)}`),
   exercise: (id: string) => api<CatalogExercise>(`/api/exercises/${id}`),
   /** 204 (техники нет) клиент отдаёт как undefined — превращаем в null: TanStack Query не хранит undefined */

@@ -29,7 +29,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, UUID>, JpaSp
     @EntityGraph(attributePaths = "muscles")
     Optional<Exercise> findWithMusclesById(UUID id);
 
-    boolean existsByOwnerIdAndNameIgnoreCase(UUID ownerId, String name);
+    /** Своё действующее (не удалённое) упражнение с таким названием уже есть? */
+    boolean existsByOwnerIdAndNameIgnoreCaseAndArchivedAtIsNull(UUID ownerId, String name);
+
+    /** Удалённое (архивное) своё упражнение с таким названием — при повторном создании вернём его. */
+    Optional<Exercise> findFirstByOwnerIdAndNameIgnoreCaseAndArchivedAtIsNotNull(UUID ownerId, String name);
 
     /** Есть ли системное упражнение (owner_id IS NULL) с таким названием. */
     boolean existsByOwnerIdIsNullAndNameIgnoreCase(String name);

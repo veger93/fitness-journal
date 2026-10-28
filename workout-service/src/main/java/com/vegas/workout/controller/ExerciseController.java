@@ -1,6 +1,7 @@
 package com.vegas.workout.controller;
 
 import com.vegas.common.model.BodyPart;
+import com.vegas.workout.dto.DeleteExerciseResponse;
 import com.vegas.workout.dto.ExerciseRequest;
 import com.vegas.workout.dto.ExerciseResponse;
 import com.vegas.workout.dto.TechniqueResponse;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,8 +30,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Каталог упражнений. Удаления пока нет: оно появится вместе с тренировками —
- * упражнение, по которому уже есть подходы, будем не удалять, а архивировать.
+ * Каталог упражнений. Удалить можно только своё; если по нему есть тренировки или комплексы,
+ * оно не удаляется, а прячется из каталога (история остаётся).
  */
 @RestController
 @RequestMapping("/api/exercises")
@@ -75,5 +77,12 @@ public class ExerciseController {
                                    @PathVariable UUID id,
                                    @Valid @RequestBody ExerciseRequest request) {
         return exerciseService.update(CurrentUser.id(jwt), id, request);
+    }
+
+    /** Не 204, а тело с результатом: фронту важно, удалили совсем или только спрятали — от этого зависит текст */
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Удалить своё упражнение (с историей — спрятать из каталога)")
+    public DeleteExerciseResponse delete(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return exerciseService.delete(CurrentUser.id(jwt), id);
     }
 }
