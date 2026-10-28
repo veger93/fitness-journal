@@ -3,7 +3,8 @@
 #   docker compose pull && docker compose up -d
 # Образы сервисов собирает GitHub Actions и кладёт в GitHub Container Registry (ghcr.io).
 #
-# Наружу открыт ТОЛЬКО web (Caddy): порты 80/443. Базы, Kafka и сервисы видны лишь внутри docker-сети.
+# Наружу открыт ТОЛЬКО web (Caddy): порты 80/443. Kafka и сервисы видны лишь внутри docker-сети,
+# Postgres — ещё и на 127.0.0.1 самого сервера (для DBeaver через SSH-туннель).
 
 x-service: &service
   restart: unless-stopped
@@ -29,6 +30,10 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: postgres
+    # Порт виден ТОЛЬКО на самом сервере (127.0.0.1) — для DBeaver через SSH-туннель, см. docs/deploy.md.
+    # Без "127.0.0.1:" база торчала бы в интернет: Docker открывает порты в обход файрвола ufw.
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data          # данные переживают пересоздание контейнера
       - ./postgres-init:/docker-entrypoint-initdb.d:ro  # 4 базы создаются при самом первом запуске
