@@ -1,6 +1,6 @@
 import type { ProgressPoint } from '../api/analytics';
 import type { ExerciseMuscle, MuscleGroup, TrackingType } from '../api/workouts';
-import { formatKg, formatSet } from './format';
+import { formatKg, formatSet, plural } from './format';
 import { formatClock } from './workout';
 
 /** Строка истории на странице упражнения: одна тренировка. */
@@ -37,15 +37,7 @@ function bestResult(point: ProgressPoint, trackingType: TrackingType): string {
 
 /** 1 подход, 2 подхода, 5 подходов, 11 подходов, 21 подход */
 export function setsLabel(count: number): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) {
-    return `${count} подход`;
-  }
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-    return `${count} подхода`;
-  }
-  return `${count} подходов`;
+  return plural(count, 'подход', 'подхода', 'подходов');
 }
 
 /** Лучшее время за период — у упражнений на время это главная цифра вместо силы. */

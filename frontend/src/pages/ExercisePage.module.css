@@ -15,26 +15,37 @@
   font-size: var(--text-h1);
 }
 
-/* заголовок слева, миниатюра справа — в одну строку и на телефоне */
-.titleRow {
+/* заголовок, под ним кнопка "Как выполнять" */
+.titleBlock {
   display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.howToRow {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
-.titleRow > .header {
-  min-width: 0;
-}
-
-/* миниатюра у заголовка — кнопка без своего оформления, рамку рисует ExerciseImage */
-.thumb {
-  flex: none;
-  padding: 0;
+/* пилюля с миниатюрой: видно, что это кнопка, а картинка подсказывает, что внутри */
+.howTo {
+  height: 44px;
+  padding: 0 var(--space-4) 0 var(--space-1);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   border: 0;
-  border-radius: 16px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
+  color: var(--text);
+  font: 500 var(--text-sm) var(--font-body);
   cursor: pointer;
+}
+
+.howTo > span {
+  width: 48px;
 }
 
 .cardTitle {

@@ -1,7 +1,10 @@
+import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
-import type { SetInput, WorkoutExercise, WorkoutSet } from '../../api/workouts';
+import { workoutsApi, type SetInput, type WorkoutExercise, type WorkoutSet } from '../../api/workouts';
 import { formatKg, formatShortDate } from '../../lib/format';
 import { distanceFromSpeed, formatPace, formatSpeed, speedKmh, suggestNextSet } from '../../lib/workout';
+import { ExerciseImage } from '../ExerciseImage';
+import { ExerciseInfo } from '../ExerciseInfo';
 import { SegmentedControl } from '../ui/SegmentedControl';
 import { Chip } from '../ui/Chip';
 import { Button } from '../ui/Button';
@@ -21,7 +24,11 @@ interface SetDialogProps {
   onClose: () => void;
 }
 
-/** Модалка "Добавление подхода": поля под вид упражнения (вес/время/бег), разминка, Готово/Отмена. */
+/**
+ * Модалка "Добавление подхода": поля под вид упражнения (вес/время/бег), разминка, Готово/Отмена.
+ * Слева в шапке — миниатюра с "i": открывает карточку упражнения прямо в этом окне.
+ * Введённые вес и повторы живут в state этого компонента, поэтому после "←" они на месте.
+ */
 export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, onClose }: SetDialogProps) {
   const [values, setValues] = useState<SetInput>(
     () =>
@@ -29,6 +36,13 @@ export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, 
       suggestNextSet(exercise.sets, exercise.previousSets, exercise.trackingType, exercise.equipment, exercise.deload),
   );
   const change = (patch: Partial<SetInput>) => setValues((v) => ({ ...v, ...patch }));
+  const [showInfo, setShowInfo] = useState(false);
+  // описание упражнения из каталога (картинка, мышцы) — тот же кэш, что у страницы упражнения
+  const catalogExercise = useQuery({
+    queryKey: ['exercise', exercise.exerciseId],
+    queryFn: () => workoutsApi.exercise(exercise.exerciseId),
+    staleTime: 60 * 60 * 1000,
+  });
 
   const number = editing ? editing.number : exercise.sets.length + 1;
   const isRun = exercise.trackingType === 'DISTANCE';
@@ -59,8 +73,33 @@ export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, 
     }
   };
 
+  if (showInfo && catalogExercise.data) {
+    return (
+      <Dialog open onClose={onClose} onBack={() => setShowInfo(false)} title={exercise.exerciseName}>
+        <ExerciseInfo exercise={catalogExercise.data} />
+        <Button fullWidth onClick={() => setShowInfo(false)}>
+          К подходу
+        </Button>
+      </Dialog>
+    );
+  }
+
+  const leading = catalogExercise.data && (
+    <button
+      type="button"
+      className={styles.infoThumb}
+      aria-label={`Как выполнять: ${exercise.exerciseName}`}
+      onClick={() => setShowInfo(true)}
+    >
+      <ExerciseImage imageKey={catalogExercise.data.imageKey} />
+      <span className={styles.infoBadge} aria-hidden="true">
+        i
+      </span>
+    </button>
+  );
+
   return (
-    <Dialog open onClose={onClose} title={exercise.exerciseName} subtitle={subtitle}>
+    <Dialog open onClose={onClose} title={exercise.exerciseName} subtitle={subtitle} leading={leading}>
       <form className={styles.form} onSubmit={submit}>
         {exercise.trackingType === 'WEIGHT_REPS' && (
           <>

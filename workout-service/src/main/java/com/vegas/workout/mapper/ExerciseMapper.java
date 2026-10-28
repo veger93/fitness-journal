@@ -2,8 +2,10 @@ package com.vegas.workout.mapper;
 
 import com.vegas.workout.dto.ExerciseResponse;
 import com.vegas.workout.dto.MuscleResponse;
+import com.vegas.workout.dto.TechniqueResponse;
 import com.vegas.workout.entity.Exercise;
 import com.vegas.workout.entity.ExerciseMuscle;
+import com.vegas.workout.entity.ExerciseTechnique;
 import org.mapstruct.Mapper;
 
 import java.util.Comparator;
@@ -22,6 +24,8 @@ public interface ExerciseMapper {
     List<ExerciseResponse> toResponses(List<Exercise> exercises);
 
     MuscleResponse toMuscleResponse(ExerciseMuscle muscle);
+
+    TechniqueResponse toTechniqueResponse(ExerciseTechnique technique);
 
     /** Set не упорядочен -> сортируем сами: сначала PRIMARY, потом SECONDARY, внутри по названию. */
     default List<MuscleResponse> toMuscleResponses(Set<ExerciseMuscle> muscles) {

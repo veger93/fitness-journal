@@ -22,7 +22,9 @@ import { Card } from '../components/ui/Card';
 import { Dialog } from '../components/ui/Dialog';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { StatTile } from '../components/ui/StatTile';
+import { EQUIPMENT_NAMES } from '../lib/catalog';
 import { bestDuration, historyRows } from '../lib/exercise';
+import { BODY_PART_NAMES } from '../lib/plan';
 import { formatChange, formatExerciseResult, formatKg, formatShortDate, formatTonnage } from '../lib/format';
 import { formatClock } from '../lib/workout';
 import styles from './ExercisePage.module.css';
@@ -84,9 +86,9 @@ export function ExercisePage() {
     return (
       <div className={styles.page}>
         <BackLink to="/exercises">Все упражнения</BackLink>
-        <div className={styles.titleRow}>
+        <div className={styles.titleBlock}>
           <h1 className={styles.title}>{name ?? exercise.data?.name ?? 'Упражнение'}</h1>
-          {exercise.data && <ExerciseThumb exercise={exercise.data} />}
+          {exercise.data && <HowTo exercise={exercise.data} />}
         </div>
         <p className={styles.muted}>Пока нет завершённых тренировок с этим упражнением.</p>
       </div>
@@ -99,12 +101,12 @@ export function ExercisePage() {
   return (
     <div className={styles.page}>
       <BackLink to="/exercises">Все упражнения</BackLink>
-      <div className={styles.titleRow}>
+      <div className={styles.titleBlock}>
         <div className={styles.header}>
           <h1 className={styles.title}>{summary.exerciseName}</h1>
           {badge && <Badge variant={badge.variant}>{badge.label}</Badge>}
         </div>
-        {exercise.data && <ExerciseThumb exercise={exercise.data} />}
+        {exercise.data && <HowTo exercise={exercise.data} />}
       </div>
 
       <SegmentedControl legend="Период" options={PERIODS} value={period} onChange={setPeriod} />
@@ -152,23 +154,25 @@ export function ExercisePage() {
   );
 }
 
-/** Миниатюра у заголовка; по нажатию — карточка упражнения с картинками и мышцами */
-function ExerciseThumb({ exercise }: { exercise: CatalogExercise }) {
+/**
+ * Под заголовком: кнопка-пилюля "Как выполнять" с миниатюрой и рядом "часть тела · снаряд".
+ * По нажатию — карточка упражнения: картинки, мышцы, техника.
+ */
+function HowTo({ exercise }: { exercise: CatalogExercise }) {
   const [open, setOpen] = useState(false);
   return (
-    <>
-      <button
-        type="button"
-        className={styles.thumb}
-        aria-label={`Как выполнять: ${exercise.name}`}
-        onClick={() => setOpen(true)}
-      >
-        <ExerciseImage imageKey={exercise.imageKey} size="medium" />
+    <div className={styles.howToRow}>
+      <button type="button" className={styles.howTo} onClick={() => setOpen(true)}>
+        <ExerciseImage imageKey={exercise.imageKey} />
+        Как выполнять
       </button>
+      <span className={styles.muted}>
+        {BODY_PART_NAMES[exercise.bodyPart]} · {EQUIPMENT_NAMES[exercise.equipment].toLowerCase()}
+      </span>
       <Dialog open={open} onClose={() => setOpen(false)} title={exercise.name}>
         <ExerciseInfo exercise={exercise} />
       </Dialog>
-    </>
+    </div>
   );
 }
 

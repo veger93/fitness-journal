@@ -120,6 +120,14 @@ export interface CatalogExercise {
   imageKey: string | null;
 }
 
+/** GET /api/exercises/{id}/technique */
+export interface ExerciseTechnique {
+  /** исходное положение */
+  setup: string;
+  steps: string[];
+  mistakes: string[];
+}
+
 /** POST /api/exercises — своё упражнение (workout-service: ExerciseRequest) */
 export interface NewExercise {
   name: string;
@@ -185,4 +193,6 @@ export const workoutsApi = {
   createExercise: (body: NewExercise) => api<CatalogExercise>('/api/exercises', { method: 'POST', body }),
   exercises: (search: string) => api<CatalogExercise[]>(`/api/exercises?search=${encodeURIComponent(search)}`),
   exercise: (id: string) => api<CatalogExercise>(`/api/exercises/${id}`),
+  /** 204 (техники нет) клиент отдаёт как undefined — превращаем в null: TanStack Query не хранит undefined */
+  technique: async (id: string) => (await api<ExerciseTechnique | undefined>(`/api/exercises/${id}/technique`)) ?? null,
 };

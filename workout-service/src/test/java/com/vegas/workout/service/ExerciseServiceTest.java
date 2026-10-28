@@ -14,6 +14,8 @@ import com.vegas.workout.entity.MuscleRole;
 import com.vegas.workout.entity.TrackingType;
 import com.vegas.workout.mapper.ExerciseMapper;
 import com.vegas.workout.repository.ExerciseRepository;
+import com.vegas.workout.repository.ExerciseTechniqueRepository;
+import com.vegas.workout.entity.ExerciseTechnique;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,8 +23,10 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.BeanUtils;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,6 +43,9 @@ class ExerciseServiceTest {
     @Mock
     private ExerciseRepository exerciseRepository;
 
+    @Mock
+    private ExerciseTechniqueRepository techniqueRepository;
+
     private final ExerciseMapper exerciseMapper = Mappers.getMapper(ExerciseMapper.class);
 
     private ExerciseService service;
@@ -49,7 +56,7 @@ class ExerciseServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ExerciseService(exerciseRepository, exerciseMapper);
+        service = new ExerciseService(exerciseRepository, techniqueRepository, exerciseMapper);
     }
 
     // ---------- create ----------
@@ -116,6 +123,43 @@ class ExerciseServiceTest {
                 .isInstanceOf(NotFoundException.class);
     }
 
+    // ---------- getTechnique ----------
+
+    @Test
+    void getTechnique_returnsStepsInOrder() {
+        Exercise system = systemExercise();
+        ReflectionTestUtils.setField(system, "id", exerciseId);
+        when(exerciseRepository.findWithMusclesById(exerciseId)).thenReturn(Optional.of(system));
+        when(techniqueRepository.findById(exerciseId)).thenReturn(Optional.of(technique("Лягте на скамью",
+                List.of("Снимите штангу", "Опустите к груди", "Выжмите вверх"), List.of("Таз отрывается"))));
+
+        var response = service.getTechnique(me, exerciseId);
+
+        assertThat(response).isPresent();
+        assertThat(response.get().setup()).isEqualTo("Лягте на скамью");
+        assertThat(response.get().steps()).containsExactly("Снимите штангу", "Опустите к груди", "Выжмите вверх");
+    }
+
+    @Test
+    void getTechnique_noTechnique_isEmptyNotError() {
+        Exercise mine = customExercise(me, "Мой жим");
+        ReflectionTestUtils.setField(mine, "id", exerciseId);
+        when(exerciseRepository.findWithMusclesById(exerciseId)).thenReturn(Optional.of(mine));
+        when(techniqueRepository.findById(exerciseId)).thenReturn(Optional.empty());
+
+        assertThat(service.getTechnique(me, exerciseId)).isEmpty();
+    }
+
+    @Test
+    void getTechnique_someoneElsesCustomExercise_isNotFound() {
+        when(exerciseRepository.findWithMusclesById(exerciseId))
+                .thenReturn(Optional.of(customExercise(someoneElse, "Чужой жим")));
+
+        assertThatThrownBy(() -> service.getTechnique(me, exerciseId))
+                .isInstanceOf(NotFoundException.class);
+        verify(techniqueRepository, never()).findById(any());
+    }
+
     // ---------- update ----------
 
     @Test
@@ -145,6 +189,15 @@ class ExerciseServiceTest {
 
     private static Exercise customExercise(UUID ownerId, String name) {
         return Exercise.custom(ownerId, name, BodyPart.CHEST, Equipment.BARBELL, TrackingType.WEIGHT_REPS, null, null);
+    }
+
+    /** Техника тоже создаётся только миграцией: конструктор закрыт, заполняем поля напрямую. */
+    private static ExerciseTechnique technique(String setup, List<String> steps, List<String> mistakes) {
+        ExerciseTechnique technique = BeanUtils.instantiateClass(ExerciseTechnique.class);
+        ReflectionTestUtils.setField(technique, "setup", setup);
+        ReflectionTestUtils.setField(technique, "steps", steps);
+        ReflectionTestUtils.setField(technique, "mistakes", mistakes);
+        return technique;
     }
 
     /** Системные упражнения создаёт только миграция, поэтому в тесте "обнуляем" владельца. */
