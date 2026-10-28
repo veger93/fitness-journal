@@ -3,6 +3,7 @@ package com.vegas.workout.controller;
 import com.vegas.common.model.BodyPart;
 import com.vegas.workout.dto.ExerciseRequest;
 import com.vegas.workout.dto.ExerciseResponse;
+import com.vegas.workout.dto.TechniqueResponse;
 import com.vegas.workout.security.CurrentUser;
 import com.vegas.workout.service.ExerciseService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,6 +51,15 @@ public class ExerciseController {
     @Operation(summary = "Упражнение по id")
     public ExerciseResponse getById(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
         return exerciseService.getById(CurrentUser.id(jwt), id);
+    }
+
+    /** 200 — техника есть, 204 — для этого упражнения техники нет (например, своё упражнение) */
+    @GetMapping("/{id}/technique")
+    @Operation(summary = "Техника выполнения: исходное положение, шаги, частые ошибки")
+    public ResponseEntity<TechniqueResponse> technique(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return exerciseService.getTechnique(CurrentUser.id(jwt), id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @PostMapping

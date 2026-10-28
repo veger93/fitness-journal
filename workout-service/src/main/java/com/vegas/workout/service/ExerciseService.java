@@ -6,15 +6,18 @@ import com.vegas.common.exception.NotFoundException;
 import com.vegas.common.model.BodyPart;
 import com.vegas.workout.dto.ExerciseRequest;
 import com.vegas.workout.dto.ExerciseResponse;
+import com.vegas.workout.dto.TechniqueResponse;
 import com.vegas.workout.entity.Exercise;
 import com.vegas.workout.mapper.ExerciseMapper;
 import com.vegas.workout.repository.ExerciseRepository;
+import com.vegas.workout.repository.ExerciseTechniqueRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.vegas.workout.repository.ExerciseSpecifications.hasBodyPart;
@@ -26,6 +29,7 @@ import static com.vegas.workout.repository.ExerciseSpecifications.visibleTo;
 public class ExerciseService {
 
     private final ExerciseRepository exerciseRepository;
+    private final ExerciseTechniqueRepository techniqueRepository;
     private final ExerciseMapper exerciseMapper;
 
     /** Каталог: системные + свои, с необязательными фильтрами. Каталог небольшой — без пагинации. */
@@ -40,6 +44,16 @@ public class ExerciseService {
     @Transactional(readOnly = true)
     public ExerciseResponse getById(UUID userId, UUID exerciseId) {
         return exerciseMapper.toResponse(findVisible(userId, exerciseId));
+    }
+
+    /**
+     * Техника выполнения. Сначала проверяем, что упражнение видно пользователю (чужое своё -> 404),
+     * потом ищем технику. Её может не быть (свои упражнения) — это не ошибка, поэтому Optional, а не исключение.
+     */
+    @Transactional(readOnly = true)
+    public Optional<TechniqueResponse> getTechnique(UUID userId, UUID exerciseId) {
+        Exercise exercise = findVisible(userId, exerciseId);
+        return techniqueRepository.findById(exercise.getId()).map(exerciseMapper::toTechniqueResponse);
     }
 
     /**

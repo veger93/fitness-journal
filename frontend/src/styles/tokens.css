@@ -51,6 +51,7 @@
   --text-on-accent: #ffffff;
   --accent-soft-text: #ffedd5; /* вторичный текст на акцентной заливке */
   --chip: #e5e7eb; /* нейтральный бейдж */
+  --warning-soft: #ffedd5; /* мягкая заливка "осторожно": частые ошибки в технике */
   --border: #e5e7eb;
   --input-bg: #ffffff;
   --input-border: #d1d5db;
@@ -72,6 +73,7 @@
   --text-on-accent: #ffffff;
   --accent-soft-text: #ffedd5;
   --chip: #2d3546;
+  --warning-soft: #3b2416;
   --border: #232a38;
   --input-bg: #0f141e;
   --input-border: #374151;

@@ -91,11 +91,6 @@
   color: var(--text);
 }
 
-.infoActions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
 
 .muted {
   color: var(--text-muted);
@@ -184,4 +179,81 @@
   margin: 0;
   color: var(--danger-text);
   font-size: var(--text-sm);
+}
+
+/* ---------- выбор упражнения: плитки и чипы ---------- */
+
+.catalogSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sectionLabel {
+  margin: 0;
+  font: 600 var(--text-xs) var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* чипы в одну строку с прокруткой вбок: на телефоне не переносятся в три ряда */
+.chipRow {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chipRow > * {
+  flex: none;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tileName {
+  font: 600 var(--text-md) var(--font-display);
+}
+
+/* миниатюра упражнения в шапке окна подхода; значок "i" в углу подсказывает, что она нажимается */
+.infoThumb {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.infoBadge {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--surface-inverse);
+  color: var(--text-on-inverse);
+  font: 600 12px var(--font-display);
 }

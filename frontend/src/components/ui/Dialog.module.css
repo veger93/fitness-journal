@@ -1,7 +1,7 @@
 .dialog {
   width: min(480px, calc(100vw - 2 * var(--space-4)));
   max-height: calc(100vh - 2 * var(--space-5));
-  padding: var(--space-6) var(--space-5);
+  padding: var(--space-5);
   border: 0;
   border-radius: var(--radius-section);
   background: var(--surface);
@@ -18,6 +18,54 @@
   gap: var(--space-4);
 }
 
+/* ← | заголовок | × : боковые колонки одной ширины, поэтому заголовок точно по центру */
+.header {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.side {
+  display: flex;
+  align-items: center;
+}
+
+.sideEnd {
+  justify-content: flex-end;
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* круглая кнопка 44px — удобно попасть пальцем */
+.iconButton {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.iconButton svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .subtitle {
   margin: 0;
   text-align: center;
@@ -26,6 +74,6 @@
 }
 
 .title {
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   text-align: center;
 }
