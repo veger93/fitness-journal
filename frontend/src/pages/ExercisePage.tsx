@@ -8,7 +8,9 @@ import {
   type ExerciseSummary,
   type ProgressPeriod,
 } from '../api/analytics';
-import { workoutsApi } from '../api/workouts';
+import { workoutsApi, type CatalogExercise } from '../api/workouts';
+import { ExerciseImage } from '../components/ExerciseImage';
+import { ExerciseInfo } from '../components/ExerciseInfo';
 import { DeloadPlanContent } from '../components/home/DeloadPlanContent';
 import { PlateauTips } from '../components/home/PlateauTips';
 import { STATUS_BADGES } from '../components/ExerciseRow';
@@ -17,6 +19,7 @@ import { ProgressLegend } from '../components/ProgressLegend';
 import { BackLink } from '../components/ui/BackLink';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
+import { Dialog } from '../components/ui/Dialog';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { StatTile } from '../components/ui/StatTile';
 import { bestDuration, historyRows } from '../lib/exercise';
@@ -46,7 +49,7 @@ const PERIOD_CAPTION: Record<ProgressPeriod, string> = {
  *
  * Данных три: сводка упражнения берётся из /dashboard (тот же кэш, что у главной — лишнего запроса нет),
  * progress — по выбранному периоду (период входит в queryKey, поэтому каждый период кэшируется отдельно),
- * insights — плато, перегрузка и совет.
+ * insights — плато, перегрузка и совет. Описание упражнения из каталога (картинка, мышцы) — для миниатюры у заголовка.
  */
 export function ExercisePage() {
   const { exerciseId = '' } = useParams();
@@ -60,6 +63,12 @@ export function ExercisePage() {
   const insights = useQuery({
     queryKey: ['insights', exerciseId],
     queryFn: () => analyticsApi.insights(exerciseId),
+  });
+  // каталог меняется редко — не перезапрашиваем при каждом возврате на вкладку
+  const exercise = useQuery({
+    queryKey: ['exercise', exerciseId],
+    queryFn: () => workoutsApi.exercise(exerciseId),
+    staleTime: 60 * 60 * 1000,
   });
 
   const summary = dashboard.data?.exercises.find((e) => e.exerciseId === exerciseId) ?? null;
@@ -75,7 +84,10 @@ export function ExercisePage() {
     return (
       <div className={styles.page}>
         <BackLink to="/exercises">Все упражнения</BackLink>
-        <h1 className={styles.title}>{name ?? 'Упражнение'}</h1>
+        <div className={styles.titleRow}>
+          <h1 className={styles.title}>{name ?? exercise.data?.name ?? 'Упражнение'}</h1>
+          {exercise.data && <ExerciseThumb exercise={exercise.data} />}
+        </div>
         <p className={styles.muted}>Пока нет завершённых тренировок с этим упражнением.</p>
       </div>
     );
@@ -87,9 +99,12 @@ export function ExercisePage() {
   return (
     <div className={styles.page}>
       <BackLink to="/exercises">Все упражнения</BackLink>
-      <div className={styles.header}>
-        <h1 className={styles.title}>{summary.exerciseName}</h1>
-        {badge && <Badge variant={badge.variant}>{badge.label}</Badge>}
+      <div className={styles.titleRow}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>{summary.exerciseName}</h1>
+          {badge && <Badge variant={badge.variant}>{badge.label}</Badge>}
+        </div>
+        {exercise.data && <ExerciseThumb exercise={exercise.data} />}
       </div>
 
       <SegmentedControl legend="Период" options={PERIODS} value={period} onChange={setPeriod} />
@@ -134,6 +149,26 @@ export function ExercisePage() {
         </p>
       )}
     </div>
+  );
+}
+
+/** Миниатюра у заголовка; по нажатию — карточка упражнения с картинками и мышцами */
+function ExerciseThumb({ exercise }: { exercise: CatalogExercise }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        className={styles.thumb}
+        aria-label={`Как выполнять: ${exercise.name}`}
+        onClick={() => setOpen(true)}
+      >
+        <ExerciseImage imageKey={exercise.imageKey} size="medium" />
+      </button>
+      <Dialog open={open} onClose={() => setOpen(false)} title={exercise.name}>
+        <ExerciseInfo exercise={exercise} />
+      </Dialog>
+    </>
   );
 }
 

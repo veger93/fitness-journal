@@ -15,6 +15,28 @@
   font-size: var(--text-h1);
 }
 
+/* заголовок слева, миниатюра справа — в одну строку и на телефоне */
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.titleRow > .header {
+  min-width: 0;
+}
+
+/* миниатюра у заголовка — кнопка без своего оформления, рамку рисует ExerciseImage */
+.thumb {
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
 .cardTitle {
   font-size: var(--text-lg);
 }

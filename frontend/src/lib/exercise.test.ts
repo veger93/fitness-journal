@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ProgressPoint } from '../api/analytics';
-import { bestDuration, historyRows, setsLabel } from './exercise';
+import { bestDuration, exerciseImageUrl, historyRows, musclesText, setsLabel } from './exercise';
 
 const point = (date: string, extra: Partial<ProgressPoint> = {}): ProgressPoint => ({
   date,
@@ -61,5 +61,28 @@ describe('bestDuration', () => {
       95,
     );
     expect(bestDuration([point('a')])).toBeNull();
+  });
+});
+
+describe('musclesText', () => {
+  const muscles = [
+    { muscle: 'CHEST', role: 'PRIMARY' },
+    { muscle: 'TRICEPS', role: 'SECONDARY' },
+    { muscle: 'FRONT_DELTS', role: 'SECONDARY' },
+  ] as const;
+
+  it('перечисляет мышцы нужной роли по-русски', () => {
+    expect(musclesText([...muscles], 'PRIMARY')).toBe('грудь');
+    expect(musclesText([...muscles], 'SECONDARY')).toBe('трицепс, передняя дельта');
+  });
+
+  it('нет мышц этой роли — пустая строка', () => {
+    expect(musclesText([], 'PRIMARY')).toBe('');
+  });
+});
+
+describe('exerciseImageUrl', () => {
+  it('файл из public/exercises по ключу и положению', () => {
+    expect(exerciseImageUrl('bench-press', 2)).toBe('/exercises/bench-press-2.svg');
   });
 });
