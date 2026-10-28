@@ -91,7 +91,6 @@
   color: var(--text);
 }
 
-
 .muted {
   color: var(--text-muted);
   font-size: var(--text-sm);

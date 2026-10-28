@@ -22,6 +22,8 @@
 8. ~~Токен в httpOnly-cookie + refresh-токен~~ — access 15 минут только в памяти фронта, refresh 30 дней
    в httpOnly-cookie (SameSite=Strict, Path=/api/auth) с ротацией и защитой от повторного использования.
 9. ~~Мобильная версия~~ — нижняя панель вкладок (тёмная капсула), вёрстка проверена на 320/360/390/700px.
-10. Подготовка к релизу — Dockerfile сервисов, docker-compose всего стека, CI (GitHub Actions), README и список литературы.
+10. ~~Подготовка к релизу~~ — Dockerfile сервисов и фронта (Caddy + HTTPS), docker-compose всего стека,
+    CI и CD в GitHub Actions (образы в ghcr.io, выкладка по SSH), README, инструкция docs/deploy.md.
+    Осталось руками: сервер, домен, почта, секреты в GitHub — по docs/deploy.md.
 
 Дальше — бэклог: `docs/ideas.md` (там же вход через Google).

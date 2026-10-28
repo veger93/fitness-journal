@@ -1,6 +1,11 @@
 # fitness-journal (Vegas)
 
+[![CI](https://github.com/veger93/fitness-journal/actions/workflows/ci.yml/badge.svg)](https://github.com/veger93/fitness-journal/actions/workflows/ci.yml)
+
 Умный дневник тренировок: подходы, прогресс, эталонные кривые, плато, отчёты.
+
+**Стек:** Java 17, Spring Boot 3.3, Spring Cloud Gateway, PostgreSQL 16, Liquibase, Kafka (KRaft), MapStruct ·
+React 19, TypeScript, Vite, TanStack Query · Docker, Caddy, GitHub Actions.
 
 ## Модули
 
@@ -24,6 +29,17 @@
 3. Run Configuration сервиса → VM options: `-Dspring.profiles.active=local`
 4. Swagger каждого сервиса: `http://localhost:<порт>/swagger-ui.html`
 5. Фронт: `cd frontend && npm install && npm run dev` → http://localhost:5173 (нужен Node.js 22)
+
+## Выкладка (продакшен)
+
+| Что | Где |
+|---|---|
+| Docker-образ любого Java-сервиса | `Dockerfile` в корне: `docker build --build-arg SERVICE=user-service .` |
+| Образ фронта (статика + Caddy, HTTPS, прокси `/api` в gateway) | `frontend/Dockerfile`, `frontend/Caddyfile` |
+| Весь стек на сервере | `deploy/docker-compose.yml` + `.env` по образцу `deploy/.env.example` |
+| CI: тесты и сборка на каждый PR | `.github/workflows/ci.yml` |
+| CD: образы в ghcr.io и обновление сервера после мержа в main | `.github/workflows/deploy.yml` |
+| Пошаговая инструкция: сервер, домен, почта, секреты | [docs/deploy.md](docs/deploy.md) |
 
 ## Структура пакетов сервиса
 
@@ -86,6 +102,14 @@ docker exec vegas-kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-serv
 
 Kafka UI: http://localhost:8090
 
-## Научная база
+## Научная база и источники
 
 Формулы и пороги аналитики опираются на исследования — список и привязка к коду: [docs/references.md](docs/references.md).
+Там же — откуда иллюстрации упражнений и на каких условиях они используются.
+
+## Документы
+
+- [docs/roadmap.md](docs/roadmap.md) — план до релиза
+- [docs/ideas.md](docs/ideas.md) — бэклог
+- [docs/deploy.md](docs/deploy.md) — выкладка на сервер
+- [docs/references.md](docs/references.md) — список литературы

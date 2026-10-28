@@ -24,7 +24,13 @@ spring:
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:1025}
+    # на сервере — настоящий SMTP (например, Яндекс: smtp.yandex.ru:587 + пароль приложения); локально пусто — Mailpit
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     default-encoding: UTF-8
+    properties:
+      "[mail.smtp.auth]": ${MAIL_SMTP_AUTH:false}
+      "[mail.smtp.starttls.enable]": ${MAIL_STARTTLS:false}
   jpa:
     open-in-view: false          # не держим соединение с БД открытым до конца HTTP-запроса
     hibernate:
@@ -57,6 +63,6 @@ app:
     # "давно не было тренировок": раз в час достаточно
     inactivity-cron: "0 0 * * * *"
   mail:
-    from: "Vegas <no-reply@vegas.local>"
+    from: "${MAIL_FROM:Vegas <no-reply@vegas.local>}"
   jwt:
     secret: ${JWT_SECRET}         # тот же ключ, что у user-service

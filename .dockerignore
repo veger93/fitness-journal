@@ -1,0 +1,11 @@
+# В контекст сборки Java-сервисов не отправляем лишнее: так сборка быстрее, а секреты не утекут в образ
+.git
+.github
+.idea
+**/build
+**/.gradle
+frontend
+infra
+deploy
+docs
+*.md

@@ -1,0 +1,29 @@
+# Веб-сервер приложения.
+# DOMAIN — из переменной окружения: на сервере "vegas-fit.ru" (Caddy сам выпустит HTTPS-сертификат),
+# для проверки на своём компьютере — "http://localhost" (без HTTPS).
+{$DOMAIN:http://localhost} {
+	encode zstd gzip
+
+	# всё API — в gateway; Swagger и actuator сервисов наружу не торчат
+	handle /api/* {
+		reverse_proxy gateway:8080
+	}
+
+	# остальное — собранный фронт. Неизвестный путь (/history/123) отдаём index.html: маршруты разбирает React
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	# у файлов из assets в имени есть хеш содержимого — их можно кэшировать "навсегда"
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	# базовая защита браузера
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
