@@ -1,7 +1,8 @@
 /*
- * Нижняя панель вкладок. Видна на телефоне и планшете (≤ 768px): там же, где шапка не вмещает меню.
+ * Нижняя панель вкладок — тёмная "капсула" над экраном (вариант B).
+ * Видна на телефоне и планшете (≤ 768px): там же, где шапка не вмещает меню.
  * env(safe-area-inset-bottom) — отступ под "полоской" iPhone внизу экрана (нужен viewport-fit=cover в index.html).
- * Три варианта оформления — data-variant на <nav>: classic / floating / center.
+ * Другие варианты (в т.ч. C с круглой кнопкой "Тренировка") — в коммите 8658b5c, см. docs/ideas.md.
  */
 .bar {
   display: none;
@@ -11,26 +12,48 @@
   .bar {
     position: fixed;
     z-index: 10;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    left: var(--space-3);
+    right: var(--space-3);
+    bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-1);
+    border-radius: var(--radius-pill);
+    background: var(--surface-inverse);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
   }
 }
 
 .tab {
-  min-height: 56px;
+  min-height: 52px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
-  color: var(--text-muted);
+  gap: var(--space-2);
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  color: var(--text-on-inverse);
+  opacity: 0.7;
   text-decoration: none;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* выбранная вкладка — светлая "таблетка" с подписью */
+.active {
+  opacity: 1;
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* у невыбранных подпись скрыта только визуально: экранный диктор её читает (display:none убрал бы у ссылки имя) */
+.tab:not(.active) .label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .icon {
@@ -58,194 +81,9 @@
   height: 9px;
   border-radius: 50%;
   background: var(--accent-strong);
-  box-shadow: 0 0 0 2px var(--surface);
-}
-
-.active {
-  color: var(--text);
-}
-
-/* ---------- A. classic: белая панель во всю ширину, у активной вкладки — "таблетка" под иконкой ---------- */
-
-.bar[data-variant='classic'] {
-  padding: var(--space-1) var(--space-2) calc(var(--space-1) + env(safe-area-inset-bottom));
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-}
-
-.bar[data-variant='classic'] .active .icon {
-  padding: 2px 16px;
-  border-radius: var(--radius-pill);
-  background: var(--chip);
-}
-
-.bar[data-variant='classic'] .tab:not(.active) .icon {
-  padding: 2px 16px;
-}
-
-/* ---------- B. floating: тёмная капсула над экраном, активная вкладка — светлая с подписью ---------- */
-
-.bar[data-variant='floating'] {
-  left: var(--space-3);
-  right: var(--space-3);
-  bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
-  padding: var(--space-1);
-  border-radius: var(--radius-pill);
-  background: var(--surface-inverse);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
-  grid-template-columns: repeat(5, auto);
-  justify-content: space-between;
-}
-
-.bar[data-variant='floating'] .tab {
-  min-height: 52px;
-  flex-direction: row;
-  gap: var(--space-2);
-  padding: 0 14px;
-  border-radius: var(--radius-pill);
-  color: var(--text-on-inverse);
-  opacity: 0.7;
-  font-size: 13px;
-}
-
-.bar[data-variant='floating'] .tab:not(.active) .label {
-  /* скрыта визуально, но экранный диктор подпись читает: display:none убрал бы у ссылки имя */
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.bar[data-variant='floating'] .active {
-  opacity: 1;
-  background: var(--surface);
-  color: var(--text);
-}
-
-
-.bar[data-variant='floating'] .dot {
   box-shadow: 0 0 0 2px var(--surface-inverse);
 }
 
-/* ---------- C. center: обычная панель, "Тренировка" — круглая акцентная кнопка, приподнятая над панелью ---------- */
-
-.bar[data-variant='center'] {
-  padding: 0 var(--space-2) env(safe-area-inset-bottom);
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  align-items: end;
-}
-
-.bar[data-variant='center'] .main .icon {
-  width: 56px;
-  height: 56px;
-  margin-top: -22px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--text-on-accent);
-  box-shadow: 0 6px 16px rgb(194 65 12 / 0.35), 0 0 0 4px var(--surface);
-}
-
-.bar[data-variant='center'] .main .dot {
-  top: 4px;
-  right: 6px;
-  background: var(--text-on-accent);
-  box-shadow: none;
-}
-
-.bar[data-variant='center'] .main.active {
-  color: var(--text);
-}
-
-/* ---------- D. hybrid: капсула из B + круглая кнопка "Тренировка" из C, приподнятая над капсулой ---------- */
-
-.bar[data-variant^='hybrid'] {
-  left: var(--space-3);
-  right: var(--space-3);
-  bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
-  padding: var(--space-1);
-  border-radius: var(--radius-pill);
-  background: var(--surface-inverse);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
-  /* 5 равных колонок: круглая кнопка всегда ровно посередине, что бы ни было выбрано */
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  align-items: center;
-}
-
-.bar[data-variant^='hybrid'] .tab {
-  position: relative;
-  justify-self: center;
-  width: 52px;
-  min-height: 52px;
-  border-radius: 50%;
-  color: var(--text-on-inverse);
-  opacity: 0.7;
-  font-size: 13px;
-}
-
-.bar[data-variant^='hybrid'] .tab .label {
-  /* скрыта визуально, но экранный диктор подпись читает: display:none убрал бы у ссылки имя */
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.bar[data-variant^='hybrid'] .active:not(.main) {
-  opacity: 1;
-  background: var(--surface);
-  color: var(--text);
-}
-
-
-/* центральная кнопка: круг 60px, приподнят над капсулой на треть */
-.bar[data-variant^='hybrid'] .main {
-  width: auto;
-  opacity: 1;
-}
-
-.bar[data-variant^='hybrid'] .main .icon {
-  width: 60px;
-  height: 60px;
-  margin-top: -26px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--text-on-accent);
-  box-shadow: 0 6px 16px rgb(194 65 12 / 0.35), 0 0 0 4px var(--bg);
-}
-
-.bar[data-variant^='hybrid'] .main .icon svg {
-  width: 28px;
-  height: 28px;
-}
-
-.bar[data-variant^='hybrid'] .main .dot {
-  top: 8px;
-  right: 9px;
-  background: var(--text-on-accent);
-  box-shadow: none;
-}
-
-/* активная "Тренировка" — кольцо вокруг круга */
-.bar[data-variant^='hybrid'] .main.active .icon {
-  box-shadow: 0 6px 16px rgb(194 65 12 / 0.35), 0 0 0 4px var(--bg), 0 0 0 6px var(--accent);
-}
-
-/* D2: круг цвета страницы вместо оранжевого — оранжевый остаётся только для риска */
-.bar[data-variant='hybrid-light'] .main .icon {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 6px 16px rgb(0 0 0 / 0.2), 0 0 0 4px var(--bg);
-}
-
-.bar[data-variant='hybrid-light'] .main.active .icon {
-  box-shadow: 0 6px 16px rgb(0 0 0 / 0.2), 0 0 0 4px var(--bg), 0 0 0 6px var(--text);
-}
-
-.bar[data-variant='hybrid-light'] .main .dot {
-  background: var(--accent-strong);
+.active .dot {
+  box-shadow: 0 0 0 2px var(--surface);
 }

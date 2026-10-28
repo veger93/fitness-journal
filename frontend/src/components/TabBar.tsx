@@ -2,8 +2,6 @@ import { NavLink } from 'react-router-dom';
 import { useCurrentWorkout } from '../hooks/useWorkout';
 import styles from './TabBar.module.css';
 
-export type TabBarVariant = 'classic' | 'floating' | 'center' | 'hybrid' | 'hybrid-light';
-
 /** Иконки — простые линии 24×24 одним stroke, как колокольчик в шапке */
 const ICONS = {
   home: 'M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z',
@@ -23,23 +21,21 @@ const TABS: { to: string; label: string; icon: keyof typeof ICONS }[] = [
 
 /**
  * Нижняя панель вкладок на телефоне: до разделов дотягивается большой палец, шапка не съедает экран.
- * "Тренировка" посередине — главное действие приложения. Идёт тренировка — на вкладке точка.
+ * "Тренировка" посередине — главное действие приложения. Идёт тренировка — на вкладке оранжевая точка.
  * На компьютере панель скрыта (CSS), там меню в шапке.
  */
-export function TabBar({ variant }: { variant: TabBarVariant }) {
+export function TabBar() {
   const current = useCurrentWorkout();
   const inProgress = current.data != null;
 
   return (
-    <nav aria-label="Разделы" className={styles.bar} data-variant={variant}>
+    <nav aria-label="Разделы" className={styles.bar}>
       {TABS.map((tab) => (
         <NavLink
           key={tab.to}
           to={tab.to}
           end={tab.to === '/'}
-          className={({ isActive }) =>
-            [styles.tab, tab.icon === 'workout' && styles.main, isActive && styles.active].filter(Boolean).join(' ')
-          }
+          className={({ isActive }) => [styles.tab, isActive && styles.active].filter(Boolean).join(' ')}
         >
           <span className={styles.icon}>
             <svg viewBox="0 0 24 24" aria-hidden="true">

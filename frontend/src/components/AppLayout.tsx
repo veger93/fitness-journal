@@ -42,7 +42,7 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
-      <TabBar variant="floating" />
+      <TabBar />
     </div>
   );
 }
