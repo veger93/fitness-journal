@@ -18,10 +18,10 @@
   gap: var(--space-4);
 }
 
-/* ← | заголовок | × : боковые колонки одной ширины, поэтому заголовок точно по центру */
+/* ← | заголовок | × : боковые колонки не уже кнопки 44px (миниатюра в окне подхода чуть шире — колонка подстроится) */
 .header {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) 56px;
+  grid-template-columns: minmax(44px, auto) minmax(0, 1fr) minmax(44px, auto);
   align-items: center;
   gap: var(--space-2);
 }
@@ -76,4 +76,16 @@
 .title {
   font-size: var(--text-lg);
   text-align: center;
+}
+
+/* телефон: поля окна поменьше — заголовку в шапке между кнопками достаётся больше места */
+@media (max-width: 640px) {
+  .dialog {
+    padding: var(--space-4);
+  }
+
+  /* между кнопками ~150px: при 20px "упражнение" не влезало и рвалось посередине слова */
+  .title {
+    font-size: 17px;
+  }
 }

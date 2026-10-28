@@ -23,6 +23,13 @@ h3 {
   font-family: var(--font-display);
   font-weight: 700;
   line-height: 1.15;
+  /* слово длиннее строки не вылезает за экран, а переносится */
+  overflow-wrap: break-word;
+}
+
+/* крупный заголовок страницы ("Уведомления" 34px на 320px экрана) — переносим по слогам (работает благодаря lang="ru") */
+h1 {
+  hyphens: auto;
 }
 
 a {

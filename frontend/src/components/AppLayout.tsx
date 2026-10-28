@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { NotificationBell } from './NotificationBell';
+import { TabBar } from './TabBar';
 import styles from './AppLayout.module.css';
 
 const NAV = [
@@ -11,7 +12,10 @@ const NAV = [
   // Комплексы — появятся вместе со своим экраном
 ];
 
-/** Общая "рамка" всех страниц после входа: шапка + контент. */
+/**
+ * Общая "рамка" всех страниц после входа: шапка + контент.
+ * На телефоне меню из шапки уходит в нижнюю панель вкладок (TabBar), в шапке остаются логотип и колокольчик.
+ */
 export function AppLayout() {
   return (
     <div className={styles.page}>
@@ -38,6 +42,7 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
+      <TabBar variant="floating" />
     </div>
   );
 }

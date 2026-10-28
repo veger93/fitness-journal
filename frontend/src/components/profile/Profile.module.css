@@ -7,7 +7,7 @@
 .steppers {
   display: grid;
   /* у степпера кнопки по 48px и число между ними: уже 220px кнопки наезжают на соседний степпер */
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: var(--space-3);
 }
 

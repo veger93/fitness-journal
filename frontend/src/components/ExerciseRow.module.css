@@ -30,9 +30,11 @@
 
 .title {
   font-weight: 600;
+  /* до двух строк, дальше многоточие: "Тяга верхнего блока узким хватом" не обрезается до "Тяга верхнего…" */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .note {
