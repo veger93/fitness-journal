@@ -42,4 +42,6 @@ app:
     poll-interval-ms: 1000
   jwt:
     secret: ${JWT_SECRET}         # base64, минимум 256 бит; в проде — только через переменную окружения
-    access-token-ttl: 1h          # время жизни токена (Duration: 15m, 1h, 1d)
+    access-token-ttl: 15m         # короткий access-токен (Duration: 15m, 1h, 1d); фронт сам обновит его по refresh
+    refresh-token-ttl: 30d        # refresh-токен в httpOnly-cookie: столько можно не вводить пароль
+    cookie-secure: ${COOKIE_SECURE:true}   # в проде только HTTPS

@@ -24,7 +24,7 @@ class JwtServiceTest {
     private static final String OTHER_SECRET =
             "0EJXS5DoMcGPf1mXDuHC7Fn/xZnsIq1q0iyBJXy1pz3pRxx5FNGNmQ+Qihz2H0rix/fZ2V0yopKjXGdQci97MQ==";
 
-    private final JwtService jwtService = new JwtService(new JwtProperties(SECRET, Duration.ofHours(1)));
+    private final JwtService jwtService = new JwtService(new JwtProperties(SECRET, Duration.ofHours(1), Duration.ofDays(30), false));
 
     @Test
     void generatedToken_isParsedBackWithSameUser() {
@@ -48,7 +48,7 @@ class JwtServiceTest {
 
     @Test
     void tokenSignedWithAnotherKey_isRejected() {
-        JwtService otherService = new JwtService(new JwtProperties(OTHER_SECRET, Duration.ofHours(1)));
+        JwtService otherService = new JwtService(new JwtProperties(OTHER_SECRET, Duration.ofHours(1), Duration.ofDays(30), false));
         String foreignToken = otherService.generateAccessToken(userWithId());
 
         assertThat(jwtService.parse(foreignToken)).isEmpty();
@@ -57,7 +57,7 @@ class JwtServiceTest {
     @Test
     void expiredToken_isRejected() {
         // отрицательный TTL -> токен просрочен в момент выпуска
-        JwtService shortLived = new JwtService(new JwtProperties(SECRET, Duration.ofSeconds(-1)));
+        JwtService shortLived = new JwtService(new JwtProperties(SECRET, Duration.ofSeconds(-1), Duration.ofDays(30), false));
         String token = shortLived.generateAccessToken(userWithId());
 
         assertThat(jwtService.parse(token)).isEmpty();

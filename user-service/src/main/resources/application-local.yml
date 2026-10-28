@@ -9,3 +9,4 @@ app:
   jwt:
     # ключ ТОЛЬКО для локальной разработки. Для прода генерируется новый и передаётся через JWT_SECRET
     secret: ${JWT_SECRET:0EJXS5DoMcGPf1mXDuHC7Fn/xZnsIq1q0iyBJXy1pz3pRxx5FNGNmQ+Qihz2H0rix/fZ2V0yopKjXGdQci97MQ==}
+    cookie-secure: false   # локально всё по http: Secure-cookie браузер бы не сохранил

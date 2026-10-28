@@ -9,6 +9,7 @@ import com.vegas.user.entity.User;
 import com.vegas.user.entity.UserProfile;
 import com.vegas.user.event.OutboxService;
 import com.vegas.user.exception.InvalidCredentialsException;
+import com.vegas.user.exception.InvalidRefreshTokenException;
 import com.vegas.user.repository.UserProfileRepository;
 import com.vegas.user.repository.UserRepository;
 import com.vegas.user.security.JwtService;
@@ -22,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -48,6 +50,8 @@ class AuthServiceTest {
     private JwtService jwtService;
     @Mock
     private OutboxService outboxService;
+    @Mock
+    private RefreshTokenService refreshTokenService;
 
     @InjectMocks // создаёт AuthService и передаёт в конструктор моки выше
     private AuthService authService;
@@ -60,7 +64,10 @@ class AuthServiceTest {
         when(jwtService.generateAccessToken(any())).thenReturn("jwt-token");
         when(jwtService.getAccessTokenTtl()).thenReturn(Duration.ofHours(1));
 
-        AuthResponse response = authService.register(new RegisterRequest(" Ivan@Mail.RU ", "password123", "Иван"));
+        when(refreshTokenService.issueNewFamily(any())).thenReturn("refresh-token");
+
+        AuthTokens tokens = authService.register(new RegisterRequest(" Ivan@Mail.RU ", "password123", "Иван"));
+        AuthResponse response = tokens.response();
 
         ArgumentCaptor<User> saved = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(saved.capture());
@@ -73,6 +80,7 @@ class AuthServiceTest {
         assertThat(response.accessToken()).isEqualTo("jwt-token");
         assertThat(response.tokenType()).isEqualTo("Bearer");
         assertThat(response.expiresIn()).isEqualTo(3600);
+        assertThat(tokens.refreshToken()).isEqualTo("refresh-token"); // уйдёт в httpOnly-cookie
     }
 
     @Test
@@ -96,9 +104,12 @@ class AuthServiceTest {
         when(jwtService.generateAccessToken(user)).thenReturn("jwt-token");
         when(jwtService.getAccessTokenTtl()).thenReturn(Duration.ofHours(1));
 
-        AuthResponse response = authService.login(new LoginRequest("Ivan@mail.ru", "password123"));
+        when(refreshTokenService.issueNewFamily(user.getId())).thenReturn("refresh-token");
 
-        assertThat(response.accessToken()).isEqualTo("jwt-token");
+        AuthTokens tokens = authService.login(new LoginRequest("Ivan@mail.ru", "password123"));
+
+        assertThat(tokens.response().accessToken()).isEqualTo("jwt-token");
+        assertThat(tokens.refreshToken()).isEqualTo("refresh-token");
     }
 
     @Test
@@ -128,5 +139,39 @@ class AuthServiceTest {
                 .isInstanceOf(InvalidCredentialsException.class);
 
         verify(passwordEncoder, never()).matches(anyString(), anyString());
+    }
+
+    // ---------- refresh ----------
+
+    @Test
+    void refresh_returnsNewAccessAndRotatedRefreshToken() {
+        User user = User.local("ivan@mail.ru", "hashed", "Иван");
+        UUID userId = UUID.randomUUID();
+        when(refreshTokenService.rotate("old")).thenReturn(new RefreshTokenService.Rotation(userId, "new"));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(jwtService.generateAccessToken(user)).thenReturn("jwt-token");
+        when(jwtService.getAccessTokenTtl()).thenReturn(Duration.ofMinutes(15));
+
+        AuthTokens tokens = authService.refresh("old");
+
+        assertThat(tokens.response().accessToken()).isEqualTo("jwt-token");
+        assertThat(tokens.response().expiresIn()).isEqualTo(900);
+        assertThat(tokens.refreshToken()).isEqualTo("new");
+    }
+
+    @Test
+    void refresh_forDeletedUser_isInvalid() {
+        UUID userId = UUID.randomUUID();
+        when(refreshTokenService.rotate("old")).thenReturn(new RefreshTokenService.Rotation(userId, "new"));
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.refresh("old")).isInstanceOf(InvalidRefreshTokenException.class);
+    }
+
+    @Test
+    void logout_revokesRefreshToken() {
+        authService.logout("token");
+
+        verify(refreshTokenService).revoke("token");
     }
 }
