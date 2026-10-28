@@ -10,4 +10,4 @@
 Изменённые файлы распространяются на тех же условиях — CC BY-SA.
 
 Имя файла: `<storage_key>-1.svg` и `<storage_key>-2.svg` — два положения движения.
-Ключ хранится в workout-service, таблица exercise_media (миграция 012).
+Ключ хранится в workout-service, таблица exercise_media (миграции 012 и 014).
