@@ -255,7 +255,9 @@ function CatalogRow({
             {exercise.name}
             {exercise.custom && <span className={styles.muted}> · своё</span>}
           </span>
-          <span className={styles.muted}>{already ? 'уже в тренировке' : musclesText(exercise.muscles, 'PRIMARY')}</span>
+          <span className={styles.muted}>
+            {already ? 'уже в тренировке' : musclesText(exercise.muscles, 'PRIMARY')}
+          </span>
         </span>
       </button>
       <button

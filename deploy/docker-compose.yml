@@ -1,0 +1,136 @@
+# Весь стек Vegas на одном сервере (продакшен).
+# Запуск на сервере (папка с этим файлом и .env):
+#   docker compose pull && docker compose up -d
+# Образы сервисов собирает GitHub Actions и кладёт в GitHub Container Registry (ghcr.io).
+#
+# Наружу открыт ТОЛЬКО web (Caddy): порты 80/443. Базы, Kafka и сервисы видны лишь внутри docker-сети.
+
+x-service: &service
+  restart: unless-stopped
+  environment: &service-env
+    SPRING_DATASOURCE_USERNAME: ${DB_USER}
+    SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    JWT_SECRET: ${JWT_SECRET}
+    TZ: Europe/Moscow
+  depends_on:
+    postgres:
+      condition: service_healthy
+    kafka:
+      condition: service_healthy
+  # 5 JVM + Postgres + Kafka должны уместиться в 8 ГБ: каждому сервису — не больше 640 МБ
+  mem_limit: 640m
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data          # данные переживают пересоздание контейнера
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro  # 4 базы создаются при самом первом запуске
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      retries: 20
+    mem_limit: 1g
+
+  kafka:
+    image: apache/kafka:3.8.0
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      # только внутренняя сеть: снаружи к Kafka не подключиться
+      KAFKA_LISTENERS: PLAINTEXT://:29092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      CLUSTER_ID: KdRvp5eoT3GrO7nej_01zA
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_HEAP_OPTS: -Xms384m -Xmx384m
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:29092 > /dev/null"]
+      interval: 10s
+      retries: 20
+    mem_limit: 768m
+
+  user-service:
+    <<: *service
+    image: ${IMAGE_PREFIX:-ghcr.io/veger93/vegas}-user-service:${TAG:-latest}
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/user_db
+      COOKIE_SECURE: "true"
+
+  workout-service:
+    <<: *service
+    image: ${IMAGE_PREFIX:-ghcr.io/veger93/vegas}-workout-service:${TAG:-latest}
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/workout_db
+
+  analytics-service:
+    <<: *service
+    image: ${IMAGE_PREFIX:-ghcr.io/veger93/vegas}-analytics-service:${TAG:-latest}
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/analytics_db
+
+  notification-service:
+    <<: *service
+    image: ${IMAGE_PREFIX:-ghcr.io/veger93/vegas}-notification-service:${TAG:-latest}
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/notification_db
+      APP_WEB_URL: https://${DOMAIN}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM}
+      MAIL_SMTP_AUTH: "true"
+      MAIL_STARTTLS: "true"
+
+  gateway:
+    image: ${IMAGE_PREFIX:-ghcr.io/veger93/vegas}-gateway-service:${TAG:-latest}
+    restart: unless-stopped
+    environment:
+      USER_SERVICE_URL: http://user-service:8081
+      WORKOUT_SERVICE_URL: http://workout-service:8082
+      ANALYTICS_SERVICE_URL: http://analytics-service:8083
+      NOTIFICATION_SERVICE_URL: http://notification-service:8084
+    mem_limit: 384m
+
+  web:
+    image: ${IMAGE_PREFIX:-ghcr.io/veger93/vegas}-web:${TAG:-latest}
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy-data:/data        # HTTPS-сертификаты: без тома Caddy выпускал бы их заново при каждом перезапуске
+      - caddy-config:/config
+    depends_on:
+      - gateway
+    mem_limit: 128m
+
+volumes:
+  postgres-data:
+  kafka-data:
+  caddy-data:
+  caddy-config:
