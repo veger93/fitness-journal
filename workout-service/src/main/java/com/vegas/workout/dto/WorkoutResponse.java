@@ -21,6 +21,8 @@ public record WorkoutResponse(
         Long durationSec,
         long workingSets,
         BigDecimal tonnageKg,
+        /** записал тренер за клиента (иначе сам пользователь) */
+        boolean recordedByTrainer,
         List<WorkoutExerciseResponse> exercises
 ) {
 }

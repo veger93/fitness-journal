@@ -56,6 +56,15 @@ public class WorkoutService {
 
     @Transactional
     public WorkoutResponse start(UUID userId, StartWorkoutRequest request) {
+        return start(userId, null, request);
+    }
+
+    /**
+     * @param recordedBy тренер, если он ведёт тренировку за клиента (заголовок X-Client-Id), иначе null.
+     *                   Остальные действия (подходы, завершение) отдельно не помечаем: тренировка целиком "его".
+     */
+    @Transactional
+    public WorkoutResponse start(UUID userId, UUID recordedBy, StartWorkoutRequest request) {
         if (workoutRepository.existsByUserIdAndStatus(userId, WorkoutStatus.IN_PROGRESS)) {
             // фронт в ответ может предложить "продолжить текущую" (GET /api/workouts/current)
             throw new BusinessException("У вас уже есть незавершённая тренировка");
@@ -71,6 +80,7 @@ public class WorkoutService {
         } else {
             workout = Workout.create(userId, nameOrDefault(request.name(), DEFAULT_NAME), null, List.of());
         }
+        workout.recordedBy(recordedBy);
         return toResponse(workoutRepository.save(workout));
     }
 

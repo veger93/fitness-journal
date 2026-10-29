@@ -48,6 +48,10 @@ public class Workout {
     @Column(name = "template_id")
     private UUID templateId;
 
+    /** Кто записал: null — сам пользователь, иначе id тренера, который вёл тренировку за клиента */
+    @Column(name = "recorded_by", updatable = false)
+    private UUID recordedBy;
+
     @Column(nullable = false, length = 100)
     private String name;
 
@@ -84,6 +88,11 @@ public class Workout {
      * Новая тренировка — пока "подготовка": упражнения можно выбирать, а время ещё не идёт.
      * Время пойдёт с begin(): по кнопке "Начать" или с первым подходом.
      */
+    /** Тренировку записывает тренер за клиента (вызывать сразу после create) */
+    public void recordedBy(UUID trainerId) {
+        this.recordedBy = trainerId;
+    }
+
     public static Workout create(UUID userId, String name, UUID templateId, List<Exercise> exercises) {
         Workout workout = new Workout();
         workout.userId = userId;

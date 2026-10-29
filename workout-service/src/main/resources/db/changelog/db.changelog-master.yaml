@@ -31,3 +31,8 @@ databaseChangeLog:
       file: db/changelog/changes/014-catalog-expansion.sql
   - include:
       file: db/changelog/changes/015-exercise-archive.sql
+  - include:
+      file: db/changelog/changes/016-workout-recorded-by.sql
+  # общий файл из модуля common-trainer-access (лежит в его ресурсах, Liquibase найдёт в classpath)
+  - include:
+      file: db/changelog/common/trainer-links.sql

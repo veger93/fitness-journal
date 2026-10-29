@@ -50,6 +50,7 @@ public class WorkoutMapper {
                 workout.getDurationSec(),
                 workout.getWorkingSetsCount(),
                 workout.getTonnageKg(),
+                workout.getRecordedBy() != null,
                 exercises
         );
     }
