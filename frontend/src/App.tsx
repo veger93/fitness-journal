@@ -22,6 +22,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { StartWorkoutPage } from './pages/StartWorkoutPage';
 import { WorkoutSummaryPage } from './pages/WorkoutSummaryPage';
 import { ThemeProvider } from './theme/ThemeProvider';
+import { ActingClientProvider } from './trainer/ActingClientProvider';
 
 // Один клиент на всё приложение: в нём кэш ответов сервера.
 // staleTime 30 с: данные свежие полминуты — переходы между страницами не дёргают сервер заново.
@@ -34,47 +35,50 @@ export function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route
-                path="/onboarding"
-                element={
-                  <RequireAuth>
-                    <OnboardingPage />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                element={
-                  // гость на "/" видит страницу о приложении, на остальных закрытых страницах — вход
-                  <RequireAuth guestHome={<LandingPage />}>
-                    <RequireOnboarding>
-                      <AppLayout />
-                    </RequireOnboarding>
-                  </RequireAuth>
-                }
-              >
-                <Route path="/" element={<HomePage />} />
-                <Route path="/workout" element={<StartWorkoutPage />} />
-                <Route path="/workout/active" element={<ActiveWorkoutPage />} />
-                <Route path="/workout/:workoutId/summary" element={<WorkoutSummaryPage />} />
-                <Route path="/exercises" element={<ExercisesPage />} />
-                <Route path="/exercises/:exerciseId" element={<ExercisePage />} />
-                <Route path="/records" element={<RecordsPage />} />
-                <Route path="/running" element={<RunningPage />} />
-                <Route path="/plan" element={<PlanPage />} />
-                <Route path="/history" element={<HistoryPage />} />
-                <Route path="/history/:workoutId" element={<WorkoutSummaryPage mode="view" />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/notifications" element={<NotificationsPage />} />
-                <Route path="/reports" element={<ReportPage />} />
-                <Route path="/reports/:month" element={<ReportPage />} />
-              </Route>
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
+          {/* режим тренера: за какого клиента сейчас работаем (заголовок X-Client-Id в запросах) */}
+          <ActingClientProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route
+                  path="/onboarding"
+                  element={
+                    <RequireAuth>
+                      <OnboardingPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  element={
+                    // гость на "/" видит страницу о приложении, на остальных закрытых страницах — вход
+                    <RequireAuth guestHome={<LandingPage />}>
+                      <RequireOnboarding>
+                        <AppLayout />
+                      </RequireOnboarding>
+                    </RequireAuth>
+                  }
+                >
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/workout" element={<StartWorkoutPage />} />
+                  <Route path="/workout/active" element={<ActiveWorkoutPage />} />
+                  <Route path="/workout/:workoutId/summary" element={<WorkoutSummaryPage />} />
+                  <Route path="/exercises" element={<ExercisesPage />} />
+                  <Route path="/exercises/:exerciseId" element={<ExercisePage />} />
+                  <Route path="/records" element={<RecordsPage />} />
+                  <Route path="/running" element={<RunningPage />} />
+                  <Route path="/plan" element={<PlanPage />} />
+                  <Route path="/history" element={<HistoryPage />} />
+                  <Route path="/history/:workoutId" element={<WorkoutSummaryPage mode="view" />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
+                  <Route path="/reports" element={<ReportPage />} />
+                  <Route path="/reports/:month" element={<ReportPage />} />
+                </Route>
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
+          </ActingClientProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>

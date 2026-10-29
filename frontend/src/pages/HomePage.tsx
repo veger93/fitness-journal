@@ -16,6 +16,7 @@ import { TodayPlanCard } from '../components/home/TodayPlanCard';
 import { MonthSummary } from '../components/report/MonthSummary';
 import { currentMonth } from '../lib/month';
 import { formatChange, formatKg, formatMonth, formatExerciseResult, formatTonnage } from '../lib/format';
+import { useActingClient } from '../trainer/ActingClientProvider';
 import styles from './HomePage.module.css';
 
 /**
@@ -25,6 +26,7 @@ import styles from './HomePage.module.css';
  */
 export function HomePage() {
   const me = useQuery({ queryKey: ['me'], queryFn: authApi.me });
+  const { client: acting } = useActingClient();
   const dashboard = useQuery({
     queryKey: ['dashboard'],
     queryFn: analyticsApi.dashboard,
@@ -40,7 +42,10 @@ export function HomePage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <p className={styles.greeting}>Привет, {me.data?.displayName || me.data?.email || '…'}</p>
+          <p className={styles.greeting}>
+            {/* тренер в дневнике клиента — подписываем, чей он */}
+            {acting ? `Дневник: ${acting.displayName}` : `Привет, ${me.data?.displayName || me.data?.email || '…'}`}
+          </p>
           <h1 className={styles.title}>
             {dashboard.data ? `Прогресс за ${formatMonth(dashboard.data.month)}` : 'Прогресс'}
           </h1>

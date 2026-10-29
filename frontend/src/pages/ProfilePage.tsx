@@ -8,7 +8,10 @@ import { RemindersCard } from '../components/profile/RemindersCard';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
+import { ClientProfileCard } from '../components/trainer/ClientProfileCard';
+import { TrainerModeCard } from '../components/trainer/TrainerModeCard';
 import { useTheme } from '../theme/ThemeProvider';
+import { useActingClient } from '../trainer/ActingClientProvider';
 import type { ThemeChoice } from '../theme/theme';
 import styles from './ProfilePage.module.css';
 
@@ -23,6 +26,17 @@ export function ProfilePage() {
   const { logout } = useAuth();
   const me = useQuery({ queryKey: ['me'], queryFn: authApi.me });
   const profile = useQuery({ queryKey: ['profile'], queryFn: usersApi.profile });
+  const { client: acting } = useActingClient();
+
+  // тренер в дневнике клиента: "Профиль" — карточка клиента; свой профиль — после "✕ К себе"
+  if (acting) {
+    return (
+      <div className={styles.page}>
+        <h1 className={styles.title}>{acting.displayName}</h1>
+        <ClientProfileCard clientId={acting.id} />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -44,6 +58,8 @@ export function ProfilePage() {
       {profile.data && <BodyWeightCard currentWeightKg={profile.data.currentWeightKg} />}
 
       <RemindersCard />
+
+      <TrainerModeCard />
 
       <Card>
         <h2 className={styles.sectionTitle}>Оформление</h2>

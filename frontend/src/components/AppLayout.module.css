@@ -19,6 +19,13 @@
   gap: var(--space-4);
 }
 
+/* справа в шапке: переключатель "Я ▾" (тренеру) и колокольчик */
+.headerEnd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .logo {
   font-family: var(--font-display);
   font-weight: 700;

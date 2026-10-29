@@ -41,6 +41,42 @@ export function configureApiClient(next: ClientOptions) {
   options = next;
 }
 
+/**
+ * Режим тренера: за какого клиента сейчас работаем (docs/trainer.md). null — за себя.
+ * Хранится здесь, а не в React: api() вызывается из queryFn, где хуков нет. Ставит ActingClientProvider.
+ */
+let actingClientId: string | null = null;
+let onClientAccessLost: () => void = () => {};
+
+export function setActingClient(clientId: string | null, onAccessLost: () => void = () => {}) {
+  actingClientId = clientId;
+  onClientAccessLost = onAccessLost;
+}
+
+/** Заголовок, по которому workout- и analytics-service выполняют запрос "как будто его сделал клиент" */
+export const CLIENT_HEADER = 'X-Client-Id';
+
+/**
+ * Какие запросы идут "за клиента": только к сервисам с его тренировками и аналитикой.
+ * Свой профиль, уведомления и вход — всегда тренера (user- и notification-service заголовок не понимают).
+ */
+const CLIENT_DATA_PATHS = [
+  '/api/workouts',
+  '/api/exercises',
+  '/api/templates',
+  '/api/plan',
+  '/api/deloads',
+  '/api/analytics',
+  '/api/records',
+  '/api/reports',
+];
+
+export function isClientDataPath(path: string): boolean {
+  return CLIENT_DATA_PATHS.some(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`),
+  );
+}
+
 let refreshing: Promise<string | null> | null = null;
 
 /**
@@ -70,11 +106,17 @@ export function refreshAccessToken(): Promise<string | null> {
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   body?: unknown;
+  /**
+   * За кого запрос, если не за текущего (список клиентов тренера: "идёт ли у Ивана тренировка").
+   * undefined — как выбрано в переключателе; null — точно за себя.
+   */
+  asClient?: string | null;
 }
 
-export async function api<T>(path: string, { method = 'GET', body }: RequestOptions = {}): Promise<T> {
+export async function api<T>(path: string, { method = 'GET', body, asClient }: RequestOptions = {}): Promise<T> {
   const token = options.getToken();
-  let response = await send(path, method, body, token);
+  const clientId = isClientDataPath(path) ? (asClient === undefined ? actingClientId : asClient) : null;
+  let response = await send(path, method, body, token, clientId);
 
   // access-токен истёк (живёт 15 минут) — обновляем и повторяем запрос один раз.
   // Эндпоинты /api/auth/* не трогаем: 401 на логине — это "неверный пароль", а не истёкший токен.
@@ -82,11 +124,15 @@ export async function api<T>(path: string, { method = 'GET', body }: RequestOpti
     const fresh = await refreshAccessToken();
     if (fresh) {
       options.onTokenRefreshed?.(fresh);
-      response = await send(path, method, body, fresh);
+      response = await send(path, method, body, fresh, clientId);
     }
     if (!fresh || response.status === 401) {
       options.onUnauthorized();
     }
+  }
+  // клиент ушёл от тренера (или связь ещё не дошла) — возвращаемся к своему дневнику
+  if (response.status === 403 && clientId && clientId === actingClientId) {
+    onClientAccessLost();
   }
   if (!response.ok) {
     throw new ApiError(response.status, await errorMessage(response));
@@ -96,13 +142,22 @@ export async function api<T>(path: string, { method = 'GET', body }: RequestOpti
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
-async function send(path: string, method: string, body: unknown, token: string | null): Promise<Response> {
+async function send(
+  path: string,
+  method: string,
+  body: unknown,
+  token: string | null,
+  clientId: string | null,
+): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json';
   }
   if (token) {
     headers.Authorization = `Bearer ${token}`;
+  }
+  if (clientId) {
+    headers[CLIENT_HEADER] = clientId;
   }
   try {
     return await fetch(path, {

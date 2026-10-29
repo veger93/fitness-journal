@@ -11,10 +11,13 @@ export interface AuthResponse {
 /** user-service: dto/UserResponse */
 export interface UserResponse {
   id: string;
-  email: string;
+  /** null у клиента, которого ведёт тренер (входа нет) */
+  email: string | null;
   displayName: string | null;
   authProvider: string;
   role: string;
+  /** включён режим тренера — в шапке появляется переключатель "Я / клиенты" */
+  trainer: boolean;
   createdAt: string;
 }
 

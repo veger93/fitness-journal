@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { api, ApiError, configureApiClient, refreshAccessToken } from './client';
+import { api, ApiError, configureApiClient, isClientDataPath, refreshAccessToken, setActingClient } from './client';
 
 function mockFetch(status: number, body?: unknown) {
   const fetchMock = vi
@@ -11,6 +11,7 @@ function mockFetch(status: number, body?: unknown) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  setActingClient(null);
   configureApiClient({ getToken: () => null, onUnauthorized: () => {} });
 });
 
@@ -85,5 +86,56 @@ describe('api', () => {
       'message',
       'Сервис временно недоступен. Попробуйте позже.',
     );
+  });
+});
+
+describe('режим тренера: заголовок X-Client-Id', () => {
+  it('тренер выбрал клиента — запросы тренировок уходят с его id, профиль — без', async () => {
+    // новый Response на каждый вызов: тело ответа читается только один раз
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response('{}', { status: 200 })));
+    vi.stubGlobal('fetch', fetchMock);
+    setActingClient('client-1');
+
+    await api('/api/workouts/current');
+    await api('/api/users/me/profile');
+
+    expect(fetchMock.mock.calls[0][1].headers['X-Client-Id']).toBe('client-1');
+    expect(fetchMock.mock.calls[1][1].headers['X-Client-Id']).toBeUndefined();
+  });
+
+  it('asClient — запрос за другого клиента, не меняя выбранного', async () => {
+    const fetchMock = mockFetch(200, {});
+
+    await api('/api/workouts/current', { asClient: 'client-2' });
+
+    expect(fetchMock.mock.calls[0][1].headers['X-Client-Id']).toBe('client-2');
+  });
+
+  it('403 по выбранному клиенту — сообщает провайдеру', async () => {
+    mockFetch(403, { status: 403, error: 'Forbidden', message: 'Нет доступа к этому клиенту' });
+    const onLost = vi.fn();
+    setActingClient('client-1', onLost);
+
+    await expect(api('/api/workouts/current')).rejects.toBeInstanceOf(ApiError);
+    expect(onLost).toHaveBeenCalledOnce();
+  });
+});
+
+describe('isClientDataPath — какие запросы тренер делает "за клиента"', () => {
+  it('тренировки и аналитика — за клиента', () => {
+    expect(isClientDataPath('/api/workouts/current')).toBe(true);
+    expect(isClientDataPath('/api/analytics/dashboard')).toBe(true);
+    expect(isClientDataPath('/api/exercises?query=жим')).toBe(true);
+    expect(isClientDataPath('/api/records')).toBe(true);
+  });
+
+  it('профиль, вход и уведомления — всегда свои', () => {
+    expect(isClientDataPath('/api/users/me/profile')).toBe(false);
+    expect(isClientDataPath('/api/auth/refresh')).toBe(false);
+    expect(isClientDataPath('/api/notifications/unread-count')).toBe(false);
+  });
+
+  it('похожий префикс не путается', () => {
+    expect(isClientDataPath('/api/workoutsx')).toBe(false);
   });
 });
