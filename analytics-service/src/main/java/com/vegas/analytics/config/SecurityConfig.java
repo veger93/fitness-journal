@@ -1,5 +1,8 @@
 package com.vegas.analytics.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vegas.traineraccess.TrainerAccessFilter;
+import com.vegas.traineraccess.TrainerLinkRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import javax.crypto.SecretKey;
@@ -23,7 +27,8 @@ import java.util.Base64;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, TrainerLinkRepository trainerLinks,
+                                                   ObjectMapper objectMapper) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -32,6 +37,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                // после проверки токена: заголовок X-Client-Id -> тренер работает за своего клиента (docs/trainer.md)
+                .addFilterAfter(new TrainerAccessFilter(trainerLinks, objectMapper), BearerTokenAuthenticationFilter.class)
                 .build();
     }
 

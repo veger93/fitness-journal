@@ -13,3 +13,6 @@ databaseChangeLog:
       file: db/changelog/changes/005-create-outbox-events.sql
   - include:
       file: db/changelog/changes/006-add-running-metrics.sql
+  # общий файл из модуля common-trainer-access (лежит в его ресурсах, Liquibase найдёт в classpath)
+  - include:
+      file: db/changelog/common/trainer-links.sql

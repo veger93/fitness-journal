@@ -48,7 +48,7 @@ public class WorkoutController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Создать тренировку (ещё не начата): {\"templateId\": \"...\"} или {} — своя")
     public WorkoutResponse start(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody StartWorkoutRequest request) {
-        return workoutService.start(CurrentUser.id(jwt), request);
+        return workoutService.start(CurrentUser.id(jwt), CurrentUser.actorId(jwt), request);
     }
 
     /**
