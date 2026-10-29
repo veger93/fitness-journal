@@ -2,6 +2,7 @@ package com.vegas.user.event;
 
 import com.vegas.common.event.EventTypes;
 import com.vegas.common.event.TrainerClientLinkedEvent;
+import com.vegas.common.event.TrainerClientUnlinkedEvent;
 import com.vegas.common.event.UserProfileUpdatedEvent;
 import com.vegas.common.event.UserRegisteredEvent;
 import com.vegas.common.exception.NotFoundException;
@@ -49,6 +50,14 @@ public class OutboxService {
         UUID clientId = link.getClient().getId();
         TrainerClientLinkedEvent event = new TrainerClientLinkedEvent(link.getTrainerId(), clientId, link.getLinkedAt());
         outboxWriter.write(clientId, EventTypes.TRAINER_CLIENT_LINKED, clientId.toString(), event);
+    }
+
+    /** Связь закончилась — workout/analytics удаляют копию, доступ тренера к данным клиента пропадает */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void trainerClientUnlinked(TrainerClient link) {
+        UUID clientId = link.getClient().getId();
+        TrainerClientUnlinkedEvent event = new TrainerClientUnlinkedEvent(link.getTrainerId(), clientId, link.getEndedAt());
+        outboxWriter.write(clientId, EventTypes.TRAINER_CLIENT_UNLINKED, clientId.toString(), event);
     }
 
     /**

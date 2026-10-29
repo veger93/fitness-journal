@@ -83,7 +83,8 @@ public class AuthService {
         refreshTokenService.revoke(refreshToken);
     }
 
-    private AuthTokens issueTokens(User user) {
+    /** package-private: ещё нужен ClaimService — клиент получил аккаунт и сразу вошёл */
+    AuthTokens issueTokens(User user) {
         return new AuthTokens(accessResponse(user), refreshTokenService.issueNewFamily(user.getId()));
     }
 

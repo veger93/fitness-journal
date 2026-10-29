@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vegas.common.event.EventTypes;
 import com.vegas.common.event.TrainerClientLinkedEvent;
+import com.vegas.common.event.TrainerClientUnlinkedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -41,6 +42,13 @@ public class TrainerLinkListener {
             // save по первичному ключу: повтор того же события (Kafka доставляет "минимум один раз") ничего не испортит
             repository.save(new TrainerLink(event.clientId(), event.trainerId(), event.linkedAt()));
             log.info("Trainer {} linked to client {}", event.trainerId(), event.clientId());
+        } else if (EventTypes.TRAINER_CLIENT_UNLINKED.equals(eventType)) {
+            TrainerClientUnlinkedEvent event = objectMapper.readValue(record.value(), TrainerClientUnlinkedEvent.class);
+            // удаляем, только если в копии всё ещё ЭТОТ тренер: повтор старого события не снесёт новую связь
+            repository.findById(event.clientId())
+                    .filter(link -> link.getTrainerId().equals(event.trainerId()))
+                    .ifPresent(repository::delete);
+            log.info("Trainer {} unlinked from client {}", event.trainerId(), event.clientId());
         }
     }
 }

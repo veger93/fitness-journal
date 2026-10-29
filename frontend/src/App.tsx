@@ -6,6 +6,7 @@ import { AppLayout } from './components/AppLayout';
 import { HomePage } from './pages/HomePage';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
+import { ClaimPage } from './pages/ClaimPage';
 import { ActiveWorkoutPage } from './pages/ActiveWorkoutPage';
 import { ExercisePage } from './pages/ExercisePage';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -41,6 +42,8 @@ export function App() {
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                {/* передача аккаунта клиенту по ссылке тренера — без входа */}
+                <Route path="/claim/:token" element={<ClaimPage />} />
                 <Route
                   path="/onboarding"
                   element={

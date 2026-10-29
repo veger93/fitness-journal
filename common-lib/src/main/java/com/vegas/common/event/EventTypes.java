@@ -18,6 +18,8 @@ public final class EventTypes {
     public static final String USER_REGISTERED = "UserRegistered";
     /** user-service -> workout/analytics: связь "тренер — клиент" (копия для проверки доступа) */
     public static final String TRAINER_CLIENT_LINKED = "TrainerClientLinked";
+    /** связь закончилась (клиент ушёл от тренера) — копии в сервисах удаляют её */
+    public static final String TRAINER_CLIENT_UNLINKED = "TrainerClientUnlinked";
 
     // события analytics-service (топик analytics-events) -> notification-service
     public static final String PERSONAL_RECORD = "PersonalRecord";

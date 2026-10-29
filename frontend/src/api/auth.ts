@@ -21,6 +21,22 @@ export interface UserResponse {
   createdAt: string;
 }
 
+/** user-service: dto/ClaimPreviewResponse — что передают по ссылке */
+export interface ClaimPreview {
+  clientName: string | null;
+  trainerName: string | null;
+  expiresAt: string;
+}
+
+/** Клиент принимает аккаунт от тренера */
+export interface ClaimBody {
+  email: string;
+  password: string;
+  /** true — продолжаю с тренером, false — дальше сам */
+  keepTrainer: boolean;
+  consent: boolean;
+}
+
 export const authApi = {
   login: (email: string, password: string) =>
     api<AuthResponse>('/api/auth/login', { method: 'POST', body: { email, password } }),
@@ -35,4 +51,8 @@ export const authApi = {
   logout: () => api<void>('/api/auth/logout', { method: 'POST' }),
 
   me: () => api<UserResponse>('/api/users/me'),
+
+  claimPreview: (token: string) => api<ClaimPreview>(`/api/auth/claim/${encodeURIComponent(token)}`),
+  claim: (token: string, body: ClaimBody) =>
+    api<AuthResponse>(`/api/auth/claim/${encodeURIComponent(token)}`, { method: 'POST', body }),
 };

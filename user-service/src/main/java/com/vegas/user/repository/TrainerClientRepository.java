@@ -26,4 +26,7 @@ public interface TrainerClientRepository extends JpaRepository<TrainerClient, UU
     Optional<TrainerClient> findByTrainerIdAndClient_IdAndEndedAtIsNull(UUID trainerId, UUID clientId);
 
     boolean existsByTrainerIdAndEndedAtIsNull(UUID trainerId);
+
+    /** Активный тренер клиента (у клиента он один — см. частичный индекс в миграции 006) */
+    Optional<TrainerClient> findByClient_IdAndEndedAtIsNull(UUID clientId);
 }

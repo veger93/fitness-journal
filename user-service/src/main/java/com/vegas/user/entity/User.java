@@ -58,6 +58,10 @@ public class User {
     @Column(nullable = false, length = 20)
     private Role role;
 
+    /** Когда согласился на обработку данных (клиент тренера — при получении аккаунта) */
+    @Column(name = "data_consent_at")
+    private Instant dataConsentAt;
+
     /** Режим тренера: может заводить клиентов и вести их тренировки */
     @Setter
     @Column(nullable = false)
@@ -104,6 +108,20 @@ public class User {
         user.authProvider = AuthProvider.NONE;
         user.role = Role.USER;
         return user;
+    }
+
+    /**
+     * Клиент получает аккаунт от тренера: придумал email и пароль — теперь входит сам.
+     * id не меняется, поэтому все его тренировки и аналитика остаются на месте.
+     */
+    public void claim(String email, String passwordHash, Instant consentAt) {
+        if (!isManaged()) {
+            throw new IllegalStateException("Аккаунт уже передан");
+        }
+        this.email = normalizeEmail(email);
+        this.passwordHash = passwordHash;
+        this.authProvider = AuthProvider.LOCAL;
+        this.dataConsentAt = consentAt;
     }
 
     /** Ведомый клиент тренера (ещё без входа) */

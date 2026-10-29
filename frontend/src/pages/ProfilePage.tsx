@@ -9,6 +9,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { ClientProfileCard } from '../components/trainer/ClientProfileCard';
+import { MyTrainerCard } from '../components/trainer/MyTrainerCard';
 import { TrainerModeCard } from '../components/trainer/TrainerModeCard';
 import { useTheme } from '../theme/ThemeProvider';
 import { useActingClient } from '../trainer/ActingClientProvider';
@@ -42,7 +43,7 @@ export function ProfilePage() {
     <div className={styles.page}>
       <div>
         <h1 className={styles.title}>Профиль</h1>
-        {me.data && <p className={styles.muted}>{me.data.email}</p>}
+        {me.data?.email && <p className={styles.muted}>{me.data.email}</p>}
       </div>
 
       <Card>
@@ -58,6 +59,8 @@ export function ProfilePage() {
       {profile.data && <BodyWeightCard currentWeightKg={profile.data.currentWeightKg} />}
 
       <RemindersCard />
+
+      <MyTrainerCard />
 
       <TrainerModeCard />
 
