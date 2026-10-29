@@ -35,7 +35,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
+    /** null только у ведомого клиента тренера (authProvider = NONE) */
+    @Column(unique = true)
     private String email;
 
     @Setter
@@ -56,6 +57,11 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;
+
+    /** Режим тренера: может заводить клиентов и вести их тренировки */
+    @Setter
+    @Column(nullable = false)
+    private boolean trainer;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -85,6 +91,24 @@ public class User {
         user.displayName = displayName;
         user.role = Role.USER;
         return user;
+    }
+
+    /**
+     * Клиент, которого завёл тренер. Ни email, ни пароля: войти нельзя, пока тренер не передаст аккаунт.
+     * Данные клиента (тренировки, вес, аналитика) с первого дня хранятся под ЕГО id —
+     * поэтому при передаче ничего не переносится, клиент просто получает вход в уже существующий аккаунт.
+     */
+    public static User managed(String displayName) {
+        User user = new User();
+        user.displayName = displayName;
+        user.authProvider = AuthProvider.NONE;
+        user.role = Role.USER;
+        return user;
+    }
+
+    /** Ведомый клиент тренера (ещё без входа) */
+    public boolean isManaged() {
+        return authProvider == AuthProvider.NONE;
     }
 
     /** "Ivan@Mail.ru " и "ivan@mail.ru" — один и тот же пользователь. */
