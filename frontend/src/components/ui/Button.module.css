@@ -30,6 +30,14 @@
   color: inherit;
 }
 
+/* главное действие на тёмном экране (лендинг): оранжевая */
+.accent {
+  border: 0;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  box-shadow: 0 10px 30px rgb(234 88 12 / 0.35);
+}
+
 /* на цветной карточке (риск): кнопка цвета обычной карточки */
 .surface {
   border: 0;

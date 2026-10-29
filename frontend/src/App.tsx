@@ -4,6 +4,7 @@ import { AuthProvider } from './auth/AuthProvider';
 import { RequireAuth } from './auth/RequireAuth';
 import { AppLayout } from './components/AppLayout';
 import { HomePage } from './pages/HomePage';
+import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { ActiveWorkoutPage } from './pages/ActiveWorkoutPage';
 import { ExercisePage } from './pages/ExercisePage';
@@ -47,7 +48,8 @@ export function App() {
               />
               <Route
                 element={
-                  <RequireAuth>
+                  // гость на "/" видит страницу о приложении, на остальных закрытых страницах — вход
+                  <RequireAuth guestHome={<LandingPage />}>
                     <RequireOnboarding>
                       <AppLayout />
                     </RequireOnboarding>

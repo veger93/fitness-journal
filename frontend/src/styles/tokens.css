@@ -45,7 +45,9 @@
 
 /* ---------- светлая тема ---------- */
 :root,
-:root[data-theme='light'] {
+:root[data-theme='light'],
+/* светлый островок внутри тёмного участка (макеты экранов на лендинге) */
+[data-theme='light'] {
   color-scheme: light;
   --bg: #eef1f5;
   --surface: #ffffff; /* обычная карточка */
@@ -67,7 +69,9 @@
 }
 
 /* ---------- тёмная тема ---------- */
-:root[data-theme='dark'] {
+:root[data-theme='dark'],
+/* участок страницы всегда в тёмной теме (лендинг для гостей): <div data-theme="dark"> */
+[data-theme='dark'] {
   color-scheme: dark;
   --bg: #0b0f17;
   --surface: #161b26;
