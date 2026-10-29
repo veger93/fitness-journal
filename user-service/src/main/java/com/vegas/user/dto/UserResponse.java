@@ -16,6 +16,8 @@ public record UserResponse(
         String displayName,
         AuthProvider authProvider,
         Role role,
+        /** режим тренера включён */
+        boolean trainer,
         Instant createdAt
 ) {
 }

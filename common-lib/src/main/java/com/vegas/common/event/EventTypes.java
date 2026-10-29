@@ -16,6 +16,8 @@ public final class EventTypes {
     public static final String WEEKLY_PLAN_UPDATED = "WeeklyPlanUpdated";
     public static final String USER_PROFILE_UPDATED = "UserProfileUpdated";
     public static final String USER_REGISTERED = "UserRegistered";
+    /** user-service -> workout/analytics: связь "тренер — клиент" (копия для проверки доступа) */
+    public static final String TRAINER_CLIENT_LINKED = "TrainerClientLinked";
 
     // события analytics-service (топик analytics-events) -> notification-service
     public static final String PERSONAL_RECORD = "PersonalRecord";
