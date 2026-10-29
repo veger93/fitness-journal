@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useCapsule } from '../hooks/useCapsule';
+import { useActingClient } from '../trainer/ActingClientProvider';
 import { useCurrentWorkout } from '../hooks/useWorkout';
 import styles from './TabBar.module.css';
 
@@ -33,12 +34,14 @@ export function TabBar() {
   const current = useCurrentWorkout();
   const inProgress = current.data != null;
   const { pathname } = useLocation();
+  const { client: acting } = useActingClient();
   const navRef = useRef<HTMLElement>(null);
   const capsuleRef = useRef<HTMLSpanElement>(null);
   useCapsule(navRef, capsuleRef, pathname);
 
   return (
-    <nav ref={navRef} aria-label="Разделы" className={styles.bar}>
+    // в режиме клиента капсула оранжевая — как полоса сверху: видно, чей дневник открыт
+    <nav ref={navRef} aria-label="Разделы" className={acting ? `${styles.bar} ${styles.client}` : styles.bar}>
       <span ref={capsuleRef} className={styles.capsule} aria-hidden="true" />
       {TABS.map((tab) => (
         <NavLink
