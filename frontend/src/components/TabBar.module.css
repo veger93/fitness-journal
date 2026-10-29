@@ -2,6 +2,7 @@
  * Нижняя панель вкладок — тёмная "капсула" над экраном (вариант B).
  * Видна на телефоне и планшете (≤ 768px): там же, где шапка не вмещает меню.
  * env(safe-area-inset-bottom) — отступ под "полоской" iPhone внизу экрана (нужен viewport-fit=cover в index.html).
+ * Капсула под выбранной вкладкой перетекает "каплей" — см. .capsule и hooks/useCapsule.ts.
  * Другие варианты (в т.ч. C с круглой кнопкой "Тренировка") — в коммите 8658b5c, см. docs/ideas.md.
  */
 .bar {
@@ -25,10 +26,11 @@
 }
 
 .tab {
+  position: relative; /* над капсулой */
+  z-index: 1;
   min-height: 52px;
   display: flex;
   align-items: center;
-  gap: var(--space-2);
   padding: 0 14px;
   border-radius: var(--radius-pill);
   color: var(--text-on-inverse);
@@ -37,23 +39,71 @@
   font-size: 13px;
   font-weight: 500;
   -webkit-tap-highlight-color: transparent;
+  transition:
+    color 0.3s ease,
+    opacity 0.3s ease;
 }
 
-/* выбранная вкладка — светлая "таблетка" с подписью */
+/* выбранная вкладка: тёмный текст поверх светлой капсулы */
 .active {
   opacity: 1;
-  background: var(--surface);
   color: var(--text);
 }
 
-/* у невыбранных подпись скрыта только визуально: экранный диктор её читает (display:none убрал бы у ссылки имя) */
-.tab:not(.active) .label {
+/*
+ * Светлая "капля" под выбранной вкладкой. Положение и ширину каждый кадр ставит useCapsule (JS),
+ * здесь — только внешний вид. top/bottom = отступ панели, слева — от начала панели.
+ */
+.capsule {
   position: absolute;
-  width: 1px;
-  height: 1px;
+  top: var(--space-1);
+  bottom: var(--space-1);
+  left: 0;
+  width: 0;
+  opacity: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  transform-origin: center;
+  pointer-events: none;
+  will-change: transform, width;
+}
+
+/*
+ * Подпись раскрывается плавно: колонка сетки растёт от 0fr до 1fr (ширина текста), текст проявляется.
+ * Подпись остаётся в разметке у всех вкладок — экранный диктор её читает (раньше прятали через clip).
+ */
+.label {
+  display: grid;
+  grid-template-columns: 0fr;
   overflow: hidden;
-  clip-path: inset(50%);
+  transition:
+    grid-template-columns 0.35s ease,
+    margin-left 0.35s ease;
+}
+
+.labelText {
+  min-width: 0;
   white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.active .label {
+  grid-template-columns: 1fr;
+  margin-left: var(--space-2); /* отступ от иконки — только когда подпись видна */
+}
+
+.active .labelText {
+  opacity: 1;
+  transition-delay: 0.15s; /* текст проявляется, когда капля уже подбегает */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab,
+  .label,
+  .labelText {
+    transition: none;
+  }
 }
 
 .icon {

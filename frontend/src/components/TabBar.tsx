@@ -1,4 +1,6 @@
-import { NavLink } from 'react-router-dom';
+import { useRef } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { useCapsule } from '../hooks/useCapsule';
 import { useCurrentWorkout } from '../hooks/useWorkout';
 import styles from './TabBar.module.css';
 
@@ -23,13 +25,21 @@ const TABS: { to: string; label: string; icon: keyof typeof ICONS }[] = [
  * Нижняя панель вкладок на телефоне: до разделов дотягивается большой палец, шапка не съедает экран.
  * "Тренировка" посередине — главное действие приложения. Идёт тренировка — на вкладке оранжевая точка.
  * На компьютере панель скрыта (CSS), там меню в шапке.
+ *
+ * Светлая капсула под выбранной вкладкой — отдельный элемент: при смене раздела она перетекает
+ * к новой вкладке "каплей" (useCapsule), а подпись вкладки плавно раскрывается.
  */
 export function TabBar() {
   const current = useCurrentWorkout();
   const inProgress = current.data != null;
+  const { pathname } = useLocation();
+  const navRef = useRef<HTMLElement>(null);
+  const capsuleRef = useRef<HTMLSpanElement>(null);
+  useCapsule(navRef, capsuleRef, pathname);
 
   return (
-    <nav aria-label="Разделы" className={styles.bar}>
+    <nav ref={navRef} aria-label="Разделы" className={styles.bar}>
+      <span ref={capsuleRef} className={styles.capsule} aria-hidden="true" />
       {TABS.map((tab) => (
         <NavLink
           key={tab.to}
@@ -43,7 +53,9 @@ export function TabBar() {
             </svg>
             {tab.icon === 'workout' && inProgress && <span className={styles.dot} />}
           </span>
-          <span className={styles.label}>{tab.label}</span>
+          <span className={styles.label}>
+            <span className={styles.labelText}>{tab.label}</span>
+          </span>
           {tab.icon === 'workout' && inProgress && <span className="visually-hidden">, идёт тренировка</span>}
         </NavLink>
       ))}
