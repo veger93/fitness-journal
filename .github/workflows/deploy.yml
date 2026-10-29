@@ -89,7 +89,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: deploy/docker-compose.yml,deploy/postgres-init
+          source: deploy/docker-compose.yml,deploy/postgres-init,deploy/status.sh
           target: ~/vegas
           strip_components: 1
 
