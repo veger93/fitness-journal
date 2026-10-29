@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { loadThemeChoice, resolveTheme, saveThemeChoice, type Theme, type ThemeChoice } from './theme';
+import { THEME_COLOR, loadThemeChoice, resolveTheme, saveThemeChoice, type Theme, type ThemeChoice } from './theme';
 
 interface ThemeContextValue {
   choice: ThemeChoice;
@@ -31,6 +31,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
+    // тема могла быть выбрана вручную, не как в системе — полосу браузера красим под неё же
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLOR[theme]);
   }, [theme]);
 
   const setChoice = (next: ThemeChoice) => {
