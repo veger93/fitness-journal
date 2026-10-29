@@ -7,6 +7,12 @@ export type Theme = 'light' | 'dark';
 
 export const THEME_STORAGE_KEY = 'vegas.theme';
 
+/**
+ * Цвет полосы браузера и статус-бара телефона (<meta name="theme-color">) — фон страницы (--bg в tokens.css).
+ * Копия значений — в index.html (там тема ставится до загрузки React).
+ */
+export const THEME_COLOR: Record<Theme, string> = { light: '#eef1f5', dark: '#0b0f17' };
+
 /** Чистая функция: никакого DOM, легко тестировать. */
 export function resolveTheme(choice: ThemeChoice, systemPrefersDark: boolean): Theme {
   if (choice === 'system') {
