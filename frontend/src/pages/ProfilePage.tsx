@@ -8,6 +8,7 @@ import { RemindersCard } from '../components/profile/RemindersCard';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
+import { EmailVerifyCard } from '../components/account/EmailVerifyCard';
 import { ClientProfileCard } from '../components/trainer/ClientProfileCard';
 import { MyTrainerCard } from '../components/trainer/MyTrainerCard';
 import { TrainerModeCard } from '../components/trainer/TrainerModeCard';
@@ -43,8 +44,15 @@ export function ProfilePage() {
     <div className={styles.page}>
       <div>
         <h1 className={styles.title}>Профиль</h1>
-        {me.data?.email && <p className={styles.muted}>{me.data.email}</p>}
+        {me.data?.email && (
+          <p className={styles.muted}>
+            {me.data.email}
+            {me.data.emailVerified && ' · подтверждён ✓'}
+          </p>
+        )}
       </div>
+
+      <EmailVerifyCard />
 
       <Card>
         <h2 className={styles.sectionTitle}>Физические данные</h2>

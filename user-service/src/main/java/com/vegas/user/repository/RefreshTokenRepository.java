@@ -31,4 +31,20 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     int revokeFamily(@Param("familyId") UUID familyId,
                      @Param("reason") RefreshToken.RevokeReason reason,
                      @Param("now") Instant now);
+
+    /**
+     * Отозвать все действующие токены пользователя (сменил пароль — выйти на всех устройствах).
+     * flushAutomatically: ПЕРЕД запросом сохранить в базу всё, что изменено в этой транзакции.
+     * Без этого clearAutomatically выбросил бы из памяти несохранённый новый пароль: Hibernate сам
+     * сбрасывает перед JPQL-запросом только изменения тех таблиц, которые запрос затрагивает (здесь — refresh_tokens).
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update RefreshToken t
+            set t.revokedAt = :now, t.revokedReason = :reason
+            where t.userId = :userId and t.revokedAt is null
+            """)
+    int revokeAllOfUser(@Param("userId") UUID userId,
+                        @Param("reason") RefreshToken.RevokeReason reason,
+                        @Param("now") Instant now);
 }

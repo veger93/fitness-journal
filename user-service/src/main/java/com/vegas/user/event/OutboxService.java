@@ -1,5 +1,6 @@
 package com.vegas.user.event;
 
+import com.vegas.common.event.EmailCodeRequestedEvent;
 import com.vegas.common.event.EventTypes;
 import com.vegas.common.event.TrainerClientLinkedEvent;
 import com.vegas.common.event.TrainerClientUnlinkedEvent;
@@ -51,6 +52,14 @@ public class OutboxService {
         UUID clientId = link.getClient().getId();
         TrainerClientLinkedEvent event = new TrainerClientLinkedEvent(link.getTrainerId(), clientId, link.getLinkedAt());
         outboxWriter.write(clientId, EventTypes.TRAINER_CLIENT_LINKED, clientId.toString(), event);
+    }
+
+    /** Письмо с кодом: шлёт notification-service. Сам код в событии — в базе user-service только его хеш */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void emailCodeRequested(User user, String code, String purpose, Instant expiresAt) {
+        EmailCodeRequestedEvent event = new EmailCodeRequestedEvent(
+                user.getId(), user.getEmail(), user.getDisplayName(), code, purpose, expiresAt);
+        outboxWriter.write(user.getId(), EventTypes.EMAIL_CODE_REQUESTED, user.getId().toString(), event);
     }
 
     /** Пользователь удалён: workout, analytics и notification удаляют все его данные */

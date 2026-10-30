@@ -45,6 +45,7 @@ public class ClaimService {
     private final PasswordEncoder passwordEncoder;
     private final OutboxService outboxService;
     private final AuthService authService;
+    private final EmailCodeService emailCodeService;
     private final Clock clock;
 
     /** Тренер: "Передать аккаунт" — новая одноразовая ссылка (старые неиспользованные перестают работать) */
@@ -94,6 +95,7 @@ public class ClaimService {
         token.markUsed(now);
         // notification-service узнаёт email — теперь клиенту можно слать письма
         outboxService.userRegistered(client);
+        emailCodeService.sendVerificationOnSignUp(client);
 
         if (!request.keepTrainer()) {
             trainerClientRepository.findByClient_IdAndEndedAtIsNull(client.getId()).ifPresent(link -> endLink(link, now));

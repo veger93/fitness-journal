@@ -31,6 +31,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final OutboxService outboxService;
     private final RefreshTokenService refreshTokenService;
+    private final EmailCodeService emailCodeService;
 
     /**
      * @Transactional: пользователь и его профиль сохраняются вместе.
@@ -49,6 +50,8 @@ public class AuthService {
         userProfileRepository.save(new UserProfile(user));
         // notification-service узнает email нового пользователя
         outboxService.userRegistered(user);
+        // код подтверждения email — сразу в письме; пользоваться приложением можно и до подтверждения
+        emailCodeService.sendVerificationOnSignUp(user);
 
         return issueTokens(user);
     }
