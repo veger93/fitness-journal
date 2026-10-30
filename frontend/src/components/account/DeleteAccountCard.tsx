@@ -3,7 +3,9 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../api/auth';
 import { useAuth } from '../../auth/AuthProvider';
+import type { Client } from '../../api/trainer';
 import { useClients, useIsTrainer } from '../../hooks/useTrainer';
+import { useActingClient } from '../../trainer/ActingClientProvider';
 import { Button } from '../ui/Button';
 import { Dialog } from '../ui/Dialog';
 import { TextField } from '../ui/TextField';
@@ -20,6 +22,7 @@ export const LOCK_SECONDS = 5;
  */
 export function DeleteAccountCard() {
   const { logout } = useAuth();
+  const { actAs } = useActingClient();
   const navigate = useNavigate();
   const isTrainer = useIsTrainer();
   const clients = useClients();
@@ -98,7 +101,13 @@ export function DeleteAccountCard() {
           </form>
         ) : (
           <ClientsStep
-            names={managed.map((client) => client.displayName)}
+            clients={managed}
+            onHandover={(client) => {
+              // в профиль клиента — там "Передать аккаунт" (QR и ссылка). Удаление пока откладываем
+              close();
+              actAs(client);
+              navigate('/profile');
+            }}
             ownAccounts={ownAccounts}
             pending={remove.isPending}
             onConfirm={() => remove.mutate()}
@@ -112,13 +121,15 @@ export function DeleteAccountCard() {
 
 /** Второе окно тренера: список клиентов без аккаунта и кнопка с обратным отсчётом */
 function ClientsStep({
-  names,
+  clients,
+  onHandover,
   ownAccounts,
   pending,
   onConfirm,
   onCancel,
 }: {
-  names: string[];
+  clients: Client[];
+  onHandover: (client: Client) => void;
   ownAccounts: number;
   pending: boolean;
   onConfirm: () => void;
@@ -138,8 +149,13 @@ function ClientsStep({
         У этих клиентов нет своего аккаунта — они удалятся вместе с вами, со всеми тренировками:
       </p>
       <ul className={styles.clientList}>
-        {names.map((name, index) => (
-          <li key={index}>{name}</li>
+        {clients.map((client) => (
+          <li key={client.id}>
+            <button type="button" className={styles.clientButton} onClick={() => onHandover(client)}>
+              {client.displayName}
+              <span>Передать аккаунт →</span>
+            </button>
+          </li>
         ))}
       </ul>
       {ownAccounts > 0 && (
@@ -147,7 +163,7 @@ function ClientsStep({
           Клиенты со своим аккаунтом ({ownAccounts}) останутся — у них просто не будет тренера.
         </p>
       )}
-      <p className={styles.muted}>Кто-то хочет вести дневник сам — сначала передайте ему аккаунт.</p>
+      <p className={styles.muted}>Кто-то хочет вести дневник сам — нажмите на имя и сначала передайте ему аккаунт.</p>
       <div className={styles.dialogActions}>
         <Button variant="danger" disabled={left > 0 || pending} onClick={onConfirm}>
           {left > 0 ? `Удалить всё · ${left}` : 'Удалить всё'}

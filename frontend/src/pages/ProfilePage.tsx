@@ -79,11 +79,13 @@ export function ProfilePage() {
         <p className={styles.muted}>«Как в системе» — тема переключится вместе с настройкой телефона или компьютера.</p>
       </Card>
 
-      <Button variant="secondary" className={styles.logout} onClick={logout}>
-        Выйти
-      </Button>
-
-      <DeleteAccountCard />
+      {/* внизу одной строкой: "Выйти" слева, редкое "Удалить аккаунт" справа, по нижнему краю */}
+      <div className={styles.bottomRow}>
+        <Button variant="secondary" onClick={logout}>
+          Выйти
+        </Button>
+        <DeleteAccountCard />
+      </div>
     </div>
   );
 }
