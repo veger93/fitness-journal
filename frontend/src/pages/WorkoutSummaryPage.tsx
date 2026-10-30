@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ApiError } from '../api/client';
 import { workoutsApi } from '../api/workouts';
+import { CURRENT_WORKOUT_KEY } from '../hooks/useWorkout';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { SaveTemplateDialog } from '../components/workout/SaveTemplateDialog';
 import { Card } from '../components/ui/Card';
@@ -27,6 +29,16 @@ export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 
   const { workoutId = '' } = useParams();
   const [saving, setSaving] = useState(false);
   const workout = useQuery({ queryKey: ['workout', workoutId], queryFn: () => workoutsApi.get(workoutId) });
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  // "Повторить": новая тренировка с теми же упражнениями — сразу на экран тренировки (как старт из комплекса)
+  const repeat = useMutation({
+    mutationFn: () => workoutsApi.repeat(workoutId),
+    onSuccess: (next) => {
+      queryClient.setQueryData(CURRENT_WORKOUT_KEY, next);
+      navigate('/workout/active');
+    },
+  });
 
   if (!workout.data) {
     return <p className={styles.muted}>{workout.isError ? workout.error.message : 'Загружаем…'}</p>;
@@ -93,6 +105,18 @@ export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 
 
       {mode === 'finished' && (
         <p className="footnote">Рекорды и прогресс обновятся на главной через несколько секунд.</p>
+      )}
+      {mode === 'view' && (
+        <Button onClick={() => repeat.mutate()} disabled={repeat.isPending}>
+          Повторить тренировку
+        </Button>
+      )}
+      {repeat.isError && <p className={styles.muted}>{repeat.error.message}</p>}
+      {/* 409 — уже идёт другая тренировка: предлагаем вернуться к ней */}
+      {repeat.error instanceof ApiError && repeat.error.status === 409 && (
+        <ButtonLink to="/workout/active" variant="secondary">
+          Продолжить текущую
+        </ButtonLink>
       )}
       {!w.templateId && (
         <Button variant="secondary" onClick={() => setSaving(true)}>
