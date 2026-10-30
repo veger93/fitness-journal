@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { authApi, type UserResponse } from '../../api/auth';
 import { useActingClient } from '../../trainer/ActingClientProvider';
 import { Button } from '../ui/Button';
@@ -11,7 +11,7 @@ import styles from './Account.module.css';
 /**
  * "Подтвердите email" (docs/account.md): приложением можно пользоваться и без этого — просто напоминаем.
  * Без подтверждённого email не сработает "Забыли пароль?". Ошибся в адресе — "Исправить email".
- * Показывается на главной и в профиле, пока email не подтверждён; в режиме тренера за клиента — нет.
+ * Живёт в профиле, пока email не подтверждён (на главной — только намёк EmailVeil); в режиме тренера за клиента — нет.
  */
 export function EmailVerifyCard() {
   const queryClient = useQueryClient();
@@ -20,13 +20,19 @@ export function EmailVerifyCard() {
   const [code, setCode] = useState('');
   const [sentAgain, setSentAgain] = useState(false);
   const [changing, setChanging] = useState(false);
+  // подтвердили — сначала показываем "Email подтверждён ✓", и только потом обновляем пользователя (карточка уйдёт)
+  const [confirmed, setConfirmed] = useState<UserResponse | null>(null);
 
   const onUser = (user: UserResponse) => queryClient.setQueryData(['me'], user);
-  const confirm = useMutation({ mutationFn: () => authApi.confirmEmail(code), onSuccess: onUser });
+  const confirm = useMutation({ mutationFn: () => authApi.confirmEmail(code), onSuccess: setConfirmed });
   const resend = useMutation({ mutationFn: authApi.resendEmailCode, onSuccess: () => setSentAgain(true) });
 
   if (acting || !me.data?.email || me.data.emailVerified) {
     return null;
+  }
+
+  if (confirmed) {
+    return <EmailConfirmed onDone={() => onUser(confirmed)} />;
   }
 
   const onSubmit = (event: FormEvent) => {
@@ -80,6 +86,85 @@ export function EmailVerifyCard() {
         }}
       />
     </Card>
+  );
+}
+
+const prefersReducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+/**
+ * На месте карточки: "Email подтверждён ✓" на лёгком зелёном свечении. Галочка "пишется" росчерком:
+ * короткий штрих вниз, микропауза в нижней точке, взмах вверх. Через ~2 с всё растворяется, блок схлопывается
+ * (карточки ниже плавно поднимаются) — и только тогда onDone убирает компонент.
+ */
+function EmailConfirmed({ onDone }: { onDone: () => void }) {
+  const box = useRef<HTMLDivElement>(null);
+  const tick = useRef<SVGPathElement>(null);
+  // onDone в ref: эффект запускаем один раз, а не на каждый рендер родителя
+  const done = useRef(onDone);
+  useEffect(() => {
+    done.current = onDone;
+  }, [onDone]);
+
+  useEffect(() => {
+    const el = box.current;
+    const path = tick.current;
+    // без анимаций (настройка "уменьшить движение" или тесты в jsdom) — просто показываем надпись 1.5 с
+    if (!el || !path || typeof el.animate !== 'function' || prefersReducedMotion()) {
+      const timer = setTimeout(() => done.current(), 1500);
+      return () => clearTimeout(timer);
+    }
+    const out = 'cubic-bezier(0.16, 1, 0.3, 1)';
+    const animations = [
+      el.animate(
+        [
+          { opacity: 0, transform: 'translateY(8px) scale(.97)' },
+          { opacity: 1, transform: 'none' },
+        ],
+        {
+          duration: 420,
+          easing: out,
+          fill: 'both',
+        },
+      ),
+      path.animate(
+        [
+          { strokeDashoffset: 22, easing: 'cubic-bezier(.3,.6,.5,1)' },
+          { strokeDashoffset: 15.6, offset: 0.32 },
+          { strokeDashoffset: 15.6, offset: 0.42, easing: 'cubic-bezier(.5,0,.3,1)' },
+          { strokeDashoffset: 0 },
+        ],
+        { duration: 520, delay: 380, fill: 'both' },
+      ),
+    ];
+    const fade = el.animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(1.04)' }], {
+      duration: 450,
+      delay: 2200,
+      easing: 'ease-in',
+      fill: 'forwards',
+    });
+    // надпись растворилась — схлопываем высоту, чтобы карточки ниже поднялись плавно, а не прыжком
+    fade.onfinish = () => {
+      const collapse = el.animate([{ height: `${el.offsetHeight}px` }, { height: '0px', marginBottom: '0px' }], {
+        duration: 400,
+        easing: out,
+        fill: 'forwards',
+      });
+      collapse.onfinish = () => done.current();
+      animations.push(collapse);
+    };
+    animations.push(fade);
+    return () => animations.forEach((a) => a.cancel());
+  }, []);
+
+  return (
+    <div ref={box} className={styles.confirmed} role="status">
+      <span className={styles.confirmedText}>
+        Email подтверждён
+        <svg className={styles.tick} viewBox="0 0 24 24" aria-hidden="true">
+          <path ref={tick} d="M4.5 12.8l4.2 4.4L19.5 6" />
+        </svg>
+      </span>
+    </div>
   );
 }
 

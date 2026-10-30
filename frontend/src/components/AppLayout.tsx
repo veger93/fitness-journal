@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
+import { EmailVeil } from './account/EmailVeil';
 import { NotificationBell } from './NotificationBell';
 import { ClientBand } from './trainer/ClientBand';
 import { ClientReminder } from './trainer/ClientReminder';
@@ -22,6 +23,8 @@ const NAV = [
 export function AppLayout() {
   return (
     <div className={styles.page}>
+      {/* email не подтверждён — тёмная вуаль с намёком сверху главной (сама решает, показываться ли) */}
+      <EmailVeil />
       <div className={styles.container}>
         {/* тренер работает за клиента — оранжевая полоса с именем (режим тренера, docs/trainer.md) */}
         <ClientBand />
