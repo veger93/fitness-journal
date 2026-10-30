@@ -44,4 +44,12 @@ subprojects {
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
     }
+
+    // Воспроизводимые архивы: одинаковое содержимое -> байт в байт одинаковый jar (время файлов фиксированное).
+    // Нужно для слоёв Docker (Dockerfile): слой с библиотеками не меняется между выкладками,
+    // и сервер не скачивает заново ~80 МБ на каждый сервис.
+    tasks.withType(AbstractArchiveTask).configureEach {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
 }

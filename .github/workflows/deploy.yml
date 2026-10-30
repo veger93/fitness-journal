@@ -105,13 +105,16 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: GHCR_TOKEN,GHCR_USER,SHA
           script_stop: true
+          # по умолчанию 10 минут: при медленной сети сервера скачивание образов не успевало
+          command_timeout: 30m
           script: |
             cd ~/vegas
             # временный вход в ghcr.io: токен живёт только пока идёт этот запуск
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-            # версия образов = проверенный коммит (в .env строка TAG заменяется)
+            # сначала скачиваем новые образы (TAG из окружения важнее, чем в .env), и только потом
+            # меняем версию в .env: оборвётся скачивание — .env и работающие сервисы останутся на старой версии
+            TAG=$SHA docker compose pull
             sed -i "s/^TAG=.*/TAG=$SHA/" .env
-            docker compose pull
             docker compose up -d --remove-orphans
             docker logout ghcr.io
             # старые образы занимают диск — удаляем те, что больше не используются
