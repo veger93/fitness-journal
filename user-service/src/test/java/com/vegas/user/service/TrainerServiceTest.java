@@ -187,6 +187,36 @@ class TrainerServiceTest {
         assertThat(trainerService.setTrainerMode(trainerId, true).trainer()).isTrue();
     }
 
+    @Test
+    void removeClient_withoutAccount_deletedCompletely() {
+        trainer.setTrainer(true);
+        User client = withId(User.managed("Иван"), UUID.randomUUID());
+        TrainerClient link = new TrainerClient(trainerId, client, null, CLOCK.instant());
+        when(userRepository.findById(trainerId)).thenReturn(Optional.of(trainer));
+        when(trainerClientRepository.findByTrainerIdAndClient_IdAndEndedAtIsNull(trainerId, client.getId()))
+                .thenReturn(Optional.of(link));
+
+        assertThat(trainerService.removeClient(trainerId, client.getId())).isTrue();
+        verify(userRepository).delete(client);
+        verify(outboxService).userDeleted(client.getId());
+    }
+
+    @Test
+    void removeClient_withOwnAccount_onlyUnlinked() {
+        trainer.setTrainer(true);
+        User client = withId(User.local("ivan@mail.ru", "hash", "Иван"), UUID.randomUUID());
+        TrainerClient link = new TrainerClient(trainerId, client, null, CLOCK.instant());
+        when(userRepository.findById(trainerId)).thenReturn(Optional.of(trainer));
+        when(trainerClientRepository.findByTrainerIdAndClient_IdAndEndedAtIsNull(trainerId, client.getId()))
+                .thenReturn(Optional.of(link));
+
+        assertThat(trainerService.removeClient(trainerId, client.getId())).isFalse();
+        // аккаунт клиента не трогаем — он его
+        verify(userRepository, never()).delete(any());
+        assertThat(link.getEndedAt()).isEqualTo(CLOCK.instant());
+        verify(outboxService).trainerClientUnlinked(link);
+    }
+
     /** id генерирует база, а в unit-тесте базы нет — ставим id через reflection */
     private static User withId(User user, UUID id) {
         ReflectionTestUtils.setField(user, "id", id);

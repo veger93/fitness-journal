@@ -118,6 +118,30 @@ public class TrainerService {
         return toResponse(link);
     }
 
+    /**
+     * Убрать клиента из списка.
+     * - Клиент без аккаунта (ведомый): его данные больше никому не нужны — удаляем пользователя целиком,
+     *   а событие UserDeleted просит остальные сервисы удалить его тренировки, аналитику, уведомления.
+     * - Клиент со своим аккаунтом: только закрываем связь — аккаунт и данные остаются у него.
+     *
+     * @return true — клиент удалён полностью, false — только отвязан
+     */
+    @Transactional
+    public boolean removeClient(UUID trainerId, UUID clientId) {
+        requireTrainer(trainerId);
+        TrainerClient link = findLink(trainerId, clientId);
+        User client = link.getClient();
+        if (client.isManaged()) {
+            // ON DELETE CASCADE в базе удалит профиль, вес, связь и ссылки передачи
+            userRepository.delete(client);
+            outboxService.userDeleted(clientId);
+            return true;
+        }
+        link.end(clock.instant());
+        outboxService.trainerClientUnlinked(link);
+        return false;
+    }
+
     private void requireTrainer(UUID userId) {
         if (!findUser(userId).isTrainer()) {
             throw new ForbiddenException("Включите режим тренера в профиле");

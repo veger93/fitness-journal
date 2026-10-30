@@ -6,6 +6,8 @@ import { useActingClient } from '../../trainer/ActingClientProvider';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { TextField } from '../ui/TextField';
+import { HandoverCard } from './HandoverCard';
+import { RemoveClientCard } from './RemoveClientCard';
 import styles from './Trainer.module.css';
 
 const LEVEL_NAMES = { BEGINNER: 'новичок', INTERMEDIATE: 'средний', ADVANCED: 'опытный' } as const;
@@ -30,22 +32,27 @@ export function ClientProfileCard({ clientId }: { clientId: string }) {
   ].filter(Boolean);
 
   return (
-    <Card>
-      <p className={styles.muted}>{data.managed ? 'Дневник ведёте вы' : 'У клиента свой аккаунт'}</p>
-      {facts.length > 0 && <p>{facts.join(' · ')}</p>}
-      <ClientContactsForm
-        key={data.id}
-        clientId={data.id}
-        managed={data.managed}
-        name={data.displayName}
-        phone={data.phone ?? ''}
-        onSaved={(saved) => {
-          queryClient.setQueryData(['trainer', 'client', clientId], saved);
-          queryClient.invalidateQueries({ queryKey: CLIENTS_KEY });
-          actAs({ id: saved.id, displayName: saved.displayName });
-        }}
-      />
-    </Card>
+    <>
+      <Card>
+        <p className={styles.muted}>{data.managed ? 'Дневник ведёте вы' : 'У клиента свой аккаунт'}</p>
+        {facts.length > 0 && <p>{facts.join(' · ')}</p>}
+        <ClientContactsForm
+          key={data.id}
+          clientId={data.id}
+          managed={data.managed}
+          name={data.displayName}
+          phone={data.phone ?? ''}
+          onSaved={(saved) => {
+            queryClient.setQueryData(['trainer', 'client', clientId], saved);
+            queryClient.invalidateQueries({ queryKey: CLIENTS_KEY });
+            actAs({ id: saved.id, displayName: saved.displayName });
+          }}
+        />
+      </Card>
+      {/* передать можно только ведомого: у клиента со своим аккаунтом вход уже есть */}
+      {data.managed && <HandoverCard clientId={data.id} clientName={data.displayName} />}
+      <RemoveClientCard clientId={data.id} clientName={data.displayName} managed={data.managed} />
+    </>
   );
 }
 

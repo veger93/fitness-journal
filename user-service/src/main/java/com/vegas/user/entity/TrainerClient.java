@@ -59,6 +59,11 @@ public class TrainerClient {
         this.linkedAt = linkedAt;
     }
 
+    /** Связь закончилась: клиент ушёл от тренера. Строка остаётся как история */
+    public void end(Instant at) {
+        this.endedAt = at;
+    }
+
     public UUID getClientId() {
         return client.getId();
     }
