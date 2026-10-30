@@ -50,7 +50,8 @@ public class OutboxService {
     @Transactional(propagation = Propagation.MANDATORY)
     public void trainerClientLinked(TrainerClient link) {
         UUID clientId = link.getClient().getId();
-        TrainerClientLinkedEvent event = new TrainerClientLinkedEvent(link.getTrainerId(), clientId, link.getLinkedAt());
+        TrainerClientLinkedEvent event = new TrainerClientLinkedEvent(link.getTrainerId(), clientId, link.getLinkedAt(),
+                link.getClient().getDisplayName());
         outboxWriter.write(clientId, EventTypes.TRAINER_CLIENT_LINKED, clientId.toString(), event);
     }
 

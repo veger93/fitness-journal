@@ -1,10 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { notificationsApi, type AppNotification } from '../api/notifications';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
+import { useIsTrainer } from '../hooks/useTrainer';
 import { NOTIFICATION_LABELS, toFeedItem } from '../lib/notifications';
+import { initial } from '../lib/trainer';
+import { useActingClient } from '../trainer/ActingClientProvider';
 import styles from './NotificationsPage.module.css';
 
 const dateTime = new Intl.DateTimeFormat('ru-RU', {
@@ -21,6 +24,7 @@ const dateTime = new Intl.DateTimeFormat('ru-RU', {
  */
 export function NotificationsPage() {
   const queryClient = useQueryClient();
+  const isTrainer = useIsTrainer();
   const list = useQuery({ queryKey: ['notifications', 'list'], queryFn: () => notificationsApi.list() });
   const markRead = useMutation({
     mutationFn: notificationsApi.markAllRead,
@@ -43,7 +47,7 @@ export function NotificationsPage() {
       <h1 className={styles.title}>Уведомления</h1>
       <p className={styles.muted}>
         Рекорды, плато, перегрузки и итоги месяца — то же, что приходит на почту. Напоминания настраиваются в{' '}
-        <Link to="/profile">профиле</Link>.
+        <Link to="/profile">профиле</Link>.{isTrainer && ' О ваших клиентах — только здесь, без писем.'}
       </p>
       {list.isPending && <p className={styles.muted}>Загружаем…</p>}
       {list.isError && <p className={styles.muted}>{list.error.message}</p>}
@@ -63,10 +67,19 @@ export function NotificationsPage() {
 
 function NotificationItem({ notification }: { notification: AppNotification }) {
   const item = toFeedItem(notification);
+  const { link, client } = item;
+  const { actAs } = useActingClient();
+  const navigate = useNavigate();
   const accent = notification.type === 'OVERLOAD_RISK';
   return (
     <li className={`${styles.item} ${notification.read ? '' : styles.unread}`}>
       <div className={styles.head}>
+        {/* о клиенте — кружок с буквой, как в списке "Чей дневник открыть" */}
+        {client && (
+          <span className={styles.clientAvatar} aria-hidden="true">
+            {initial(client.displayName)}
+          </span>
+        )}
         <Badge variant={accent ? 'accent' : notification.type === 'PERSONAL_RECORD' ? 'inverse' : 'neutral'}>
           {NOTIFICATION_LABELS[notification.type]}
         </Badge>
@@ -76,11 +89,23 @@ function NotificationItem({ notification }: { notification: AppNotification }) {
       <h2 className={styles.subject}>{notification.subject}</h2>
       {/* текст письма с переносами строк: white-space: pre-line в CSS */}
       <p className={styles.body}>{item.text}</p>
-      {item.link && (
-        <Link to={item.link.to} className={styles.action}>
-          {item.link.label} →
-        </Link>
-      )}
+      {link &&
+        (client ? (
+          <button
+            type="button"
+            className={styles.action}
+            onClick={() => {
+              actAs(client);
+              navigate(link.to);
+            }}
+          >
+            {link.label} →
+          </button>
+        ) : (
+          <Link to={link.to} className={styles.action}>
+            {link.label} →
+          </Link>
+        ))}
     </li>
   );
 }

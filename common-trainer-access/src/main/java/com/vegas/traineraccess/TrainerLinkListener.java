@@ -40,7 +40,7 @@ public class TrainerLinkListener {
         if (EventTypes.TRAINER_CLIENT_LINKED.equals(eventType)) {
             TrainerClientLinkedEvent event = objectMapper.readValue(record.value(), TrainerClientLinkedEvent.class);
             // save по первичному ключу: повтор того же события (Kafka доставляет "минимум один раз") ничего не испортит
-            repository.save(new TrainerLink(event.clientId(), event.trainerId(), event.linkedAt()));
+            repository.save(new TrainerLink(event.clientId(), event.trainerId(), event.linkedAt(), event.clientName()));
             log.info("Trainer {} linked to client {}", event.trainerId(), event.clientId());
         } else if (EventTypes.TRAINER_CLIENT_UNLINKED.equals(eventType)) {
             TrainerClientUnlinkedEvent event = objectMapper.readValue(record.value(), TrainerClientUnlinkedEvent.class);

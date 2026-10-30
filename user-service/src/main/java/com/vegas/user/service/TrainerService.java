@@ -113,6 +113,8 @@ public class TrainerService {
                 throw new ForbiddenException("Имя меняет сам клиент: у него свой аккаунт");
             }
             client.setDisplayName(newName);
+            // копии связей в других сервисах хранят имя (уведомления тренеру) — шлём связь ещё раз, с новым именем
+            outboxService.trainerClientLinked(link);
         }
         link.setPhone(blankToNull(request.phone()));
         return toResponse(link);

@@ -19,6 +19,10 @@ public class UserDataCleaner {
     @Transactional
     public void deleteAll(UUID userId) {
         int notifications = jdbc.update("DELETE FROM notifications WHERE user_id = ?", userId);
+        // уведомления тренера об этом клиенте: открыть его дневник уже нельзя
+        jdbc.update("DELETE FROM notifications WHERE client_id = ?", userId);
+        // копия связей: удалили клиента — его связь; удалили тренера — связи со всеми его клиентами
+        jdbc.update("DELETE FROM trainer_links WHERE client_id = ? OR trainer_id = ?", userId, userId);
         jdbc.update("DELETE FROM notification_settings WHERE user_id = ?", userId);
         // дни плана удалятся сами (ON DELETE CASCADE от weekly_plans)
         jdbc.update("DELETE FROM weekly_plans WHERE user_id = ?", userId);

@@ -28,9 +28,14 @@ public class TrainerLink {
     @Column(name = "linked_at", nullable = false)
     private Instant linkedAt;
 
-    public TrainerLink(UUID clientId, UUID trainerId, Instant linkedAt) {
+    /** Имя клиента — для уведомлений тренеру. null — связь пришла из старого события, без имени */
+    @Column(name = "client_name", length = 100)
+    private String clientName;
+
+    public TrainerLink(UUID clientId, UUID trainerId, Instant linkedAt, String clientName) {
         this.clientId = clientId;
         this.trainerId = trainerId;
         this.linkedAt = linkedAt;
+        this.clientName = clientName;
     }
 }

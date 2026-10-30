@@ -11,11 +11,15 @@ export interface AppNotification {
   subject: string;
   /** текст письма как есть — для ленты убираем подпись (см. lib/notifications.ts) */
   body: string;
-  status: 'SENT' | 'SKIPPED';
+  /** IN_APP — только в ленте, без письма (тренеру о клиентах) */
+  status: 'SENT' | 'SKIPPED' | 'IN_APP';
   createdAt: string;
   read: boolean;
   /** почему не отправлено (для SKIPPED) */
   reason: string | null;
+  /** уведомление тренеру о клиенте: о ком (тап — дневник клиента); у обычных — null */
+  clientId: string | null;
+  clientName: string | null;
 }
 
 /** PLAN — напоминать в дни плана на неделю, CUSTOM — в выбранные вручную */
