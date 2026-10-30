@@ -8,6 +8,7 @@ import { RemindersCard } from '../components/profile/RemindersCard';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
+import { DeleteAccountCard } from '../components/account/DeleteAccountCard';
 import { EmailVerifyCard } from '../components/account/EmailVerifyCard';
 import { ClientProfileCard } from '../components/trainer/ClientProfileCard';
 import { MyTrainerCard } from '../components/trainer/MyTrainerCard';
@@ -81,6 +82,8 @@ export function ProfilePage() {
       <Button variant="secondary" className={styles.logout} onClick={logout}>
         Выйти
       </Button>
+
+      <DeleteAccountCard />
     </div>
   );
 }

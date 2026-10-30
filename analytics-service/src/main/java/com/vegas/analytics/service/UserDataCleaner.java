@@ -20,7 +20,8 @@ public class UserDataCleaner {
     public void deleteAll(UUID userId) {
         int performances = jdbc.update("DELETE FROM exercise_performances WHERE user_id = ?", userId);
         jdbc.update("DELETE FROM athlete_profiles WHERE user_id = ?", userId);
-        jdbc.update("DELETE FROM trainer_links WHERE client_id = ?", userId);
+        // копия связей: удалили клиента — его связь; удалили тренера — связи со всеми его клиентами
+        jdbc.update("DELETE FROM trainer_links WHERE client_id = ? OR trainer_id = ?", userId, userId);
         log.info("User {} analytics deleted: {} performances", userId, performances);
     }
 }
