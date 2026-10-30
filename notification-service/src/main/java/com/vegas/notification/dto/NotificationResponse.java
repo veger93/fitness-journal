@@ -16,10 +16,12 @@ public record NotificationResponse(
         NotificationStatus status,
         Instant createdAt,
         boolean read,
-        String reason   // почему не отправлено (для SKIPPED), иначе null
+        String reason,   // почему не отправлено (для SKIPPED), иначе null
+        UUID clientId,   // уведомление тренеру о клиенте: о ком (тап — дневник клиента), иначе null
+        String clientName
 ) {
     public static NotificationResponse from(Notification n) {
         return new NotificationResponse(n.getId(), n.getType(), n.getSubject(), n.getBody(), n.getStatus(),
-                n.getCreatedAt(), n.isRead(), n.getReason());
+                n.getCreatedAt(), n.isRead(), n.getReason(), n.getClientId(), n.getClientName());
     }
 }

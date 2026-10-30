@@ -63,6 +63,30 @@ public final class NotificationTemplates {
         return new EmailMessage("Новый рекорд: " + event.exerciseName(), body + SIGNATURE);
     }
 
+    // ---------- тренеру о клиенте: коротко, для ленты в приложении ----------
+
+    /** "Ольга: новый рекорд" / "Жим лёжа: 45 кг × 6" */
+    public static EmailMessage clientRecord(String client, PersonalRecordEvent event) {
+        StringBuilder body = new StringBuilder(event.exerciseName());
+        if (event.weightKg() != null) {
+            body.append(": ").append(kg(event.weightKg()));
+            if (event.reps() != null) {
+                body.append(" × ").append(event.reps());
+            }
+        }
+        return new EmailMessage(client + ": новый рекорд", body.toString());
+    }
+
+    public static EmailMessage clientPlateau(String client, PlateauDetectedEvent event) {
+        return new EmailMessage(client + ": плато",
+                event.exerciseName() + " — без нового максимума " + event.days() + " дн.");
+    }
+
+    public static EmailMessage clientOverload(String client, OverloadRiskEvent event) {
+        String reason = event.reasons().isEmpty() ? "признаки накопленной усталости" : event.reasons().get(0);
+        return new EmailMessage(client + ": риск перегрузки", event.exerciseName() + ": " + reason);
+    }
+
     public static EmailMessage plateau(String greeting, PlateauDetectedEvent event) {
         String body = greeting + ", в упражнении «" + event.exerciseName() + "» нет нового максимума уже "
                 + event.days() + " дн. (с " + date(event) + ").*\n\n"

@@ -86,4 +86,20 @@ public class NotificationService {
         log.info("Notification {} sent to user {}", dedupeKey, userId);
         return Optional.of(saved);
     }
+
+    /**
+     * Тренеру — о событии у его клиента. Только в ленту приложения: клиентов десятки, письмо на каждое — спам.
+     * Повтор события (Kafka доставляет "минимум один раз") отсекается тем же ключом, что и у обычных уведомлений.
+     */
+    @Transactional
+    public Optional<Notification> notifyTrainer(UUID trainerId, UUID clientId, String clientName, NotificationType type,
+                                                String dedupeKey, EmailMessage message) {
+        if (notificationRepository.existsByUserIdAndDedupeKey(trainerId, dedupeKey)) {
+            return Optional.empty();
+        }
+        Notification saved = notificationRepository.save(
+                Notification.aboutClient(trainerId, type, dedupeKey, message, clientId, clientName, clock.instant()));
+        log.info("Notification {} about client {} for trainer {}", dedupeKey, clientId, trainerId);
+        return Optional.of(saved);
+    }
 }

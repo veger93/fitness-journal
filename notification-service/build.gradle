@@ -5,6 +5,8 @@ plugins {
 
 dependencies {
     implementation project(':common-lib')
+    // копия связей "тренер — клиент": уведомления клиента дублируются тренеру (docs/trainer.md, шаг 5.2)
+    implementation project(':common-trainer-access')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'

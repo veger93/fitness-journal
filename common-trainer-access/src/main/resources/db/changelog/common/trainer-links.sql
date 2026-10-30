@@ -10,3 +10,8 @@ CREATE TABLE trainer_links (
     linked_at  TIMESTAMPTZ NOT NULL
 );
 --rollback DROP TABLE trainer_links;
+
+--changeset sergey:common-trainer-links-client-name
+-- Имя клиента — для уведомлений тренеру ("Ольга: новый рекорд"), приходит в TrainerClientLinked
+ALTER TABLE trainer_links ADD COLUMN client_name VARCHAR(100);
+--rollback ALTER TABLE trainer_links DROP COLUMN client_name;
