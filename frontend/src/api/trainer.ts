@@ -38,6 +38,17 @@ export interface MyTrainer {
   since: string;
 }
 
+/** Главный сигнал по клиенту (analytics: ClientSignalResponse) — метка в списке "Чей дневник открыть" */
+export interface ClientSignal {
+  clientId: string;
+  signal: 'OVERLOAD' | 'PLATEAU' | 'AWAY' | 'RECORD' | 'NONE';
+  /** в каком упражнении (у AWAY и NONE — null) */
+  exerciseName: string | null;
+  /** PLATEAU — дней без максимума, AWAY — без тренировок, RECORD — с рекорда */
+  days: number | null;
+  lastWorkoutAt: string | null;
+}
+
 const base = '/api/users/me';
 
 export const trainerApi = {
@@ -55,6 +66,11 @@ export const trainerApi = {
   myTrainer: async () => (await api<MyTrainer | undefined>(`${base}/trainer`)) ?? null,
   leaveTrainer: () => api<void>(`${base}/trainer`, { method: 'DELETE' }),
   /** Идёт ли у клиента тренировка — независимо от того, кто сейчас выбран в переключателе */
+  /**
+   * Сигналы по всем моим клиентам одним запросом. asClient: null — всегда от имени тренера,
+   * даже когда сейчас открыт дневник клиента (иначе ушёл бы X-Client-Id и вернулись бы "клиенты клиента")
+   */
+  clientSignals: () => api<ClientSignal[]>('/api/analytics/trainer/clients', { asClient: null }),
   clientCurrentWorkout: async (clientId: string) =>
     (await api<Workout | undefined>('/api/workouts/current', { asClient: clientId })) ?? null,
 };

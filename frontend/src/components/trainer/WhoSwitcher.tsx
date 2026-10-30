@@ -2,16 +2,18 @@ import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../api/auth';
 import { useQuery } from '@tanstack/react-query';
-import { useClients, useClientsInProgress, useIsTrainer } from '../../hooks/useTrainer';
-import { initial, workoutStatusText } from '../../lib/trainer';
+import { useClients, useClientSignals, useClientsInProgress, useIsTrainer } from '../../hooks/useTrainer';
+import { initial, signalBadge, workoutStatusText } from '../../lib/trainer';
 import { useActingClient } from '../../trainer/ActingClientProvider';
+import { Badge } from '../ui/Badge';
 import { Dialog } from '../ui/Dialog';
 import { NewClientForm } from './NewClientForm';
 import styles from './Trainer.module.css';
 
 /**
  * Переключатель "чей дневник" в шапке (вариант A). Виден только тренеру.
- * Тап — окно со списком: я и клиенты (у кого идёт тренировка — видно сразу); там же "Новый клиент".
+ * Тап — окно со списком: я и клиенты с одной меткой — идёт тренировка, перегрузка, плато, давно не был, рекорд
+ * (docs/trainer.md, шаг 5); там же "Новый клиент".
  */
 export function WhoSwitcher() {
   const isTrainer = useIsTrainer();
@@ -19,6 +21,7 @@ export function WhoSwitcher() {
   const { client: acting, actAs } = useActingClient();
   const clients = useClients();
   const inProgress = useClientsInProgress(clients.data ?? []);
+  const signals = useClientSignals();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -83,6 +86,7 @@ export function WhoSwitcher() {
               </li>
               {clients.data?.map((client) => {
                 const workout = inProgress.get(client.id);
+                const badge = signalBadge(signals.get(client.id));
                 return (
                   <li key={client.id}>
                     <button
@@ -95,7 +99,12 @@ export function WhoSwitcher() {
                         <b>{client.displayName}</b>
                         <span className={styles.muted}>{client.managed ? 'дневник ведёте вы' : 'свой аккаунт'}</span>
                       </span>
-                      {workout && <span className={styles.signal}>{workoutStatusText(workout.startedAt)}</span>}
+                      {/* одна метка: идущая тренировка важнее всего, иначе — главный сигнал аналитики */}
+                      {workout ? (
+                        <span className={styles.signal}>{workoutStatusText(workout.startedAt)}</span>
+                      ) : (
+                        badge && <Badge variant={badge.variant}>{badge.text}</Badge>
+                      )}
                     </button>
                   </li>
                 );

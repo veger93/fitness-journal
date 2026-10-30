@@ -1,6 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { authApi } from '../api/auth';
-import { trainerApi, type Client } from '../api/trainer';
+import { trainerApi, type Client, type ClientSignal } from '../api/trainer';
 import type { Workout } from '../api/workouts';
 
 export const CLIENTS_KEY = ['trainer', 'clients'] as const;
@@ -39,4 +39,16 @@ export function useClientsInProgress(clients: Client[]): Map<string, Workout> {
     }
   });
   return map;
+}
+
+/** Сигналы по клиентам (перегрузка, плато, давно не был, рекорд): clientId -> сигнал. Обновляем раз в минуту */
+export function useClientSignals(): Map<string, ClientSignal> {
+  const isTrainer = useIsTrainer();
+  const signals = useQuery({
+    queryKey: ['trainer', 'signals'],
+    queryFn: trainerApi.clientSignals,
+    enabled: isTrainer,
+    refetchInterval: REFRESH_MS,
+  });
+  return new Map((signals.data ?? []).map((signal) => [signal.clientId, signal]));
 }
