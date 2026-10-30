@@ -7,6 +7,7 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { TextField } from '../ui/TextField';
 import { HandoverCard } from './HandoverCard';
+import { RemoveClientCard } from './RemoveClientCard';
 import styles from './Trainer.module.css';
 
 const LEVEL_NAMES = { BEGINNER: 'новичок', INTERMEDIATE: 'средний', ADVANCED: 'опытный' } as const;
@@ -50,6 +51,7 @@ export function ClientProfileCard({ clientId }: { clientId: string }) {
       </Card>
       {/* передать можно только ведомого: у клиента со своим аккаунтом вход уже есть */}
       {data.managed && <HandoverCard clientId={data.id} clientName={data.displayName} />}
+      <RemoveClientCard clientId={data.id} clientName={data.displayName} managed={data.managed} />
     </>
   );
 }

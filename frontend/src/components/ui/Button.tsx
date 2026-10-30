@@ -1,10 +1,12 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes, Ref } from 'react';
 import { Link, type LinkProps } from 'react-router-dom';
 import styles from './Button.module.css';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'surface' | 'accent';
   fullWidth?: boolean;
+  /** React 19: ref — обычный проп (окно может "вырасти" из кнопки, см. Dialog originRef) */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 /** Единственная кнопка приложения: несколько разновидностей, форма-"пилюля", высота 52px. */

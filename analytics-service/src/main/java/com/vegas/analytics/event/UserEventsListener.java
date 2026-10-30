@@ -3,7 +3,9 @@ package com.vegas.analytics.event;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vegas.analytics.service.AthleteProfileService;
+import com.vegas.analytics.service.UserDataCleaner;
 import com.vegas.common.event.EventTypes;
+import com.vegas.common.event.UserDeletedEvent;
 import com.vegas.common.event.UserProfileUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 public class UserEventsListener {
 
     private final AthleteProfileService athleteProfileService;
+    private final UserDataCleaner userDataCleaner;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "${app.kafka.topics.user-events}")
@@ -30,6 +33,8 @@ public class UserEventsListener {
 
         if (EventTypes.USER_PROFILE_UPDATED.equals(eventType)) {
             athleteProfileService.apply(objectMapper.readValue(record.value(), UserProfileUpdatedEvent.class));
+        } else if (EventTypes.USER_DELETED.equals(eventType)) {
+            userDataCleaner.deleteAll(objectMapper.readValue(record.value(), UserDeletedEvent.class).userId());
         } else {
             log.debug("User event type {} is not handled by analytics", eventType);
         }

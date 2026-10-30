@@ -47,6 +47,8 @@ export const trainerApi = {
   createClient: (body: NewClient) => api<Client>(`${base}/clients`, { method: 'POST', body }),
   updateClient: (clientId: string, body: { displayName: string; phone: string | null }) =>
     api<Client>(`${base}/clients/${clientId}`, { method: 'PUT', body }),
+  /** Убрать клиента: без аккаунта — удалить вместе с данными, со своим аккаунтом — отвязать */
+  removeClient: (clientId: string) => api<void>(`${base}/clients/${clientId}`, { method: 'DELETE' }),
   /** "Передать аккаунт": новая ссылка на 7 дней, старые перестают работать */
   createClaimLink: (clientId: string) => api<ClaimLink>(`${base}/clients/${clientId}/claim-link`, { method: 'POST' }),
   /** со стороны клиента: мой тренер (null — тренера нет) */

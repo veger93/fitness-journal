@@ -81,6 +81,13 @@ public class TrainerController {
         return trainerService.updateClient(currentUser.id(), clientId, request);
     }
 
+    @DeleteMapping("/clients/{clientId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Убрать клиента: без аккаунта — удалить вместе с данными, со своим аккаунтом — отвязать")
+    public void removeClient(@AuthenticationPrincipal AuthenticatedUser currentUser, @PathVariable UUID clientId) {
+        trainerService.removeClient(currentUser.id(), clientId);
+    }
+
     @PostMapping("/clients/{clientId}/claim-link")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Передать аккаунт: одноразовая ссылка на 7 дней (старые перестают работать)")

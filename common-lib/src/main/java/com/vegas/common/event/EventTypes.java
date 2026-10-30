@@ -20,6 +20,8 @@ public final class EventTypes {
     public static final String TRAINER_CLIENT_LINKED = "TrainerClientLinked";
     /** связь закончилась (клиент ушёл от тренера) — копии в сервисах удаляют её */
     public static final String TRAINER_CLIENT_UNLINKED = "TrainerClientUnlinked";
+    /** пользователь удалён — все сервисы удаляют его данные */
+    public static final String USER_DELETED = "UserDeleted";
 
     // события analytics-service (топик analytics-events) -> notification-service
     public static final String PERSONAL_RECORD = "PersonalRecord";

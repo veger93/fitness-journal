@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../api/auth';
 import { useQuery } from '@tanstack/react-query';
@@ -22,6 +22,8 @@ export function WhoSwitcher() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  // окно "вырастает" из этой кнопки и сворачивается в неё
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   if (!isTrainer) {
     return null;
@@ -44,7 +46,7 @@ export function WhoSwitcher() {
 
   return (
     <>
-      <button type="button" className={styles.who} onClick={() => setOpen(true)} aria-haspopup="dialog">
+      <button ref={buttonRef} type="button" className={styles.who} onClick={() => setOpen(true)} aria-haspopup="dialog">
         <span className={acting ? `${styles.avatar} ${styles.avatarClient}` : styles.avatar} aria-hidden="true">
           {initial(acting ? acting.displayName : me.data?.displayName)}
         </span>
@@ -58,6 +60,7 @@ export function WhoSwitcher() {
         onClose={close}
         onBack={creating ? () => setCreating(false) : undefined}
         title={creating ? 'Новый клиент' : 'Чей дневник открыть'}
+        originRef={buttonRef}
       >
         {creating ? (
           <NewClientForm onCreated={(client) => pick(client)} />
