@@ -22,6 +22,8 @@ public final class EventTypes {
     public static final String TRAINER_CLIENT_UNLINKED = "TrainerClientUnlinked";
     /** пользователь удалён — все сервисы удаляют его данные */
     public static final String USER_DELETED = "UserDeleted";
+    /** user-service -> notification-service: письмо с кодом (подтверждение email, сброс пароля) */
+    public static final String EMAIL_CODE_REQUESTED = "EmailCodeRequested";
 
     // события analytics-service (топик analytics-events) -> notification-service
     public static final String PERSONAL_RECORD = "PersonalRecord";

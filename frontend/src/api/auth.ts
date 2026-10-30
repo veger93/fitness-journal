@@ -13,6 +13,8 @@ export interface UserResponse {
   id: string;
   /** null у клиента, которого ведёт тренер (входа нет) */
   email: string | null;
+  /** email подтверждён кодом из письма */
+  emailVerified: boolean;
   displayName: string | null;
   authProvider: string;
   role: string;
@@ -51,6 +53,18 @@ export const authApi = {
   logout: () => api<void>('/api/auth/logout', { method: 'POST' }),
 
   me: () => api<UserResponse>('/api/users/me'),
+
+  /** "Забыли пароль?": код уходит, только если email подтверждён; ответ всегда одинаковый */
+  forgotPassword: (email: string) => api<void>('/api/auth/password/forgot', { method: 'POST', body: { email } }),
+  resetPassword: (body: { email: string; code: string; newPassword: string }) =>
+    api<void>('/api/auth/password/reset', { method: 'POST', body }),
+
+  /** подтверждение и смена своего email */
+  resendEmailCode: () => api<void>('/api/users/me/email/verification', { method: 'POST' }),
+  confirmEmail: (code: string) =>
+    api<UserResponse>('/api/users/me/email/verification/confirm', { method: 'POST', body: { code } }),
+  changeEmail: (email: string, password: string) =>
+    api<UserResponse>('/api/users/me/email', { method: 'PUT', body: { email, password } }),
 
   claimPreview: (token: string) => api<ClaimPreview>(`/api/auth/claim/${encodeURIComponent(token)}`),
   claim: (token: string, body: ClaimBody) =>

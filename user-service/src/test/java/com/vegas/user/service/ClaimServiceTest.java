@@ -54,6 +54,8 @@ class ClaimServiceTest {
     private OutboxService outboxService;
     @Mock
     private AuthService authService;
+    @Mock
+    private EmailCodeService emailCodeService;
 
     private ClaimService service;
     private final UUID trainerId = UUID.randomUUID();
@@ -63,7 +65,7 @@ class ClaimServiceTest {
     @BeforeEach
     void setUp() {
         service = new ClaimService(claimTokenRepository, trainerClientRepository, userRepository, passwordEncoder,
-                outboxService, authService, CLOCK);
+                outboxService, authService, emailCodeService, CLOCK);
         client = User.managed("Иван");
         ReflectionTestUtils.setField(client, "id", UUID.randomUUID());
         link = new TrainerClient(trainerId, client, null, NOW.minusSeconds(86_400));

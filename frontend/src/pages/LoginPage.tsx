@@ -11,7 +11,10 @@ export function LoginPage() {
   const { isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? '/';
+  const state = location.state as { from?: string; passwordChanged?: boolean } | null;
+  const from = state?.from ?? '/';
+  // пришли со страницы "Забыли пароль?" после смены пароля
+  const passwordChanged = state?.passwordChanged ?? false;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,6 +46,7 @@ export function LoginPage() {
         <Card size="section">
           <form className={styles.form} onSubmit={onSubmit}>
             <h1 className={styles.title}>Вход</h1>
+            {passwordChanged && <p className={styles.notice}>Пароль изменён — войдите с новым паролем.</p>}
             <TextField
               label="Email"
               type="email"
@@ -67,6 +71,9 @@ export function LoginPage() {
             <Button type="submit" fullWidth disabled={submitting}>
               {submitting ? 'Входим…' : 'Войти'}
             </Button>
+            <Link to="/forgot-password" className={styles.textButton}>
+              Забыли пароль?
+            </Link>
           </form>
         </Card>
         <p className={styles.switch}>

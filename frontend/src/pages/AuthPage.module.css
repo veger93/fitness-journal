@@ -60,3 +60,25 @@
   flex: none;
   accent-color: var(--accent);
 }
+
+/* ссылка-кнопка внутри формы ("Забыли пароль?", "Отправить ещё раз") */
+.textButton {
+  align-self: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: 500 var(--text-sm) var(--font-body);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.notice {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--bg);
+  font-size: var(--text-sm);
+}

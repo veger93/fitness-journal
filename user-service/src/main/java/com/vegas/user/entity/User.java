@@ -58,6 +58,10 @@ public class User {
     @Column(nullable = false, length = 20)
     private Role role;
 
+    /** Когда подтвердил email кодом из письма; null — не подтверждён */
+    @Column(name = "email_verified_at")
+    private Instant emailVerifiedAt;
+
     /** Когда согласился на обработку данных (клиент тренера — при получении аккаунта) */
     @Column(name = "data_consent_at")
     private Instant dataConsentAt;
@@ -122,6 +126,20 @@ public class User {
         this.passwordHash = passwordHash;
         this.authProvider = AuthProvider.LOCAL;
         this.dataConsentAt = consentAt;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerifiedAt != null;
+    }
+
+    public void markEmailVerified(Instant at) {
+        this.emailVerifiedAt = at;
+    }
+
+    /** Новый email — снова не подтверждён */
+    public void changeEmail(String newEmail) {
+        this.email = normalizeEmail(newEmail);
+        this.emailVerifiedAt = null;
     }
 
     /** Ведомый клиент тренера (ещё без входа) */

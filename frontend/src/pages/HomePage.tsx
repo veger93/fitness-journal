@@ -17,6 +17,7 @@ import { MonthSummary } from '../components/report/MonthSummary';
 import { currentMonth } from '../lib/month';
 import { formatChange, formatKg, formatMonth, formatExerciseResult, formatTonnage } from '../lib/format';
 import { useActingClient } from '../trainer/ActingClientProvider';
+import { EmailVerifyCard } from '../components/account/EmailVerifyCard';
 import styles from './HomePage.module.css';
 
 /**
@@ -62,6 +63,9 @@ export function HomePage() {
           </ButtonLink>
         )}
       </div>
+
+      {/* email не подтверждён — напоминание с полем для кода (сама карточка решает, показываться ли) */}
+      <EmailVerifyCard />
 
       {/* пока идёт тренировка, "сегодня по плану" не нужен — она уже начата */}
       {plan.data && !current.data && <TodayPlanCard plan={plan.data} recent={recent.data?.content ?? []} />}
