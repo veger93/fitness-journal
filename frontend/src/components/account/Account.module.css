@@ -1,0 +1,230 @@
+/* Аккаунт: подтверждение email, смена email */
+.verify {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-lg);
+}
+
+.muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.muted b {
+  color: var(--text);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+/* поле кода и кнопка в одну строку; на узком экране — друг под другом */
+.codeRow {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) auto;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .codeRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.codeRow input {
+  font-family: var(--font-display);
+  letter-spacing: 0.3em;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+}
+
+.link {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: 500 var(--text-sm) var(--font-body);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.link:disabled {
+  opacity: 0.6;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger-text);
+  font-size: var(--text-sm);
+}
+
+.ok {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+/* ---------- намёк на главной: тёмная вуаль сверху (EmailVeil) ---------- */
+
+/* затемнение по верху экрана, растворяется вниз; клики проходят сквозь него.
+   fixed — стоит на месте, когда страницу прокручивают */
+.veil {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 140px;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(17 24 39 / 0.62) 0%, rgb(17 24 39 / 0.35) 38%, rgb(17 24 39 / 0) 100%);
+}
+
+/* мелкая белая строка у верхнего края экрана; поверх вуали, тоже неподвижна.
+   env(safe-area-inset-top) — на iPhone с "чёлкой" не залезть под часы (приложение с экрана "Домой") */
+.veilLink {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  padding: var(--space-2) var(--space-3);
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: #fff;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* место под строкой в начале страницы: в самом верху она не наезжает на шапку */
+.veilSpace {
+  height: var(--space-4);
+}
+
+.veilLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- "Email подтверждён ✓" на месте карточки (EmailConfirmed) ---------- */
+
+.confirmed {
+  position: relative;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+/* лёгкое зелёное свечение от центра надписи, расплывается в прозрачность во все стороны */
+.confirmed::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgb(34 197 94 / 0.24) 0%,
+    rgb(34 197 94 / 0.1) 45%,
+    rgb(34 197 94 / 0) 100%
+  );
+}
+
+/* как сам email в карточке профиля: тот же размер и цвет, зелёная только галочка */
+.confirmedText {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+
+.tick {
+  width: 17px;
+  height: 17px;
+  margin-top: -2px;
+}
+
+.tick path {
+  fill: none;
+  stroke: #16a34a;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 22;
+}
+
+/* ---------- "Удалить аккаунт" (DeleteAccountCard) ---------- */
+
+/* тихая ссылка под "Выйти": действие редкое, не должно бросаться в глаза */
+.deleteLink {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--danger-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.deleteLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.dialogActions {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.clientList li {
+  display: flex;
+}
+
+/* имя клиента — кнопка: переход в его профиль, где карточка "Передать аккаунт" */
+.clientButton {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.clientButton span {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.clientList {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  list-style: none;
+  border-radius: var(--radius-card);
+  background: var(--chip);
+  display: grid;
+  gap: var(--space-1);
+  font-weight: 600;
+}

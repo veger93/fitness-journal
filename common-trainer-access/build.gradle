@@ -1,0 +1,17 @@
+// Общий модуль "тренер работает за клиента" (docs/trainer.md, шаг 2).
+// Подключается к сервису с данными клиента одной строкой implementation project(':common-trainer-access'):
+// копия связей "тренер — клиент" из Kafka (таблица trainer_links) + фильтр, который по заголовку X-Client-Id
+// пускает тренера к данным его клиента. Устроен как common-outbox: auto-configuration.
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':common-lib')
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+}

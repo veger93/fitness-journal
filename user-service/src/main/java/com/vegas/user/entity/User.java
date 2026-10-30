@@ -35,7 +35,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
+    /** null только у ведомого клиента тренера (authProvider = NONE) */
+    @Column(unique = true)
     private String email;
 
     @Setter
@@ -56,6 +57,19 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;
+
+    /** Когда подтвердил email кодом из письма; null — не подтверждён */
+    @Column(name = "email_verified_at")
+    private Instant emailVerifiedAt;
+
+    /** Когда согласился на обработку данных (клиент тренера — при получении аккаунта) */
+    @Column(name = "data_consent_at")
+    private Instant dataConsentAt;
+
+    /** Режим тренера: может заводить клиентов и вести их тренировки */
+    @Setter
+    @Column(nullable = false)
+    private boolean trainer;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -85,6 +99,52 @@ public class User {
         user.displayName = displayName;
         user.role = Role.USER;
         return user;
+    }
+
+    /**
+     * Клиент, которого завёл тренер. Ни email, ни пароля: войти нельзя, пока тренер не передаст аккаунт.
+     * Данные клиента (тренировки, вес, аналитика) с первого дня хранятся под ЕГО id —
+     * поэтому при передаче ничего не переносится, клиент просто получает вход в уже существующий аккаунт.
+     */
+    public static User managed(String displayName) {
+        User user = new User();
+        user.displayName = displayName;
+        user.authProvider = AuthProvider.NONE;
+        user.role = Role.USER;
+        return user;
+    }
+
+    /**
+     * Клиент получает аккаунт от тренера: придумал email и пароль — теперь входит сам.
+     * id не меняется, поэтому все его тренировки и аналитика остаются на месте.
+     */
+    public void claim(String email, String passwordHash, Instant consentAt) {
+        if (!isManaged()) {
+            throw new IllegalStateException("Аккаунт уже передан");
+        }
+        this.email = normalizeEmail(email);
+        this.passwordHash = passwordHash;
+        this.authProvider = AuthProvider.LOCAL;
+        this.dataConsentAt = consentAt;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerifiedAt != null;
+    }
+
+    public void markEmailVerified(Instant at) {
+        this.emailVerifiedAt = at;
+    }
+
+    /** Новый email — снова не подтверждён */
+    public void changeEmail(String newEmail) {
+        this.email = normalizeEmail(newEmail);
+        this.emailVerifiedAt = null;
+    }
+
+    /** Ведомый клиент тренера (ещё без входа) */
+    public boolean isManaged() {
+        return authProvider == AuthProvider.NONE;
     }
 
     /** "Ivan@Mail.ru " и "ivan@mail.ru" — один и тот же пользователь. */

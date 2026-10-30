@@ -89,3 +89,12 @@
     font-size: 17px;
   }
 }
+
+/* окно-меню под кнопкой (anchorRef): не по центру — top/right ставит Dialog.tsx по положению кнопки */
+.menu {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  width: min(360px, calc(100vw - 2 * var(--space-4)));
+  box-shadow: 0 20px 40px rgb(17 24 39 / 0.2);
+}

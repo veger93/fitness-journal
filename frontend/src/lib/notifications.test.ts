@@ -11,6 +11,8 @@ const notification = (type: AppNotification['type'], body: string): AppNotificat
   createdAt: '2026-10-27T10:00:00Z',
   read: false,
   reason: null,
+  clientId: null,
+  clientName: null,
 });
 
 describe('toFeedItem', () => {
@@ -44,5 +46,24 @@ describe('badgeText', () => {
   it('большие числа сокращает', () => {
     expect(badgeText(7)).toBe('7');
     expect(badgeText(150)).toBe('99+');
+  });
+});
+
+describe('toFeedItem — тренеру о клиенте', () => {
+  it('ссылка в дневник клиента вместо ссылок из письма', () => {
+    const item = toFeedItem({
+      id: '1',
+      type: 'PLATEAU',
+      subject: 'Ольга: плато',
+      body: 'Присед — без нового максимума 24 дн.',
+      status: 'IN_APP',
+      createdAt: '2026-10-30T10:00:00Z',
+      read: false,
+      reason: null,
+      clientId: 'c1',
+      clientName: 'Ольга',
+    });
+    expect(item.client).toEqual({ id: 'c1', displayName: 'Ольга' });
+    expect(item.link).toEqual({ to: '/', label: 'Открыть дневник: Ольга' });
   });
 });

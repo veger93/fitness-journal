@@ -137,3 +137,16 @@
 .active .dot {
   box-shadow: 0 0 0 2px var(--surface);
 }
+
+/* режим клиента (тренер ведёт клиента): капсула и текст на ней — в цвет оранжевой полосы сверху */
+.client .capsule {
+  background: var(--accent);
+}
+
+.client .active {
+  color: var(--text-on-accent);
+}
+
+.client .active .dot {
+  box-shadow: 0 0 0 2px var(--accent);
+}

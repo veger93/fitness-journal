@@ -53,6 +53,9 @@ class AuthServiceTest {
     @Mock
     private RefreshTokenService refreshTokenService;
 
+    @Mock
+    private EmailCodeService emailCodeService;
+
     @InjectMocks // создаёт AuthService и передаёт в конструктор моки выше
     private AuthService authService;
 

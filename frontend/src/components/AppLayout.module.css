@@ -1,4 +1,5 @@
 .page {
+  position: relative; /* от неё отсчитывается вуаль EmailVeil */
   min-height: 100vh;
   padding: var(--space-6) var(--space-5) var(--space-7);
 }
@@ -17,6 +18,13 @@
   justify-content: space-between;
   align-items: center;
   gap: var(--space-4);
+}
+
+/* справа в шапке: переключатель "Я ▾" (тренеру) и колокольчик */
+.headerEnd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .logo {

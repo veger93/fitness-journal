@@ -1,5 +1,9 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
+import { EmailVeil } from './account/EmailVeil';
 import { NotificationBell } from './NotificationBell';
+import { ClientBand } from './trainer/ClientBand';
+import { ClientReminder } from './trainer/ClientReminder';
+import { WhoSwitcher } from './trainer/WhoSwitcher';
 import { TabBar } from './TabBar';
 import styles from './AppLayout.module.css';
 
@@ -19,7 +23,11 @@ const NAV = [
 export function AppLayout() {
   return (
     <div className={styles.page}>
+      {/* email не подтверждён — тёмная вуаль с намёком сверху главной (сама решает, показываться ли) */}
+      <EmailVeil />
       <div className={styles.container}>
+        {/* тренер работает за клиента — оранжевая полоса с именем (режим тренера, docs/trainer.md) */}
+        <ClientBand />
         <header className={styles.header}>
           <Link to="/" className={styles.logo}>
             VEGAS
@@ -36,13 +44,17 @@ export function AppLayout() {
               </NavLink>
             ))}
           </nav>
-          <NotificationBell />
+          <div className={styles.headerEnd}>
+            <WhoSwitcher />
+            <NotificationBell />
+          </div>
         </header>
         <main>
           <Outlet />
         </main>
       </div>
       <TabBar />
+      <ClientReminder />
     </div>
   );
 }

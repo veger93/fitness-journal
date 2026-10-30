@@ -83,7 +83,7 @@ class WorkoutServiceTest {
     void start_whenAnotherInProgress_throwsConflict() {
         when(workoutRepository.existsByUserIdAndStatus(me, WorkoutStatus.IN_PROGRESS)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.start(me, new StartWorkoutRequest(null, null)))
+        assertThatThrownBy(() -> service.start(me, new StartWorkoutRequest(null, null, null)))
                 .isInstanceOf(BusinessException.class);
 
         verify(workoutRepository, never()).save(any());
@@ -100,7 +100,7 @@ class WorkoutServiceTest {
         when(templateRepository.findWithExercisesById(templateId)).thenReturn(Optional.of(template));
         when(workoutRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        WorkoutResponse response = service.start(me, new StartWorkoutRequest(templateId, null));
+        WorkoutResponse response = service.start(me, new StartWorkoutRequest(templateId, null, null));
 
         assertThat(response.name()).isEqualTo("Ноги");
         assertThat(response.templateId()).isEqualTo(templateId);
@@ -116,8 +116,42 @@ class WorkoutServiceTest {
         UUID templateId = UUID.randomUUID();
         when(templateRepository.findWithExercisesById(templateId)).thenReturn(Optional.of(foreign));
 
-        assertThatThrownBy(() -> service.start(me, new StartWorkoutRequest(templateId, null)))
+        assertThatThrownBy(() -> service.start(me, new StartWorkoutRequest(templateId, null, null)))
                 .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void start_fromPastWorkout_doneExercisesInOrder_withoutDeletedAndSkipped() {
+        Exercise pullUps = exercise("Подтягивания", TrackingType.WEIGHT_REPS);
+        Exercise skipped = exercise("Добавил, но не сделал", TrackingType.WEIGHT_REPS);
+        Exercise row = exercise("Тяга штанги", TrackingType.WEIGHT_REPS);
+        Exercise removed = exercise("Своё удалённое", TrackingType.WEIGHT_REPS);
+        Workout past = Workout.create(me, "Спина", null, List.of(pullUps, skipped, row, removed));
+        // подходы — у всех, кроме "не сделал"; упражнение удалено уже после тренировки
+        for (int i : new int[] {0, 2, 3}) {
+            past.getExercises().get(i).addSet(new SetValues(new BigDecimal("60"), 8, null, null, null, false), NOW);
+        }
+        removed.archive(NOW);
+        when(workoutRepository.findWithExercisesByIdAndUserId(workoutId, me)).thenReturn(Optional.of(past));
+        when(workoutRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        WorkoutResponse response = service.start(me, new StartWorkoutRequest(null, workoutId, null));
+
+        assertThat(response.name()).isEqualTo("Спина");
+        assertThat(response.templateId()).isNull();
+        assertThat(response.exercises()).extracting(WorkoutExerciseResponse::exerciseName)
+                .containsExactly("Подтягивания", "Тяга штанги");
+        assertThat(response.exercises()).allSatisfy(exercise -> assertThat(exercise.sets()).isEmpty());
+    }
+
+    @Test
+    void start_fromSomeoneElsesWorkout_isNotFound() {
+        // поиск идёт по id И владельцу: чужая тренировка просто не находится
+        when(workoutRepository.findWithExercisesByIdAndUserId(workoutId, me)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.start(me, new StartWorkoutRequest(null, workoutId, null)))
+                .isInstanceOf(NotFoundException.class);
+        verify(workoutRepository, never()).save(any());
     }
 
     // ---------- sets ----------

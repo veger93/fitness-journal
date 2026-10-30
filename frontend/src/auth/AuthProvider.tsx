@@ -1,12 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { authApi, type AuthResponse } from '../api/auth';
+import { authApi, type AuthResponse, type ClaimBody } from '../api/auth';
 import { configureApiClient, refreshAccessToken } from '../api/client';
 
 interface AuthContextValue {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, displayName: string) => Promise<void>;
+  /** клиент принял аккаунт от тренера по ссылке — и сразу вошёл */
+  claim: (token: string, body: ClaimBody) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -74,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login: async (email, password) => fromResponse(await authApi.login(email, password)),
     register: async (email, password, displayName) =>
       fromResponse(await authApi.register(email, password, displayName)),
+    claim: async (token, body) => fromResponse(await authApi.claim(token, body)),
     logout: async () => {
       try {
         await authApi.logout();

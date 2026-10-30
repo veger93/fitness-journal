@@ -6,6 +6,8 @@ plugins {
 dependencies {
     implementation project(':common-lib')
     implementation project(':common-outbox')
+    // тренер работает за клиента: копия связей из Kafka + фильтр X-Client-Id (docs/trainer.md)
+    implementation project(':common-trainer-access')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'

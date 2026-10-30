@@ -56,6 +56,13 @@ public class Notification {
     @Column(name = "read_at")
     private Instant readAt;
 
+    /** Уведомление тренеру о клиенте: о ком оно (тап в ленте — дневник клиента). У обычных — null */
+    @Column(name = "client_id")
+    private UUID clientId;
+
+    @Column(name = "client_name", length = 100)
+    private String clientName;
+
     public boolean isRead() {
         return readAt != null;
     }
@@ -67,6 +74,15 @@ public class Notification {
     public static Notification skipped(UUID userId, NotificationType type, String dedupeKey, EmailMessage message,
                                        String reason, Instant now) {
         return create(userId, type, dedupeKey, message, NotificationStatus.SKIPPED, reason, now);
+    }
+
+    /** Тренеру о его клиенте — только в ленте приложения */
+    public static Notification aboutClient(UUID trainerId, NotificationType type, String dedupeKey, EmailMessage message,
+                                           UUID clientId, String clientName, Instant now) {
+        Notification notification = create(trainerId, type, dedupeKey, message, NotificationStatus.IN_APP, null, now);
+        notification.clientId = clientId;
+        notification.clientName = clientName;
+        return notification;
     }
 
     private static Notification create(UUID userId, NotificationType type, String dedupeKey, EmailMessage message,
