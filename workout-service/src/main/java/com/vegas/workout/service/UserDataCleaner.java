@@ -9,7 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 /**
- * Удаление всех данных пользователя (событие UserDeleted): тренер удалил клиента без аккаунта.
+ * Удаление всех данных пользователя (событие UserDeleted): тренер удалил клиента без аккаунта
+ * или пользователь удалил свой аккаунт.
  *
  * Обычный SQL через JdbcTemplate, а не репозитории: это массовое удаление по user_id, сущности в память грузить незачем.
  * Порядок важен из-за внешних ключей: сначала то, что ссылается, потом то, на что ссылаются.
@@ -31,7 +32,8 @@ public class UserDataCleaner {
         int templates = jdbc.update("DELETE FROM workout_templates WHERE owner_id = ?", userId);
         // свои упражнения — после тренировок и комплексов, которые на них ссылаются
         int exercises = jdbc.update("DELETE FROM exercises WHERE owner_id = ?", userId);
-        jdbc.update("DELETE FROM trainer_links WHERE client_id = ?", userId);
+        // копия связей: удалили клиента — его связь; удалили тренера — связи со всеми его клиентами
+        jdbc.update("DELETE FROM trainer_links WHERE client_id = ? OR trainer_id = ?", userId, userId);
         log.info("User {} data deleted: {} workouts, {} templates, {} exercises, {} plan days, {} deloads",
                 userId, workouts, templates, exercises, plan, deloads);
     }

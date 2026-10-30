@@ -8,6 +8,7 @@ import { RemindersCard } from '../components/profile/RemindersCard';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
+import { DeleteAccountCard } from '../components/account/DeleteAccountCard';
 import { EmailVerifyCard } from '../components/account/EmailVerifyCard';
 import { ClientProfileCard } from '../components/trainer/ClientProfileCard';
 import { MyTrainerCard } from '../components/trainer/MyTrainerCard';
@@ -78,9 +79,13 @@ export function ProfilePage() {
         <p className={styles.muted}>«Как в системе» — тема переключится вместе с настройкой телефона или компьютера.</p>
       </Card>
 
-      <Button variant="secondary" className={styles.logout} onClick={logout}>
-        Выйти
-      </Button>
+      {/* внизу одной строкой: "Выйти" слева, редкое "Удалить аккаунт" справа, по нижнему краю */}
+      <div className={styles.bottomRow}>
+        <Button variant="secondary" onClick={logout}>
+          Выйти
+        </Button>
+        <DeleteAccountCard />
+      </div>
     </div>
   );
 }

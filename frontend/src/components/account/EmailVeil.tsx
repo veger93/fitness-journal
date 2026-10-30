@@ -33,6 +33,7 @@ export function EmailVeil() {
     <>
       {/* сама вуаль — только картинка: клики проходят сквозь неё к шапке */}
       <div className={styles.veil} aria-hidden="true" />
+      <div className={styles.veilSpace} />
       <Link to="/profile" className={styles.veilLink}>
         Подтвердите email, чтобы не потерять доступ →
       </Link>

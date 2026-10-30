@@ -21,8 +21,11 @@
   font-size: var(--text-sm);
 }
 
-.logout {
-  align-self: flex-start;
+.bottomRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-4);
 }
 
 @media (max-width: 600px) {

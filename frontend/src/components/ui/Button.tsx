@@ -3,7 +3,7 @@ import { Link, type LinkProps } from 'react-router-dom';
 import styles from './Button.module.css';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'surface' | 'accent';
+  variant?: 'primary' | 'secondary' | 'surface' | 'accent' | 'danger';
   fullWidth?: boolean;
   /** React 19: ref — обычный проп (окно может "вырасти" из кнопки, см. Dialog originRef) */
   ref?: Ref<HTMLButtonElement>;
@@ -16,7 +16,7 @@ export function Button({ variant = 'primary', fullWidth = false, className, type
 }
 
 interface ButtonLinkProps extends LinkProps {
-  variant?: 'primary' | 'secondary' | 'surface' | 'accent';
+  variant?: 'primary' | 'secondary' | 'surface' | 'accent' | 'danger';
   fullWidth?: boolean;
 }
 

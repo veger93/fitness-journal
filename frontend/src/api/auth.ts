@@ -65,6 +65,8 @@ export const authApi = {
     api<UserResponse>('/api/users/me/email/verification/confirm', { method: 'POST', body: { code } }),
   changeEmail: (email: string, password: string) =>
     api<UserResponse>('/api/users/me/email', { method: 'PUT', body: { email, password } }),
+  /** удалить свой аккаунт со всеми данными (docs/account.md, шаг 2); тренер — вместе с клиентами без аккаунта */
+  deleteAccount: (password: string) => api<void>('/api/users/me/deletion', { method: 'POST', body: { password } }),
 
   claimPreview: (token: string) => api<ClaimPreview>(`/api/auth/claim/${encodeURIComponent(token)}`),
   claim: (token: string, body: ClaimBody) =>
