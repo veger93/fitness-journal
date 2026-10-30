@@ -164,6 +164,8 @@ export const workoutsApi = {
   journal: (page: number, size = 10, exerciseId?: string) =>
     api<Page<Workout>>(`${base}/journal?page=${page}&size=${size}${exerciseId ? `&exerciseId=${exerciseId}` : ''}`),
   start: (templateId: string | null) => api<Workout>(base, { method: 'POST', body: templateId ? { templateId } : {} }),
+  /** повторить прошлую тренировку: новая с теми же упражнениями в том же порядке, подходы пустые */
+  repeat: (fromWorkoutId: string) => api<Workout>(base, { method: 'POST', body: { fromWorkoutId } }),
   begin: (id: string) => api<Workout>(`${base}/${id}/start`, { method: 'POST' }),
   complete: (id: string) => api<Workout>(`${base}/${id}/complete`, { method: 'POST' }),
   remove: (id: string) => api<void>(`${base}/${id}`, { method: 'DELETE' }),

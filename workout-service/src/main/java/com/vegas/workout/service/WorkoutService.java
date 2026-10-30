@@ -70,8 +70,26 @@ public class WorkoutService {
             throw new BusinessException("У вас уже есть незавершённая тренировка");
         }
 
+        if (request.templateId() != null && request.fromWorkoutId() != null) {
+            throw new BadRequestException("Укажите что-то одно: комплекс или прошлую тренировку");
+        }
+
         Workout workout;
-        if (request.templateId() != null) {
+        if (request.fromWorkoutId() != null) {
+            // только свою тренировку: findOwn ищет по id И userId — чужая выглядит как "не найдена"
+            Workout source = findOwn(userId, request.fromWorkoutId());
+            // переносим то, что реально делали (есть подходы), — как на экране тренировки в истории;
+            // упражнение могли с тех пор удалить (своё — архивируется) — такое не переносим
+            List<Exercise> exercises = source.getExercises().stream()
+                    .filter(done -> !done.getSets().isEmpty())
+                    .map(WorkoutExercise::getExercise)
+                    .filter(exercise -> !exercise.isArchived())
+                    .toList();
+            if (exercises.isEmpty()) {
+                throw new BadRequestException("Упражнений из этой тренировки больше нет");
+            }
+            workout = Workout.create(userId, nameOrDefault(request.name(), source.getName()), null, exercises);
+        } else if (request.templateId() != null) {
             WorkoutTemplate template = templateRepository.findWithExercisesById(request.templateId())
                     .filter(found -> found.isVisibleTo(userId))
                     .orElseThrow(() -> new NotFoundException("Комплекс не найден"));
