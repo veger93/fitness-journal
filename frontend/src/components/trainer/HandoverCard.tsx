@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import QRCode from 'qrcode';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { trainerApi } from '../../api/trainer';
 import { formatShortDate } from '../../lib/format';
 import { Button } from '../ui/Button';
@@ -10,7 +10,7 @@ import styles from './Trainer.module.css';
 
 /**
  * Тренер: "Передать аккаунт" клиенту (docs/trainer.md, шаг 4).
- * В карточке — пояснение и кнопка; QR и ссылка — во всплывающем окне (по центру, с крестиком):
+ * В карточке — пояснение и кнопка; QR и ссылка — во всплывающем окне (мягко всплывает снизу, по центру, с крестиком):
  * в зале клиент просто сканирует QR камерой своего телефона.
  * Ссылка одноразовая, на 7 дней. "Новая ссылка" отменяет старую — если QR кто-то сфотографировал.
  */
@@ -18,7 +18,6 @@ export function HandoverCard({ clientId, clientName }: { clientId: string; clien
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const create = useMutation({ mutationFn: () => trainerApi.createClaimLink(clientId) });
   const url = create.data ? `${window.location.origin}/claim/${create.data.token}` : null;
 
@@ -59,11 +58,11 @@ export function HandoverCard({ clientId, clientName }: { clientId: string; clien
         {clientName} получит свой вход: все тренировки, рекорды и графики останутся с ним. Он сам решит — продолжать с
         вами или дальше самостоятельно.
       </p>
-      <Button ref={buttonRef} variant="accent" onClick={openDialog}>
+      <Button variant="accent" onClick={openDialog}>
         Показать QR-код
       </Button>
 
-      <Dialog open={open} onClose={() => setOpen(false)} title="Передать аккаунт" originRef={buttonRef}>
+      <Dialog open={open} onClose={() => setOpen(false)} title="Передать аккаунт">
         <div className={styles.handover}>
           <p className={styles.muted}>Пусть {clientName} отсканирует код камерой телефона или откроет ссылку.</p>
           {create.isError && <p className={styles.error}>{create.error.message}</p>}

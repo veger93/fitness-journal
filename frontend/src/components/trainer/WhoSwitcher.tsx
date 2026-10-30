@@ -22,7 +22,7 @@ export function WhoSwitcher() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  // окно "вырастает" из этой кнопки и сворачивается в неё
+  // окно-меню раскрывается прямо под этой кнопкой
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   if (!isTrainer) {
@@ -60,13 +60,14 @@ export function WhoSwitcher() {
         onClose={close}
         onBack={creating ? () => setCreating(false) : undefined}
         title={creating ? 'Новый клиент' : 'Чей дневник открыть'}
-        originRef={buttonRef}
+        anchorRef={buttonRef}
       >
         {creating ? (
           <NewClientForm onCreated={(client) => pick(client)} />
         ) : (
           <>
-            <ul className={styles.list}>
+            {/* data-stagger: строки появляются по очереди, когда окно раскрывается (Dialog) */}
+            <ul className={styles.list} data-stagger>
               <li>
                 <button
                   type="button"

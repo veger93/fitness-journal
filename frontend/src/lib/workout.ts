@@ -32,7 +32,9 @@ const FIRST_TIME_WEIGHT: Record<Equipment, number> = {
 /**
  * Что подставить в форму нового подхода (чтобы не набирать каждый раз):
  * 0) идёт разгрузка — её вес и повторы, а не "как в прошлый раз" (иначе подсказка тянула бы обратно к тяжёлому);
- * 1) последний подход этого упражнения сегодня; 2) тот же по номеру подход в прошлый раз;
+ * 1) последний подход этого упражнения сегодня — продолжаем с того веса, на котором остановились;
+ * 2) первый подход сегодня — самый тяжёлый рабочий подход прошлой тренировки: человек помнит
+ *    "в прошлый раз жал 40", а не "начинал с 20" (разминку не считаем);
  * 3) упражнение впервые — стартовые значения по снаряжению.
  */
 export function suggestNextSet(
@@ -51,7 +53,7 @@ export function suggestNextSet(
       reps: deload.reps,
     };
   }
-  const source = sets.at(-1) ?? previousSets[sets.length] ?? previousSets.at(-1);
+  const source = sets.at(-1) ?? heaviestSet(previousSets);
   if (!source) {
     return { ...defaults };
   }
@@ -63,6 +65,19 @@ export function suggestNextSet(
     rpe: trackingType === 'DISTANCE' ? source.rpe : null,
     warmup: false,
   };
+}
+
+/**
+ * Самый тяжёлый рабочий подход (разминочные не считаем, если есть рабочие).
+ * При равном весе — последний из них: его повторы ближе к тому, что человек может сейчас.
+ * Без веса (планка, бег) — просто последний подход.
+ */
+export function heaviestSet(sets: WorkoutSet[]): WorkoutSet | undefined {
+  const working = sets.some((s) => !s.warmup) ? sets.filter((s) => !s.warmup) : sets;
+  return working.reduce<WorkoutSet | undefined>(
+    (best, s) => (best === undefined || (s.weightKg ?? 0) >= (best.weightKg ?? 0) ? s : best),
+    undefined,
+  );
 }
 
 /** В запрос отправляем только поля, нужные этому виду упражнения. */

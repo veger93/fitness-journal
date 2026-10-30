@@ -11,60 +11,86 @@ interface DialogProps {
   /** своё содержимое левого угла шапки вместо "←" (миниатюра упражнения в окне подхода) */
   leading?: ReactNode;
   children: ReactNode;
-  /** окно "вырастает" из этого элемента и сворачивается обратно в него (кнопка "Я ▾" в шапке) */
-  originRef?: RefObject<HTMLElement | null>;
+  /**
+   * Окно-меню: открывается прямо под этим элементом (кнопка "Я ▾" в шапке) и раскрывается вниз, как шторка.
+   * Без него — обычное окно по центру, мягко всплывает снизу.
+   */
+  anchorRef?: RefObject<HTMLElement | null>;
 }
 
 const prefersReducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-/** Точка, из которой растёт окно, — в координатах самого окна (для transform-origin) */
-function originPoint(dialog: HTMLElement, origin: HTMLElement | null | undefined): string {
-  if (!origin) {
-    return 'center';
-  }
-  const d = dialog.getBoundingClientRect();
-  const o = origin.getBoundingClientRect();
-  return `${o.left + o.width / 2 - d.left}px ${o.top + o.height / 2 - d.top}px`;
+/** Отступ окна-меню от кнопки и от краёв экрана, px */
+const ANCHOR_GAP = 8;
+const SCREEN_GAP = 16;
+const MENU_WIDTH = 360;
+
+/** Ставит окно-меню под кнопку, правым краем по её правому краю (но целиком на экране, не ближе 16px к краям) */
+function placeUnder(dialog: HTMLElement, anchor: HTMLElement) {
+  const rect = anchor.getBoundingClientRect();
+  dialog.style.top = `${rect.bottom + ANCHOR_GAP}px`;
+  // ширина окна — как в CSS (.menu): не шире 360px и экрана; если под кнопкой не помещается — сдвигаем влево
+  const width = Math.min(MENU_WIDTH, window.innerWidth - 2 * SCREEN_GAP);
+  const right = Math.min(Math.max(SCREEN_GAP, window.innerWidth - rect.right), window.innerWidth - SCREEN_GAP - width);
+  dialog.style.right = `${right}px`;
+  // не ниже экрана: длинный список прокручивается внутри окна
+  dialog.style.maxHeight = `${window.innerHeight - rect.bottom - ANCHOR_GAP - SCREEN_GAP}px`;
 }
+
+const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
+const EASE_IN = 'cubic-bezier(0.4, 0, 1, 1)';
 
 /**
  * Анимации открытия/закрытия — Web Animations API (element.animate): JS решает, когда закрывать <dialog>
  * (только после того, как анимация доиграла), а CSS так не умеет во всех браузерах.
- * Из кнопки — "капля": растёт из точки с лёгким перелётом (как капсула в нижней панели); без кнопки — всплывает снизу.
+ * - окно-меню: раскрывается вниз из-под кнопки (clip-path "отрезает" низ и плавно его открывает),
+ *   строки с атрибутом data-stagger появляются по очереди;
+ * - обычное окно: поднимается на 24px и проявляется.
+ * Закрытие — то же самое в обратную сторону, быстрее.
  */
-function grow(dialog: HTMLElement, origin: HTMLElement | null | undefined, reverse = false): Animation {
-  // прошлая анимация (например, окно закрыли и тут же открыли) больше не нужна
-  dialog.getAnimations({ subtree: false }).forEach((animation) => animation.cancel());
-  dialog.style.transformOrigin = originPoint(dialog, origin);
-  const frames: Keyframe[] = origin
-    ? [
-        { opacity: 0, transform: 'scale(0.15)' },
-        { opacity: 1, transform: 'scale(1)' },
-      ]
-    : [
-        { opacity: 0, transform: 'translateY(24px) scale(0.97)' },
-        { opacity: 1, transform: 'none' },
-      ];
+function animate(dialog: HTMLElement, menu: boolean, reverse = false): Animation {
+  // прошлая анимация (окно закрыли и тут же открыли) больше не нужна
+  dialog.getAnimations({ subtree: true }).forEach((animation) => animation.cancel());
   const options: KeyframeAnimationOptions = {
-    duration: reverse ? 200 : origin ? 380 : 240,
-    // открытие с перелётом (1.25 > 1 — окно чуть "проскакивает" и возвращается), закрытие — просто быстро
-    easing: reverse ? 'cubic-bezier(0.4, 0, 1, 1)' : origin ? 'cubic-bezier(0.2, 0.9, 0.3, 1.25)' : 'ease-out',
+    duration: reverse ? 180 : menu ? 340 : 260,
+    easing: reverse ? EASE_IN : EASE_OUT,
     direction: reverse ? 'reverse' : 'normal',
     fill: 'both',
   };
-  if (origin) {
-    // из кнопки-"таблетки" окно растёт круглым и становится карточкой. Отдельной анимацией и без перелёта:
-    // с перелётом радиус ушёл бы меньше нуля, и углы на миг стали бы острыми. Радиус — числом из CSS
-    const radius = getComputedStyle(dialog).borderRadius;
-    dialog.animate({ borderRadius: ['999px', radius] }, { ...options, easing: 'ease-out' });
-  }
   try {
     // фон за окном — плавно затемняем; ::backdrop в animate() умеют не все браузеры — тогда без него
     dialog.animate({ opacity: [0, 1] }, { ...options, easing: 'linear', pseudoElement: '::backdrop' });
   } catch {
     // ничего страшного: фон появится сразу
   }
-  return dialog.animate(frames, options);
+  if (!menu) {
+    return dialog.animate(
+      [
+        { opacity: 0, transform: 'translateY(24px) scale(0.97)' },
+        { opacity: 1, transform: 'none' },
+      ],
+      options,
+    );
+  }
+  if (!reverse) {
+    dialog.querySelectorAll('[data-stagger] > *').forEach((row, i) =>
+      row.animate(
+        [
+          { opacity: 0, transform: 'translateY(-6px)' },
+          { opacity: 1, transform: 'none' },
+        ],
+        { duration: 220, delay: 90 + i * 45, easing: 'ease-out', fill: 'both' },
+      ),
+    );
+  }
+  const radius = getComputedStyle(dialog).borderRadius;
+  return dialog.animate(
+    [
+      { clipPath: `inset(0 0 100% 0 round ${radius})`, opacity: 0.6, transform: 'translateY(-6px)' },
+      { clipPath: `inset(0 0 0% 0 round ${radius})`, opacity: 1, transform: 'none' },
+    ],
+    options,
+  );
 }
 
 /**
@@ -73,7 +99,7 @@ function grow(dialog: HTMLElement, origin: HTMLElement | null | undefined, rever
  * Esc на телефоне нет — поэтому в шапке всегда крестик.
  * Шапка — три колонки одинаковой ширины по краям: так заголовок остаётся по центру, что бы ни стояло слева.
  */
-export function Dialog({ open, onClose, title, subtitle, onBack, leading, children, originRef }: DialogProps) {
+export function Dialog({ open, onClose, title, subtitle, onBack, leading, children, anchorRef }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   // содержимое остаётся на месте, пока доигрывает анимация закрытия (open уже false)
@@ -87,17 +113,19 @@ export function Dialog({ open, onClose, title, subtitle, onBack, leading, childr
     if (!dialog) {
       return;
     }
-    const animate = !prefersReducedMotion() && typeof dialog.animate === 'function';
+    const canAnimate = !prefersReducedMotion() && typeof dialog.animate === 'function';
+    const anchor = anchorRef?.current ?? null;
     if (open && !dialog.open) {
+      if (anchor) placeUnder(dialog, anchor);
       dialog.showModal();
-      if (animate) grow(dialog, originRef?.current);
+      if (canAnimate) animate(dialog, anchor !== null);
     } else if (!open && dialog.open) {
-      if (!animate) {
+      if (!canAnimate) {
         dialog.close();
         setMounted(false);
         return;
       }
-      grow(dialog, originRef?.current, true)
+      animate(dialog, anchor !== null, true)
         .finished.then(() => {
           dialog.close();
           setMounted(false);
@@ -106,13 +134,13 @@ export function Dialog({ open, onClose, title, subtitle, onBack, leading, childr
           // анимацию прервали (окно снова открыли) — ничего не делаем
         });
     }
-  }, [open, originRef]);
+  }, [open, anchorRef]);
 
   return (
     // close — после dialog.close() (в том числе нашего, по окончании анимации): синхронизируем состояние React
     <dialog
       ref={ref}
-      className={styles.dialog}
+      className={anchorRef ? `${styles.dialog} ${styles.menu}` : styles.dialog}
       onClose={onClose}
       // Esc: не даём браузеру закрыть окно мгновенно — закрываем сами, с анимацией
       onCancel={(event) => {

@@ -43,8 +43,17 @@ describe('suggestNextSet', () => {
     });
   });
 
-  it('первый подход — как первый подход в прошлый раз', () => {
-    expect(suggestNextSet([], [set(1, 75, 8), set(2, 80, 6)])).toMatchObject({ weightKg: 75, reps: 8 });
+  it('первый подход — самый тяжёлый рабочий подход прошлого раза (а не первый по счёту)', () => {
+    // в прошлый раз: 20 × 10, 30 × 10, 40 × 10, 40 × 8 — сегодня начинаем с 40 (повторы — последнего такого)
+    expect(suggestNextSet([], [set(1, 20, 10), set(2, 30, 10), set(3, 40, 10), set(4, 40, 8)])).toMatchObject({
+      weightKg: 40,
+      reps: 8,
+    });
+  });
+
+  it('разминку прошлого раза не считаем, даже если она тяжелее по ошибке', () => {
+    const warmup = { ...set(1, 60, 5), warmup: true };
+    expect(suggestNextSet([], [warmup, set(2, 50, 8)])).toMatchObject({ weightKg: 50, reps: 8 });
   });
 
   it('бег впервые — 5 км за 30 минут', () => {
