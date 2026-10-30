@@ -53,7 +53,15 @@ public class EmailCodeService {
     /** После регистрации и получения аккаунта от тренера — сразу, без кнопки (пауза "раз в минуту" не нужна) */
     @Transactional
     public void sendVerificationOnSignUp(User user) {
-        issue(user, Purpose.VERIFY_EMAIL);
+        issue(user, Purpose.VERIFY_EMAIL, null, null);
+    }
+
+    /**
+     * Клиент получил аккаунт от тренера: код подтверждения уходит в приветственном письме
+     * ("тренер Сергей передал вам дневник") — одно письмо вместо двух подряд.
+     */
+    public void sendVerificationOnClaim(User client, String trainerName, boolean keepTrainer) {
+        issue(client, Purpose.VERIFY_EMAIL, trainerName, keepTrainer);
     }
 
     /** "Отправить код ещё раз" */
@@ -135,11 +143,15 @@ public class EmailCodeService {
     // ---------- общее ----------
 
     private void issue(User user, Purpose purpose) {
+        issue(user, purpose, null, null);
+    }
+
+    private void issue(User user, Purpose purpose, String trainerName, Boolean keepTrainer) {
         String code = String.format("%06d", RANDOM.nextInt(1_000_000));
         Instant now = clock.instant();
         Instant expiresAt = now.plus(CODE_TTL);
         codeRepository.save(new EmailCode(user.getId(), purpose, user.getEmail(), hash(user.getId(), code), now, expiresAt));
-        outboxService.emailCodeRequested(user, code, purpose.name(), expiresAt);
+        outboxService.emailCodeRequested(user, code, purpose.name(), expiresAt, trainerName, keepTrainer);
     }
 
     private void check(EmailCode emailCode, UUID userId, String code) {

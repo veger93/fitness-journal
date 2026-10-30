@@ -95,7 +95,8 @@ public class ClaimService {
         token.markUsed(now);
         // notification-service узнаёт email — теперь клиенту можно слать письма
         outboxService.userRegistered(client);
-        emailCodeService.sendVerificationOnSignUp(client);
+        emailCodeService.sendVerificationOnClaim(client, findUser(token.getTrainerId()).getDisplayName(),
+                request.keepTrainer());
 
         if (!request.keepTrainer()) {
             trainerClientRepository.findByClient_IdAndEndedAtIsNull(client.getId()).ifPresent(link -> endLink(link, now));

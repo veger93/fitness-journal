@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -68,7 +69,7 @@ class EmailCodeServiceTest {
         service.sendVerificationOnSignUp(user);
 
         ArgumentCaptor<String> code = ArgumentCaptor.forClass(String.class);
-        verify(outboxService).emailCodeRequested(eq(user), code.capture(), eq("VERIFY_EMAIL"), any());
+        verify(outboxService).emailCodeRequested(eq(user), code.capture(), eq("VERIFY_EMAIL"), any(), isNull(), isNull());
         assertThat(code.getValue()).matches("\\d{6}");
         ArgumentCaptor<EmailCode> saved = ArgumentCaptor.forClass(EmailCode.class);
         verify(codeRepository).save(saved.capture());
@@ -122,7 +123,7 @@ class EmailCodeServiceTest {
 
         service.requestPasswordReset("Ivan@Mail.ru");
 
-        verify(outboxService, never()).emailCodeRequested(any(), any(), any(), any());
+        verify(outboxService, never()).emailCodeRequested(any(), any(), any(), any(), any(), any());
     }
 
     @Test

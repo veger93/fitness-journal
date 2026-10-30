@@ -32,6 +32,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -111,6 +112,8 @@ class ClaimServiceTest {
         assertThat(client.getEmail()).isEqualTo("ivan@mail.ru");
         assertThat(client.getDataConsentAt()).isEqualTo(NOW);
         verify(outboxService).userRegistered(client);
+        // код подтверждения — в приветственном письме: "тренер Сергей передал вам дневник"
+        verify(emailCodeService).sendVerificationOnClaim(client, "Сергей", true);
         verify(outboxService, never()).trainerClientUnlinked(any());
     }
 
@@ -152,6 +155,9 @@ class ClaimServiceTest {
         ClaimToken token = new ClaimToken(client.getId(), trainerId, SecureTokens.sha256(raw), NOW.plusSeconds(3600));
         when(claimTokenRepository.findByTokenHash(SecureTokens.sha256(raw))).thenReturn(Optional.of(token));
         when(userRepository.findById(client.getId())).thenReturn(Optional.of(client));
+        // lenient: тренер нужен только в успешной передаче (имя для письма), в тестах с отказом — нет
+        User trainer = User.local("coach@mail.ru", "hash", "Сергей");
+        lenient().when(userRepository.findById(trainerId)).thenReturn(Optional.of(trainer));
         return raw;
     }
 }

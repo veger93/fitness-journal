@@ -57,9 +57,11 @@ public class OutboxService {
 
     /** Письмо с кодом: шлёт notification-service. Сам код в событии — в базе user-service только его хеш */
     @Transactional(propagation = Propagation.MANDATORY)
-    public void emailCodeRequested(User user, String code, String purpose, Instant expiresAt) {
+    /** trainerName и keepTrainer — только при передаче аккаунта от тренера (письмо приветственное), иначе null */
+    public void emailCodeRequested(User user, String code, String purpose, Instant expiresAt,
+                                   String trainerName, Boolean keepTrainer) {
         EmailCodeRequestedEvent event = new EmailCodeRequestedEvent(
-                user.getId(), user.getEmail(), user.getDisplayName(), code, purpose, expiresAt);
+                user.getId(), user.getEmail(), user.getDisplayName(), code, purpose, expiresAt, trainerName, keepTrainer);
         outboxWriter.write(user.getId(), EventTypes.EMAIL_CODE_REQUESTED, user.getId().toString(), event);
     }
 
