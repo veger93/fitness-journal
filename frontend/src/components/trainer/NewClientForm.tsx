@@ -2,23 +2,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { trainerApi, type Client } from '../../api/trainer';
 import type { ExperienceLevel } from '../../api/users';
+import { CLIENT_LEVELS, toNumber } from '../../lib/trainer';
 import { CLIENTS_KEY } from '../../hooks/useTrainer';
 import { Button } from '../ui/Button';
 import { Chip } from '../ui/Chip';
 import { TextField } from '../ui/TextField';
 import styles from './Trainer.module.css';
-
-const LEVELS: { value: ExperienceLevel; label: string }[] = [
-  { value: 'BEGINNER', label: 'Новичок' },
-  { value: 'INTERMEDIATE', label: 'Средний' },
-  { value: 'ADVANCED', label: 'Опытный' },
-];
-
-/** "4,5" и "4.5" — одно и то же; пусто -> null */
-function toNumber(value: string): number | null {
-  const n = Number(value.replace(',', '.'));
-  return value.trim() === '' || Number.isNaN(n) ? null : n;
-}
 
 /**
  * Новый клиент. Обязательно только имя: это данные человека, который ещё не давал согласия (docs/trainer.md).
@@ -64,7 +53,7 @@ export function NewClientForm({ onCreated }: { onCreated: (client: Client) => vo
           <TextField label="Вес, кг" inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} />
           <TextField label="Рост, см" inputMode="numeric" value={height} onChange={(e) => setHeight(e.target.value)} />
           <div role="group" aria-label="Уровень подготовки" className={styles.chips}>
-            {LEVELS.map((option) => (
+            {CLIENT_LEVELS.map((option) => (
               <Chip
                 key={option.value}
                 selected={level === option.value}

@@ -5,8 +5,10 @@ import com.vegas.common.exception.ForbiddenException;
 import com.vegas.common.exception.NotFoundException;
 import com.vegas.user.dto.ClientResponse;
 import com.vegas.user.dto.CreateClientRequest;
+import com.vegas.user.dto.RecordWeightRequest;
 import com.vegas.user.dto.UpdateClientRequest;
 import com.vegas.user.dto.UserResponse;
+import com.vegas.user.dto.WeightEntryResponse;
 import com.vegas.user.entity.TrainerClient;
 import com.vegas.user.entity.User;
 import com.vegas.user.entity.UserProfile;
@@ -23,6 +25,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -117,7 +120,41 @@ public class TrainerService {
             outboxService.trainerClientLinked(link);
         }
         link.setPhone(blankToNull(request.phone()));
+
+        // рост и уровень: при создании могли не указать или указать примерно — тренер уточняет потом
+        UserProfile profile = profileRepository.findById(clientId).orElseGet(() -> new UserProfile(client));
+        Short height = request.heightCm() == null ? null : request.heightCm().shortValue();
+        boolean bodyChanged = !Objects.equals(height, profile.getHeightCm())
+                || request.experienceLevel() != profile.getExperienceLevel();
+        if (bodyChanged) {
+            if (!client.isManaged()) {
+                throw new ForbiddenException("Рост и уровень клиент меняет сам: у него свой аккаунт");
+            }
+            profile.setHeightCm(height);
+            profile.setExperienceLevel(request.experienceLevel());
+            profileRepository.save(profile);
+            // аналитике — новый снимок профиля (уровень влияет на "норму роста" на графиках)
+            outboxService.profileUpdated(clientId);
+        }
         return toResponse(link);
+    }
+
+    /** История веса клиента — тренеру видна у любого своего клиента */
+    @Transactional(readOnly = true)
+    public List<WeightEntryResponse> clientWeight(UUID trainerId, UUID clientId) {
+        requireTrainer(trainerId);
+        return bodyWeightService.history(findLink(trainerId, clientId).getClient().getId());
+    }
+
+    /** Записать вес клиента — только ведомому: у клиента со своим аккаунтом вес записывает он сам */
+    @Transactional
+    public WeightEntryResponse recordClientWeight(UUID trainerId, UUID clientId, LocalDate date, RecordWeightRequest request) {
+        requireTrainer(trainerId);
+        User client = findLink(trainerId, clientId).getClient();
+        if (!client.isManaged()) {
+            throw new ForbiddenException("Вес клиент записывает сам: у него свой аккаунт");
+        }
+        return bodyWeightService.record(client.getId(), date, request);
     }
 
     /**

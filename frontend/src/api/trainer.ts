@@ -1,6 +1,6 @@
 import type { UserResponse } from './auth';
 import { api } from './client';
-import type { ExperienceLevel } from './users';
+import type { ExperienceLevel, WeightEntry } from './users';
 import type { Workout } from './workouts';
 
 /** user-service: dto/ClientResponse */
@@ -56,8 +56,20 @@ export const trainerApi = {
   clients: () => api<Client[]>(`${base}/clients`),
   client: (clientId: string) => api<Client>(`${base}/clients/${clientId}`),
   createClient: (body: NewClient) => api<Client>(`${base}/clients`, { method: 'POST', body }),
-  updateClient: (clientId: string, body: { displayName: string; phone: string | null }) =>
-    api<Client>(`${base}/clients/${clientId}`, { method: 'PUT', body }),
+  /** имя, рост и уровень меняются только у клиента без аккаунта (у остальных присылаем как есть) */
+  updateClient: (
+    clientId: string,
+    body: {
+      displayName: string;
+      phone: string | null;
+      heightCm: number | null;
+      experienceLevel: ExperienceLevel | null;
+    },
+  ) => api<Client>(`${base}/clients/${clientId}`, { method: 'PUT', body }),
+  /** история веса клиента (новые сверху) и запись за день — запись только клиенту без аккаунта */
+  clientWeight: (clientId: string) => api<WeightEntry[]>(`${base}/clients/${clientId}/weight`),
+  recordClientWeight: (clientId: string, date: string, weightKg: number) =>
+    api<WeightEntry>(`${base}/clients/${clientId}/weight/${date}`, { method: 'PUT', body: { weightKg } }),
   /** Убрать клиента: без аккаунта — удалить вместе с данными, со своим аккаунтом — отвязать */
   removeClient: (clientId: string) => api<void>(`${base}/clients/${clientId}`, { method: 'DELETE' }),
   /** "Передать аккаунт": новая ссылка на 7 дней, старые перестают работать */

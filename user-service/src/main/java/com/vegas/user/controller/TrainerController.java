@@ -4,9 +4,11 @@ import com.vegas.user.dto.ClaimLinkResponse;
 import com.vegas.user.dto.ClientResponse;
 import com.vegas.user.dto.CreateClientRequest;
 import com.vegas.user.dto.MyTrainerResponse;
+import com.vegas.user.dto.RecordWeightRequest;
 import com.vegas.user.dto.TrainerModeRequest;
 import com.vegas.user.dto.UpdateClientRequest;
 import com.vegas.user.dto.UserResponse;
+import com.vegas.user.dto.WeightEntryResponse;
 import com.vegas.user.security.AuthenticatedUser;
 import com.vegas.user.service.ClaimService;
 import com.vegas.user.service.TrainerService;
@@ -15,6 +17,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -74,11 +78,27 @@ public class TrainerController {
     }
 
     @PutMapping("/clients/{clientId}")
-    @Operation(summary = "Изменить имя (только у ведомого клиента) и телефон")
+    @Operation(summary = "Изменить телефон; имя, рост и уровень — только у ведомого клиента")
     public ClientResponse updateClient(@AuthenticationPrincipal AuthenticatedUser currentUser,
                                        @PathVariable UUID clientId,
                                        @Valid @RequestBody UpdateClientRequest request) {
         return trainerService.updateClient(currentUser.id(), clientId, request);
+    }
+
+    @GetMapping("/clients/{clientId}/weight")
+    @Operation(summary = "История веса клиента, новые записи сверху")
+    public List<WeightEntryResponse> clientWeight(@AuthenticationPrincipal AuthenticatedUser currentUser,
+                                                  @PathVariable UUID clientId) {
+        return trainerService.clientWeight(currentUser.id(), clientId);
+    }
+
+    @PutMapping("/clients/{clientId}/weight/{date}")
+    @Operation(summary = "Записать вес клиента за день (только ведомому)")
+    public WeightEntryResponse recordClientWeight(@AuthenticationPrincipal AuthenticatedUser currentUser,
+                                                  @PathVariable UUID clientId,
+                                                  @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                                  @Valid @RequestBody RecordWeightRequest request) {
+        return trainerService.recordClientWeight(currentUser.id(), clientId, date, request);
     }
 
     @DeleteMapping("/clients/{clientId}")
