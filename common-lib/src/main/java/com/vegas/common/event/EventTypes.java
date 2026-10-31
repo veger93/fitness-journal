@@ -24,6 +24,8 @@ public final class EventTypes {
     public static final String USER_DELETED = "UserDeleted";
     /** user-service -> notification-service: письмо с кодом (подтверждение email, сброс пароля) */
     public static final String EMAIL_CODE_REQUESTED = "EmailCodeRequested";
+    /** user-service -> workout-service: сгенерировать тренировки демо-пользователю по сценарию (docs/demo.md) */
+    public static final String DEMO_DATA_REQUESTED = "DemoDataRequested";
 
     // события analytics-service (топик analytics-events) -> notification-service
     public static final String PERSONAL_RECORD = "PersonalRecord";

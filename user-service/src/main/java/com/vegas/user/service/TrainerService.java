@@ -67,7 +67,11 @@ public class TrainerService {
     public ClientResponse createClient(UUID trainerId, CreateClientRequest request) {
         requireTrainer(trainerId);
 
-        User client = userRepository.save(User.managed(request.displayName().trim()));
+        User trainer = findUser(trainerId);
+        // у демо-тренера и новые клиенты — демо: удалятся по расписанию вместе с ним (docs/demo.md)
+        User client = userRepository.save(trainer.isDemo()
+                ? User.demoClient(request.displayName().trim(), trainer.getDemoExpiresAt())
+                : User.managed(request.displayName().trim()));
 
         UserProfile profile = new UserProfile(client);
         profile.setHeightCm(request.heightCm() == null ? null : request.heightCm().shortValue());

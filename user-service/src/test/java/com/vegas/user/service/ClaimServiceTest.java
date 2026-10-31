@@ -1,6 +1,7 @@
 package com.vegas.user.service;
 
 import com.vegas.common.exception.BusinessException;
+import com.vegas.common.exception.ForbiddenException;
 import com.vegas.common.exception.NotFoundException;
 import com.vegas.user.dto.AuthResponse;
 import com.vegas.user.dto.ClaimLinkResponse;
@@ -76,6 +77,7 @@ class ClaimServiceTest {
     void createLink_storesOnlyHash_andRevokesOldLinks() {
         when(trainerClientRepository.findByTrainerIdAndClient_IdAndEndedAtIsNull(trainerId, client.getId()))
                 .thenReturn(Optional.of(link));
+        when(userRepository.findById(trainerId)).thenReturn(Optional.of(User.local("coach@mail.ru", "hash", "Сергей")));
 
         ClaimLinkResponse response = service.createLink(trainerId, client.getId());
 
@@ -85,6 +87,17 @@ class ClaimServiceTest {
         assertThat(saved.getValue().getTokenHash()).isEqualTo(SecureTokens.sha256(response.token()));
         assertThat(saved.getValue().getTokenHash()).isNotEqualTo(response.token());
         assertThat(response.expiresAt()).isEqualTo(NOW.plus(ClaimService.LINK_TTL));
+    }
+
+    @Test
+    void createLink_demoTrainer_forbidden() {
+        when(trainerClientRepository.findByTrainerIdAndClient_IdAndEndedAtIsNull(trainerId, client.getId()))
+                .thenReturn(Optional.of(link));
+        when(userRepository.findById(trainerId)).thenReturn(Optional.of(User.demo("Марина", NOW.plusSeconds(3600))));
+
+        // из демо настоящий аккаунт не получается
+        assertThatThrownBy(() -> service.createLink(trainerId, client.getId())).isInstanceOf(ForbiddenException.class);
+        verify(claimTokenRepository, never()).save(any());
     }
 
     @Test

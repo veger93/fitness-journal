@@ -1,6 +1,7 @@
 package com.vegas.user.service;
 
 import com.vegas.common.exception.BadRequestException;
+import com.vegas.common.exception.ForbiddenException;
 import com.vegas.user.entity.TrainerClient;
 import com.vegas.user.entity.User;
 import com.vegas.user.event.OutboxService;
@@ -21,6 +22,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,7 +48,30 @@ class AccountDeletionServiceTest {
     void setUp() {
         service = new AccountDeletionService(userRepository, trainerClientRepository, passwordEncoder, outboxService);
         user = withId(User.local("coach@mail.ru", "hash", "Сергей"), UUID.randomUUID());
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        lenient().when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+    }
+
+    @Test
+    void demo_cannotDeleteWithPassword_onlyBySchedule() {
+        User demo = withId(User.demo("Алексей", Instant.now()), UUID.randomUUID());
+        when(userRepository.findById(demo.getId())).thenReturn(Optional.of(demo));
+
+        assertThatThrownBy(() -> service.deleteAccount(demo.getId(), "x")).isInstanceOf(ForbiddenException.class);
+
+        when(trainerClientRepository.findAllByTrainerIdAndEndedAtIsNullOrderByLinkedAtDesc(demo.getId())).thenReturn(List.of());
+        service.deleteExpiredDemo(demo.getId());
+        verify(userRepository).delete(demo);
+        verify(outboxService).userDeleted(demo.getId());
+    }
+
+    @Test
+    void expiredDemo_alreadyDeletedWithCoach_skipped() {
+        UUID gone = UUID.randomUUID();
+        when(userRepository.findById(gone)).thenReturn(Optional.empty());
+
+        service.deleteExpiredDemo(gone);
+
+        verify(outboxService, never()).userDeleted(any());
     }
 
     @Test

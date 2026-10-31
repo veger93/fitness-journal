@@ -1,6 +1,7 @@
 package com.vegas.user.event;
 
 import com.vegas.common.event.EmailCodeRequestedEvent;
+import com.vegas.common.event.DemoDataRequestedEvent;
 import com.vegas.common.event.EventTypes;
 import com.vegas.common.event.TrainerClientLinkedEvent;
 import com.vegas.common.event.TrainerClientUnlinkedEvent;
@@ -63,6 +64,13 @@ public class OutboxService {
         EmailCodeRequestedEvent event = new EmailCodeRequestedEvent(
                 user.getId(), user.getEmail(), user.getDisplayName(), code, purpose, expiresAt, trainerName, keepTrainer);
         outboxWriter.write(user.getId(), EventTypes.EMAIL_CODE_REQUESTED, user.getId().toString(), event);
+    }
+
+    /** Демо (docs/demo.md): workout-service генерирует тренировки этому человеку по сценарию */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void demoDataRequested(UUID userId, String scenario, UUID recordedBy) {
+        outboxWriter.write(userId, EventTypes.DEMO_DATA_REQUESTED, userId.toString(),
+                new DemoDataRequestedEvent(userId, scenario, recordedBy, clock.instant()));
     }
 
     /** Пользователь удалён: workout, analytics и notification удаляют все его данные */

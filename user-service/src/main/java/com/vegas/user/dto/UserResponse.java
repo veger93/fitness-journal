@@ -20,6 +20,10 @@ public record UserResponse(
         Role role,
         /** режим тренера включён */
         boolean trainer,
-        Instant createdAt
+        Instant createdAt,
+        /** демо "посмотреть изнутри" (docs/demo.md): полоса "ДЕМО", без смены email и удаления аккаунта */
+        boolean demo,
+        /** когда демо удалится; null у настоящих пользователей */
+        Instant demoExpiresAt
 ) {
 }

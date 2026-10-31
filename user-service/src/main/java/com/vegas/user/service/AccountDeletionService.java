@@ -40,12 +40,29 @@ public class AccountDeletionService {
     public void deleteAccount(UUID userId, String password) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+        // у демо нет пароля: из демо просто выходят, данные удалятся по расписанию (docs/demo.md)
+        DemoGuard.requireNotDemo(user);
         if (user.getPasswordHash() == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
             // 400, а не 401: 401 фронт понимает как "сессия кончилась" и выкидывает на вход
             throw new BadRequestException("Неверный пароль");
         }
+        delete(user);
+        log.info("User {} deleted the account", userId);
+    }
 
-        List<User> managedClients = trainerClientRepository.findAllByTrainerIdAndEndedAtIsNullOrderByLinkedAtDesc(userId)
+    /**
+     * Истёкшее демо (задача по расписанию, docs/demo.md). Своя транзакция на каждое демо:
+     * упадёт одно — остальные всё равно удалятся. Уже удалённое (клиент демо-тренера) — пропускаем.
+     */
+    @Transactional
+    public void deleteExpiredDemo(UUID userId) {
+        userRepository.findById(userId).ifPresent(this::delete);
+    }
+
+    /** Тренер — сначала его клиенты без аккаунта (существуют только благодаря ему), потом он сам */
+    private void delete(User user) {
+        List<User> managedClients = trainerClientRepository
+                .findAllByTrainerIdAndEndedAtIsNullOrderByLinkedAtDesc(user.getId())
                 .stream()
                 .map(TrainerClient::getClient)
                 .filter(User::isManaged)
@@ -54,9 +71,8 @@ public class AccountDeletionService {
             userRepository.delete(client);
             outboxService.userDeleted(client.getId());
         }
-
         userRepository.delete(user);
-        outboxService.userDeleted(userId);
-        log.info("User {} deleted the account (with {} managed clients)", userId, managedClients.size());
+        outboxService.userDeleted(user.getId());
+        log.info("User {} deleted (with {} managed clients)", user.getId(), managedClients.size());
     }
 }
