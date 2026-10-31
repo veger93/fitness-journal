@@ -2,6 +2,7 @@ package com.vegas.user.service;
 
 import com.vegas.common.exception.BadRequestException;
 import com.vegas.common.exception.BusinessException;
+import com.vegas.common.exception.ForbiddenException;
 import com.vegas.user.entity.EmailCode;
 import com.vegas.user.entity.EmailCode.Purpose;
 import com.vegas.user.entity.RefreshToken;
@@ -147,5 +148,16 @@ class EmailCodeServiceTest {
         when(codeRepository.findFirstByUserIdAndPurposeOrderByCreatedAtDesc(user.getId(), purpose))
                 .thenReturn(Optional.of(emailCode));
         return emailCode;
+    }
+
+    @Test
+    void demo_noEmailActions() {
+        User demo = User.demo("Алексей", NOW.plusSeconds(3600));
+        ReflectionTestUtils.setField(demo, "id", UUID.randomUUID());
+        when(userRepository.findById(demo.getId())).thenReturn(Optional.of(demo));
+
+        assertThatThrownBy(() -> service.resendVerification(demo.getId())).isInstanceOf(ForbiddenException.class);
+        assertThatThrownBy(() -> service.changeEmail(demo.getId(), "a@b.ru", "x")).isInstanceOf(ForbiddenException.class);
+        verify(outboxService, never()).emailCodeRequested(any(), any(), any(), any(), any(), any());
     }
 }

@@ -56,6 +56,8 @@ public class ClaimService {
         if (!link.getClient().isManaged()) {
             throw new BusinessException("У клиента уже есть свой аккаунт");
         }
+        // из демо настоящий аккаунт не получается (docs/demo.md)
+        DemoGuard.requireNotDemo(findUser(trainerId));
         claimTokenRepository.deleteUnusedByClientId(clientId);
 
         String raw = SecureTokens.generate();
