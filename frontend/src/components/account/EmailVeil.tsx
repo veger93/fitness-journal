@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router-dom';
 import { analyticsApi } from '../../api/analytics';
 import { authApi } from '../../api/auth';
+import { useClients } from '../../hooks/useTrainer';
 import { useActingClient } from '../../trainer/ActingClientProvider';
 import styles from './Account.module.css';
 
@@ -9,8 +10,9 @@ import styles from './Account.module.css';
  * Ненавязчивый намёк "подтвердите email" на главной (docs/account.md): сверху тёмная вуаль, которая растворяется
  * вниз, в ней мелкая белая ссылка в профиль — там карточка с полем для кода (EmailVerifyCard).
  *
- * Показываем не сразу после регистрации, а после первой записанной тренировки: сначала человек должен
- * попробовать приложение, а уже потом есть что терять. В режиме тренера за клиента — не показываем.
+ * Показываем не сразу после регистрации, а когда уже есть что терять: после первой своей тренировки
+ * или — тренеру — когда появился первый клиент (тренер может вести только клиентов, а сам не записываться).
+ * В режиме тренера за клиента — не показываем.
  */
 export function EmailVeil() {
   const { pathname } = useLocation();
@@ -24,8 +26,12 @@ export function EmailVeil() {
     queryFn: analyticsApi.dashboard,
     enabled: onHome && unverified,
   });
+  // список клиентов грузится только тренеру (и он тоже уже в кэше — для "Я ▾" в шапке)
+  const clients = useClients();
+  const hasWorkouts = dashboard.data?.empty === false;
+  const hasClients = (clients.data?.length ?? 0) > 0;
 
-  if (!onHome || !unverified || dashboard.data?.empty !== false) {
+  if (!onHome || !unverified || !(hasWorkouts || hasClients)) {
     return null;
   }
 
