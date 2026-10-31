@@ -5,6 +5,7 @@ import com.vegas.common.exception.ForbiddenException;
 import com.vegas.common.exception.NotFoundException;
 import com.vegas.user.dto.ClientResponse;
 import com.vegas.user.dto.CreateClientRequest;
+import com.vegas.user.dto.RecordWeightRequest;
 import com.vegas.user.dto.UpdateClientRequest;
 import com.vegas.user.entity.AuthProvider;
 import com.vegas.user.entity.ExperienceLevel;
@@ -148,7 +149,7 @@ class TrainerServiceTest {
                 .thenReturn(Optional.of(link));
 
         ClientResponse response = trainerService.updateClient(trainerId, client.getId(),
-                new UpdateClientRequest("Иван Петров", "8 900 1112233"));
+                new UpdateClientRequest("Иван Петров", "8 900 1112233", null, null));
 
         assertThat(response.displayName()).isEqualTo("Иван Петров");
         assertThat(response.phone()).isEqualTo("8 900 1112233");
@@ -164,9 +165,68 @@ class TrainerServiceTest {
                 .thenReturn(Optional.of(link));
 
         assertThatThrownBy(() -> trainerService.updateClient(trainerId, client.getId(),
-                new UpdateClientRequest("Ванька", null)))
+                new UpdateClientRequest("Ванька", null, null, null)))
                 .isInstanceOf(ForbiddenException.class);
         assertThat(client.getDisplayName()).isEqualTo("Иван");
+    }
+
+    @Test
+    void updateClient_managed_heightAndLevel_updatedAndAnalyticsNotified() {
+        trainer.setTrainer(true);
+        User client = withId(User.managed("Иван"), UUID.randomUUID());
+        UserProfile profile = new UserProfile(client);
+        profile.setHeightCm((short) 175); // при создании указали примерно
+        givenLink(client);
+        when(profileRepository.findById(client.getId())).thenReturn(Optional.of(profile));
+
+        ClientResponse response = trainerService.updateClient(trainerId, client.getId(),
+                new UpdateClientRequest("Иван", null, 182, ExperienceLevel.BEGINNER));
+
+        assertThat(profile.getHeightCm()).isEqualTo((short) 182);
+        assertThat(profile.getExperienceLevel()).isEqualTo(ExperienceLevel.BEGINNER);
+        assertThat(response.heightCm()).isEqualTo((short) 182);
+        verify(outboxService).profileUpdated(client.getId());
+    }
+
+    @Test
+    void updateClient_ownAccount_sameHeight_phoneSaved_heightChange_forbidden() {
+        trainer.setTrainer(true);
+        User client = withId(User.local("ivan@mail.ru", "hash", "Иван"), UUID.randomUUID());
+        UserProfile profile = new UserProfile(client);
+        profile.setHeightCm((short) 180);
+        givenLink(client);
+        when(profileRepository.findById(client.getId())).thenReturn(Optional.of(profile));
+
+        // рост тот же — меняется только телефон, это можно
+        trainerService.updateClient(trainerId, client.getId(), new UpdateClientRequest("Иван", "8 900", 180, null));
+        // рост другой — нельзя: это аккаунт клиента
+        assertThatThrownBy(() -> trainerService.updateClient(trainerId, client.getId(),
+                new UpdateClientRequest("Иван", "8 900", 190, null)))
+                .isInstanceOf(ForbiddenException.class);
+        assertThat(profile.getHeightCm()).isEqualTo((short) 180);
+    }
+
+    @Test
+    void recordClientWeight_onlyManaged() {
+        trainer.setTrainer(true);
+        User managed = withId(User.managed("Иван"), UUID.randomUUID());
+        User own = withId(User.local("petr@mail.ru", "hash", "Пётр"), UUID.randomUUID());
+        givenLink(managed);
+        givenLink(own);
+        RecordWeightRequest request = new RecordWeightRequest(new BigDecimal("81.5"));
+        LocalDate today = LocalDate.now(CLOCK);
+
+        trainerService.recordClientWeight(trainerId, managed.getId(), today, request);
+
+        verify(bodyWeightService).record(managed.getId(), today, request);
+        assertThatThrownBy(() -> trainerService.recordClientWeight(trainerId, own.getId(), today, request))
+                .isInstanceOf(ForbiddenException.class);
+    }
+
+    private void givenLink(User client) {
+        when(userRepository.findById(trainerId)).thenReturn(Optional.of(trainer));
+        when(trainerClientRepository.findByTrainerIdAndClient_IdAndEndedAtIsNull(trainerId, client.getId()))
+                .thenReturn(Optional.of(new TrainerClient(trainerId, client, null, CLOCK.instant())));
     }
 
     @Test

@@ -1,6 +1,20 @@
 import type { ClientSignal } from '../api/trainer';
+import type { ExperienceLevel } from '../api/users';
 
 /** Мелкие расчёты режима тренера — чистые функции, проверены в trainer.test.ts */
+
+/** Уровень подготовки клиента — чипы в "Новый клиент" и в карточке клиента */
+export const CLIENT_LEVELS: { value: ExperienceLevel; label: string }[] = [
+  { value: 'BEGINNER', label: 'Новичок' },
+  { value: 'INTERMEDIATE', label: 'Средний' },
+  { value: 'ADVANCED', label: 'Опытный' },
+];
+
+/** "4,5" и "4.5" — одно и то же; пусто или не число -> null */
+export function toNumber(value: string): number | null {
+  const n = Number(value.replace(',', '.'));
+  return value.trim() === '' || Number.isNaN(n) ? null : n;
+}
 
 /** Буква для кружка-аватара: "Иван Петров" -> "И", пустое имя -> "?" */
 export function initial(name: string | null | undefined): string {
