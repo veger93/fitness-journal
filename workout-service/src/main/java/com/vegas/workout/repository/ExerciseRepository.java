@@ -38,6 +38,9 @@ public interface ExerciseRepository extends JpaRepository<Exercise, UUID>, JpaSp
     /** Есть ли системное упражнение (owner_id IS NULL) с таким названием. */
     boolean existsByOwnerIdIsNullAndNameIgnoreCase(String name);
 
+    /** Упражнение из общего каталога по названию — генератор демо (docs/demo.md) */
+    Optional<Exercise> findFirstByOwnerIdIsNullAndNameIgnoreCaseAndArchivedAtIsNull(String name);
+
     /** Для редактирования: такое имя есть у ДРУГОГО упражнения этого пользователя? */
     boolean existsByOwnerIdAndNameIgnoreCaseAndIdNot(UUID ownerId, String name, UUID id);
 }

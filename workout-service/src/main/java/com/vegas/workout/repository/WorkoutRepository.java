@@ -28,6 +28,9 @@ public interface WorkoutRepository extends JpaRepository<Workout, UUID> {
 
     boolean existsByUserIdAndStatus(UUID userId, WorkoutStatus status);
 
+    /** Есть ли у пользователя хоть одна тренировка — генератор демо не создаёт историю дважды */
+    boolean existsByUserId(UUID userId);
+
     /**
      * Журнал: страница тренировок целиком. Без @EntityGraph намеренно: fetch join коллекции + пагинация
      * заставили бы Hibernate грузить ВСЕ строки и резать страницу в памяти (warning HHH000104).
