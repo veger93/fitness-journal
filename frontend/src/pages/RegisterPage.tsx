@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/ui/Button';
@@ -10,6 +10,8 @@ import styles from './AuthPage.module.css';
 export function RegisterPage() {
   const { isAuthenticated, register } = useAuth();
   const navigate = useNavigate();
+  // из демо "Зарегистрироваться": сюда приходят ещё "вошедшими" — выход из демо идёт сразу следом (DemoBanner)
+  const fromDemo = (useLocation().state as { fromDemo?: boolean } | null)?.fromDemo ?? false;
 
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -17,7 +19,7 @@ export function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  if (isAuthenticated) {
+  if (isAuthenticated && !fromDemo) {
     return <Navigate to="/" replace />;
   }
 

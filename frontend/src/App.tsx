@@ -6,6 +6,7 @@ import { AppLayout } from './components/AppLayout';
 import { HomePage } from './pages/HomePage';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
+import { DemoPreparingPage } from './pages/DemoPreparingPage';
 import { ClaimPage } from './pages/ClaimPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ActiveWorkoutPage } from './pages/ActiveWorkoutPage';
@@ -46,6 +47,15 @@ export function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 {/* передача аккаунта клиенту по ссылке тренера — без входа */}
                 <Route path="/claim/:token" element={<ClaimPage />} />
+                {/* демо: "Готовим ваш дневник…", пока сервер генерирует тренировки (docs/demo.md) */}
+                <Route
+                  path="/demo"
+                  element={
+                    <RequireAuth>
+                      <DemoPreparingPage />
+                    </RequireAuth>
+                  }
+                />
                 <Route
                   path="/onboarding"
                   element={

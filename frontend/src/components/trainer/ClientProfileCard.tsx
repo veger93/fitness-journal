@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
+import { authApi } from '../../api/auth';
 import { trainerApi, type Client } from '../../api/trainer';
 import type { ExperienceLevel } from '../../api/users';
 import { CLIENTS_KEY } from '../../hooks/useTrainer';
@@ -26,6 +27,7 @@ export function ClientProfileCard({ clientId }: { clientId: string }) {
   const queryClient = useQueryClient();
   const { actAs } = useActingClient();
   const client = useQuery({ queryKey: ['trainer', 'client', clientId], queryFn: () => trainerApi.client(clientId) });
+  const me = useQuery({ queryKey: ['me'], queryFn: authApi.me });
 
   if (!client.data) {
     return <p className={styles.muted}>{client.isError ? client.error.message : 'Загружаем…'}</p>;
@@ -57,8 +59,8 @@ export function ClientProfileCard({ clientId }: { clientId: string }) {
         currentWeightKg={data.currentWeightKg}
         client={{ id: data.id, managed: data.managed }}
       />
-      {/* передать можно только ведомого: у клиента со своим аккаунтом вход уже есть */}
-      {data.managed && <HandoverCard clientId={data.id} clientName={data.displayName} />}
+      {/* передать можно только ведомого: у клиента со своим аккаунтом вход уже есть; из демо — нельзя (docs/demo.md) */}
+      {data.managed && !me.data?.demo && <HandoverCard clientId={data.id} clientName={data.displayName} />}
       <RemoveClientCard clientId={data.id} clientName={data.displayName} managed={data.managed} />
     </>
   );

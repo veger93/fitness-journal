@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
+import { DemoBanner } from './account/DemoBanner';
 import { EmailVeil } from './account/EmailVeil';
 import { NotificationBell } from './NotificationBell';
 import { ClientBand } from './trainer/ClientBand';
@@ -27,6 +28,8 @@ export function AppLayout() {
       <EmailVeil />
       <div className={styles.container}>
         {/* тренер работает за клиента — оранжевая полоса с именем (режим тренера, docs/trainer.md) */}
+        {/* демо "посмотреть изнутри": сколько осталось и "Зарегистрироваться" (docs/demo.md) */}
+        <DemoBanner />
         <ClientBand />
         <header className={styles.header}>
           <Link to="/" className={styles.logo}>

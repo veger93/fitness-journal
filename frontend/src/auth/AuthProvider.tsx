@@ -1,7 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { authApi, type AuthResponse, type ClaimBody } from '../api/auth';
+import { authApi, type AuthResponse, type ClaimBody, type DemoScenario } from '../api/auth';
 import { configureApiClient, refreshAccessToken } from '../api/client';
+import { clearDemoSession, markDemoSession } from '../lib/demo';
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -9,6 +10,8 @@ interface AuthContextValue {
   register: (email: string, password: string, displayName: string) => Promise<void>;
   /** клиент принял аккаунт от тренера по ссылке — и сразу вошёл */
   claim: (token: string, body: ClaimBody) => Promise<void>;
+  /** "Демо спортсмена / тренера" на лендинге: временный пользователь, сразу вход (docs/demo.md) */
+  startDemo: (scenario: DemoScenario) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -77,7 +80,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     register: async (email, password, displayName) =>
       fromResponse(await authApi.register(email, password, displayName)),
     claim: async (token, body) => fromResponse(await authApi.claim(token, body)),
+    startDemo: async (scenario) => {
+      fromResponse(await authApi.demo(scenario));
+      markDemoSession();
+    },
     logout: async () => {
+      // вышли сами — "Демо закончилось" на лендинге показывать не нужно
+      clearDemoSession();
       try {
         await authApi.logout();
       } catch {

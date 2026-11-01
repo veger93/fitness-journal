@@ -1,5 +1,8 @@
-import { useEffect, useId } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useId, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import type { DemoScenario } from '../api/auth';
+import { useAuth } from '../auth/AuthProvider';
+import { clearDemoSession, hasDemoSession } from '../lib/demo';
 import { ButtonLink } from '../components/ui/Button';
 import { DEMO_REFERENCE, DEMO_STRENGTH, chartPaths } from '../lib/landing';
 import { THEME_COLOR } from '../theme/theme';
@@ -29,6 +32,64 @@ const POINTS = [
  * Всегда тёмная (data-theme="dark"), независимо от темы в настройках: это "витрина", её стиль фиксирован.
  * Макеты экранов внутри — светлые островки (data-theme="light"), как приложение выглядит по умолчанию.
  */
+/**
+ * "Посмотреть изнутри" (docs/demo.md, вариант A): две кнопки — демо спортсмена и демо тренера.
+ * Отдельный блок с подписью "без регистрации", чтобы не казалось, что кнопки создают аккаунт.
+ * После клика — сразу вход в демо и экран "Готовим ваш дневник…", пока сервер генерирует тренировки.
+ */
+function DemoEntry() {
+  const { startDemo } = useAuth();
+  const navigate = useNavigate();
+  const [pending, setPending] = useState<DemoScenario | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // демо закончилось (сутки прошли) — гость вернулся сюда: говорим, что случилось. Метку убираем после показа
+  const [ended] = useState(hasDemoSession);
+  useEffect(() => {
+    if (ended) clearDemoSession();
+  }, [ended]);
+
+  const start = async (scenario: DemoScenario) => {
+    setPending(scenario);
+    setError(null);
+    try {
+      await startDemo(scenario);
+      navigate('/demo', { replace: true });
+    } catch (e) {
+      // 429 — лимит демо: сервер присылает понятный текст
+      setError(e instanceof Error ? e.message : 'Не получилось открыть демо — попробуйте ещё раз');
+      setPending(null);
+    }
+  };
+
+  return (
+    <section className={styles.demo} aria-labelledby="demo-title">
+      {ended && (
+        <p className={styles.demoEnded}>Демо закончилось. Понравилось — заведите свой дневник, это бесплатно.</p>
+      )}
+      <p id="demo-title" className={styles.demoTitle}>
+        Посмотреть изнутри — без регистрации
+      </p>
+      <div className={styles.demoButtons}>
+        <button
+          type="button"
+          className={styles.demoButton}
+          disabled={pending !== null}
+          onClick={() => start('ATHLETE')}
+        >
+          <b>{pending === 'ATHLETE' ? 'Открываем…' : 'Демо спортсмена'}</b>
+          <span>рекорды, плато, графики</span>
+        </button>
+        <button type="button" className={styles.demoButton} disabled={pending !== null} onClick={() => start('COACH')}>
+          <b>{pending === 'COACH' ? 'Открываем…' : 'Демо тренера'}</b>
+          <span>5 клиентов и подсказки</span>
+        </button>
+      </div>
+      {error && <p className={styles.demoError}>{error}</p>}
+      <p className={styles.demoNote}>Готовый дневник с примерами. Можно всё трогать — через сутки он удалится сам.</p>
+    </section>
+  );
+}
+
 export function LandingPage() {
   useDarkBrowserBar();
 
@@ -63,6 +124,7 @@ export function LandingPage() {
               Как это работает ↓
             </a>
           </div>
+          <DemoEntry />
           <ul className={styles.trust}>
             <li>Бесплатно</li>
             <li>Без рекламы</li>

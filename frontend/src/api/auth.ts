@@ -21,7 +21,14 @@ export interface UserResponse {
   /** включён режим тренера — в шапке появляется переключатель "Я / клиенты" */
   trainer: boolean;
   createdAt: string;
+  /** демо "посмотреть изнутри" (docs/demo.md): полоса "ДЕМО", без почты и удаления аккаунта */
+  demo: boolean;
+  /** когда демо удалится; null у настоящих пользователей */
+  demoExpiresAt: string | null;
 }
+
+/** Кем смотреть демо: спортсмен или тренер */
+export type DemoScenario = 'ATHLETE' | 'COACH';
 
 /** user-service: dto/ClaimPreviewResponse — что передают по ссылке */
 export interface ClaimPreview {
@@ -48,6 +55,9 @@ export const authApi = {
       method: 'POST',
       body: { email, password, displayName: displayName.trim() || null },
     }),
+
+  /** Демо: временный пользователь с заполненным дневником, сразу вход (refresh-cookie, как при регистрации) */
+  demo: (scenario: DemoScenario) => api<AuthResponse>('/api/auth/demo', { method: 'POST', body: { scenario } }),
 
   /** Отозвать refresh-токен и удалить cookie. Access-токен фронт просто забывает */
   logout: () => api<void>('/api/auth/logout', { method: 'POST' }),

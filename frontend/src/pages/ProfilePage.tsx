@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/auth';
 import { usersApi } from '../api/users';
 import { useAuth } from '../auth/AuthProvider';
@@ -30,6 +31,14 @@ export function ProfilePage() {
   const me = useQuery({ queryKey: ['me'], queryFn: authApi.me });
   const profile = useQuery({ queryKey: ['profile'], queryFn: usersApi.profile });
   const { client: acting } = useActingClient();
+  const demo = me.data?.demo ?? false;
+  const navigate = useNavigate();
+  // из демо — на лендинг, а не на форму входа (входить гостю нечем). Сначала переход, потом выход:
+  // наоборот закрытая страница успела бы сама увести на /login
+  const exitDemo = () => {
+    navigate('/', { replace: true });
+    void logout();
+  };
 
   // тренер в дневнике клиента: "Профиль" — карточка клиента; свой профиль — после "✕ К себе"
   if (acting) {
@@ -67,7 +76,8 @@ export function ProfilePage() {
 
       {profile.data && <BodyWeightCard currentWeightKg={profile.data.currentWeightKg} />}
 
-      <RemindersCard />
+      {/* напоминания — письма; у демо нет почты (docs/demo.md) */}
+      {!demo && <RemindersCard />}
 
       <MyTrainerCard />
 
@@ -81,10 +91,11 @@ export function ProfilePage() {
 
       {/* внизу одной строкой: "Выйти" слева, редкое "Удалить аккаунт" справа, по нижнему краю */}
       <div className={styles.bottomRow}>
-        <Button variant="secondary" onClick={logout}>
-          Выйти
+        <Button variant="secondary" onClick={demo ? exitDemo : logout}>
+          {demo ? 'Выйти из демо' : 'Выйти'}
         </Button>
-        <DeleteAccountCard />
+        {/* демо удаляется само через сутки — удалять его вручную (с паролем, которого нет) не нужно */}
+        {!demo && <DeleteAccountCard />}
       </div>
     </div>
   );
