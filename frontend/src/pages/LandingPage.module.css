@@ -148,6 +148,80 @@
   gap: var(--space-3);
 }
 
+/* ---------- "Посмотреть изнутри": демо (docs/demo.md) ---------- */
+/* отдельная рамка: это не регистрация, а "примерить" приложение */
+.demo {
+  margin-top: var(--space-6);
+  max-width: 460px;
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  border: 1px dashed rgb(255 255 255 / 0.25);
+  background: rgb(255 255 255 / 0.04);
+}
+
+.demoTitle {
+  margin: 0 0 var(--space-3);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.demoButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.demoButton {
+  display: grid;
+  gap: 2px;
+  min-height: 56px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 18px;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  background: rgb(255 255 255 / 0.08);
+  backdrop-filter: blur(8px);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.demoButton:hover:not(:disabled) {
+  border-color: var(--accent-strong);
+}
+
+.demoButton:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.demoButton b {
+  font-size: 14px;
+}
+
+.demoButton span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.demoNote {
+  margin: var(--space-3) 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.demoError,
+.demoEnded {
+  margin: 0 0 var(--space-3);
+  font-size: 13px;
+  color: var(--accent-strong);
+}
+
+.demoError {
+  margin: var(--space-3) 0 0;
+}
+
 .trust {
   display: flex;
   flex-wrap: wrap;
