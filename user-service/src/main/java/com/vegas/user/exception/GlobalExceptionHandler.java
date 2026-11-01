@@ -24,6 +24,11 @@ public class GlobalExceptionHandler extends CommonExceptionHandler {
         this.refreshTokenCookie = refreshTokenCookie;
     }
 
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRequests(TooManyRequestsException ex, HttpServletRequest request) {
+        return build(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException ex, HttpServletRequest request) {
         return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);

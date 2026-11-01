@@ -52,6 +52,12 @@ public class OutboxAutoConfiguration {
         return new OutboxPublisher(outboxRelay);
     }
 
+    @Bean
+    public OutboxCleanup outboxCleanup(OutboxEventRepository outboxRepository, ObjectProvider<Clock> clock,
+                                       OutboxProperties properties) {
+        return new OutboxCleanup(outboxRepository, clock.getIfAvailable(Clock::systemUTC), properties.retention());
+    }
+
     static class OutboxPackageRegistrar implements ImportBeanDefinitionRegistrar {
         @Override
         public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {

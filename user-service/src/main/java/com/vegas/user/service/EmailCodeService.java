@@ -68,6 +68,7 @@ public class EmailCodeService {
     @Transactional
     public void resendVerification(UUID userId) {
         User user = findUser(userId);
+        DemoGuard.requireNotDemo(user);
         if (user.isEmailVerified()) {
             throw new BusinessException("Email уже подтверждён");
         }
@@ -79,6 +80,7 @@ public class EmailCodeService {
     @Transactional(noRollbackFor = BadRequestException.class)
     public UserResponse confirmEmail(UUID userId, String code) {
         User user = findUser(userId);
+        DemoGuard.requireNotDemo(user);
         if (user.isEmailVerified()) {
             return userMapper.toResponse(user);
         }
@@ -95,6 +97,7 @@ public class EmailCodeService {
     @Transactional
     public UserResponse changeEmail(UUID userId, String newEmail, String password) {
         User user = findUser(userId);
+        DemoGuard.requireNotDemo(user);
         if (user.getPasswordHash() == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
             // 400, а не 401: 401 фронт понял бы как "сессия истекла" и разлогинил бы человека
             throw new BadRequestException("Неверный пароль");

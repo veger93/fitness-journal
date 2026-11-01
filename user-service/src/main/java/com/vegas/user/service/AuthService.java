@@ -17,6 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+
 /**
  * Регистрация и вход по email + паролю.
  * @RequiredArgsConstructor (Lombok) создаёт конструктор для final-полей -> Spring внедряет зависимости через него.
@@ -32,6 +34,7 @@ public class AuthService {
     private final OutboxService outboxService;
     private final RefreshTokenService refreshTokenService;
     private final EmailCodeService emailCodeService;
+    private final Clock clock;
 
     /**
      * @Transactional: пользователь и его профиль сохраняются вместе.
@@ -77,7 +80,10 @@ public class AuthService {
     public AuthTokens refresh(String refreshToken) {
         RefreshTokenService.Rotation rotation = refreshTokenService.rotate(refreshToken);
         // пользователя могли удалить, пока жил токен
-        User user = userRepository.findById(rotation.userId()).orElseThrow(InvalidRefreshTokenException::new);
+        User user = userRepository.findById(rotation.userId())
+                // демо закончилось: новый токен не выдаём — фронт выйдет на лендинг (docs/demo.md, "без сирот")
+                .filter(u -> !u.isDemoExpired(clock.instant()))
+                .orElseThrow(InvalidRefreshTokenException::new);
         return new AuthTokens(accessResponse(user), rotation.refreshToken());
     }
 

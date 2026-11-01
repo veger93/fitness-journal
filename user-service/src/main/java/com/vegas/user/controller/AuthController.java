@@ -1,13 +1,17 @@
 package com.vegas.user.controller;
 
 import com.vegas.user.dto.AuthResponse;
+import com.vegas.user.dto.DemoRequest;
 import com.vegas.user.dto.LoginRequest;
 import com.vegas.user.dto.RegisterRequest;
+import com.vegas.user.security.ClientIp;
 import com.vegas.user.security.RefreshTokenCookie;
 import com.vegas.user.service.AuthService;
 import com.vegas.user.service.AuthTokens;
+import com.vegas.user.service.DemoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -34,11 +38,22 @@ public class AuthController {
 
     private final AuthService authService;
     private final RefreshTokenCookie refreshTokenCookie;
+    private final DemoService demoService;
 
     @PostMapping("/register")
     @Operation(summary = "Регистрация по email и паролю")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return withCookie(HttpStatus.CREATED, authService.register(request)); // 201: создан пользователь
+    }
+
+    /**
+     * "Посмотреть изнутри" на лендинге (docs/demo.md): временный пользователь с заполненным дневником, сразу вход.
+     * 201 — создан пользователь, как при регистрации. Тренировки догенерируются за несколько секунд.
+     */
+    @PostMapping("/demo")
+    @Operation(summary = "Демо: войти как спортсмен или тренер с готовыми данными (живёт сутки)")
+    public ResponseEntity<AuthResponse> demo(@Valid @RequestBody DemoRequest request, HttpServletRequest http) {
+        return withCookie(HttpStatus.CREATED, demoService.start(request.scenario(), ClientIp.of(http)));
     }
 
     @PostMapping("/login")

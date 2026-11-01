@@ -66,6 +66,10 @@ public class User {
     @Column(name = "data_consent_at")
     private Instant dataConsentAt;
 
+    /** Демо (docs/demo.md): когда закончится. null — настоящий пользователь. Есть и у клиентов демо-тренера */
+    @Column(name = "demo_expires_at")
+    private Instant demoExpiresAt;
+
     /** Режим тренера: может заводить клиентов и вести их тренировки */
     @Setter
     @Column(nullable = false)
@@ -112,6 +116,33 @@ public class User {
         user.authProvider = AuthProvider.NONE;
         user.role = Role.USER;
         return user;
+    }
+
+    /** Демо-пользователь: вход только по кнопке на лендинге, без email и пароля */
+    public static User demo(String displayName, Instant expiresAt) {
+        User user = new User();
+        user.displayName = displayName;
+        user.authProvider = AuthProvider.DEMO;
+        user.role = Role.USER;
+        user.demoExpiresAt = expiresAt;
+        return user;
+    }
+
+    /** Клиент демо-тренера: обычный ведомый клиент, но удалится вместе с демо */
+    public static User demoClient(String displayName, Instant expiresAt) {
+        User user = managed(displayName);
+        user.demoExpiresAt = expiresAt;
+        return user;
+    }
+
+    /** Вошёл через "посмотреть изнутри" */
+    public boolean isDemo() {
+        return authProvider == AuthProvider.DEMO;
+    }
+
+    /** Демо закончилось: refresh-токен больше не обменивается */
+    public boolean isDemoExpired(Instant now) {
+        return demoExpiresAt != null && !now.isBefore(demoExpiresAt);
     }
 
     /**

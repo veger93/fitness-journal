@@ -21,7 +21,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -55,6 +57,9 @@ class AuthServiceTest {
 
     @Mock
     private EmailCodeService emailCodeService;
+
+    @Mock
+    private Clock clock;
 
     @InjectMocks // создаёт AuthService и передаёт в конструктор моки выше
     private AuthService authService;
@@ -160,6 +165,19 @@ class AuthServiceTest {
         assertThat(tokens.response().accessToken()).isEqualTo("jwt-token");
         assertThat(tokens.response().expiresIn()).isEqualTo(900);
         assertThat(tokens.refreshToken()).isEqualTo("new");
+    }
+
+    @Test
+    void refresh_expiredDemo_isInvalid() {
+        Instant now = Instant.parse("2026-10-31T12:00:00Z");
+        User demo = User.demo("Алексей", now.minusSeconds(1));
+        UUID userId = UUID.randomUUID();
+        when(clock.instant()).thenReturn(now);
+        when(refreshTokenService.rotate("old")).thenReturn(new RefreshTokenService.Rotation(userId, "new"));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(demo));
+
+        // демо закончилось — новых токенов нет, фронт выйдет на лендинг
+        assertThatThrownBy(() -> authService.refresh("old")).isInstanceOf(InvalidRefreshTokenException.class);
     }
 
     @Test
