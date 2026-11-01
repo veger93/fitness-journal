@@ -40,7 +40,7 @@ class OutboxRelayTest {
     @BeforeEach
     void setUp() {
         relay = new OutboxRelay(outboxRepository, kafkaTemplate, Clock.fixed(NOW, ZoneOffset.UTC),
-                new OutboxProperties("workout-events", 100, 1000));
+                new OutboxProperties("workout-events", 100, 1000, java.time.Duration.ofDays(7)));
     }
 
     @Test
