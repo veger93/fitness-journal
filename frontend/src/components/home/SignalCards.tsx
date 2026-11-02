@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { ExerciseSummary } from '../../api/analytics';
 import { formatExerciseResult } from '../../lib/format';
 import { Button, ButtonLink } from '../ui/Button';
@@ -14,12 +15,71 @@ import styles from './Home.module.css';
  *   3. рекорды (акцентная тёмная/светлая) -> все рекорды.
  * Если по своей теме сказать нечего, карточка остаётся на месте, но спокойного цвета и с хорошей новостью:
  * оранжевый — только когда действительно пора обратить внимание.
+ *
+ * compact (телефон): те же сигналы строками в одной карточке — только то, что требует внимания;
+ * спокойные темы сворачиваются в одну строку "✓ Перегрузки нет · плато нет". Окна те же.
  */
-export function SignalCards({ exercises }: { exercises: ExerciseSummary[] }) {
+export function SignalCards({ exercises, compact = false }: { exercises: ExerciseSummary[]; compact?: boolean }) {
   const [open, setOpen] = useState<{ dialog: 'deload' | 'plateau'; exercise: ExerciseSummary } | null>(null);
   const overloads = exercises.filter((e) => e.status === 'OVERLOAD');
   const plateaus = exercises.filter((e) => e.status === 'PLATEAU');
   const records = exercises.filter((e) => e.status === 'RECORD');
+
+  const dialogs = (
+    <>
+      {open?.dialog === 'deload' && <DeloadDialog exercise={open.exercise} onClose={() => setOpen(null)} />}
+      {open?.dialog === 'plateau' && <PlateauDialog exercise={open.exercise} onClose={() => setOpen(null)} />}
+    </>
+  );
+
+  if (compact) {
+    const calm = [overloads.length === 0 && 'перегрузки нет', plateaus.length === 0 && 'плато нет'].filter(Boolean);
+    const running = overloads[0]?.trackingType === 'DISTANCE';
+    return (
+      <Card as="section" className={styles.signalList} aria-labelledby="signals-title">
+        <h2 id="signals-title" className={styles.signalListTitle}>
+          Что сделать сейчас
+        </h2>
+        {overloads.length > 0 && (
+          <SignalRow
+            mark="!"
+            tone="accent"
+            title={running ? 'Притормозите с километражем' : 'Пора неделю полегче'}
+            text={`Перегрузка · ${withMore(overloads)}`}
+            {...(running
+              ? { to: '/running' }
+              : { onClick: () => setOpen({ dialog: 'deload', exercise: overloads[0] }) })}
+          />
+        )}
+        {plateaus.length > 0 && (
+          <SignalRow
+            mark="≈"
+            tone="plain"
+            title={plateauTitle(plateaus[0])}
+            text={withMore(plateaus)}
+            onClick={() => setOpen({ dialog: 'plateau', exercise: plateaus[0] })}
+          />
+        )}
+        {records.length > 0 && (
+          <SignalRow
+            mark="★"
+            tone="inverse"
+            title={
+              records.length === 1 ? `Рекорд: ${formatExerciseResult(records[0]) ?? ''}` : `Рекордов: ${records.length}`
+            }
+            text={records.length === 1 ? `${records[0].exerciseName} · все рекорды` : 'за две недели · все рекорды'}
+            to="/records"
+          />
+        )}
+        {calm.length > 0 && (
+          <p className={styles.calm}>
+            <span aria-hidden="true">✓</span> {capitalize(calm.join(' · '))}
+          </p>
+        )}
+        {dialogs}
+      </Card>
+    );
+  }
 
   return (
     <section className={styles.section}>
@@ -104,10 +164,50 @@ export function SignalCards({ exercises }: { exercises: ExerciseSummary[] }) {
         </Card>
       </div>
 
-      {open?.dialog === 'deload' && <DeloadDialog exercise={open.exercise} onClose={() => setOpen(null)} />}
-      {open?.dialog === 'plateau' && <PlateauDialog exercise={open.exercise} onClose={() => setOpen(null)} />}
+      {dialogs}
     </section>
   );
+}
+
+interface SignalRowProps {
+  mark: string;
+  tone: 'accent' | 'plain' | 'inverse';
+  title: string;
+  text: string;
+  /** строка — ссылка (to) или кнопка, открывающая окно (onClick) */
+  to?: string;
+  onClick?: () => void;
+}
+
+/** Строка сигнала: значок · заголовок и пояснение · стрелка. Вся строка — одна цель для пальца (>= 44px). */
+function SignalRow({ mark, tone, title, text, to, onClick }: SignalRowProps) {
+  const body = (
+    <>
+      <span className={`${styles.mark} ${styles[`mark_${tone}`]}`} aria-hidden="true">
+        {mark}
+      </span>
+      <span className={styles.rowBody}>
+        <span className={styles.rowTitle}>{title}</span>
+        <span className={styles.rowText}>{text}</span>
+      </span>
+      <span className={styles.rowArrow} aria-hidden="true">
+        ›
+      </span>
+    </>
+  );
+  return to ? (
+    <Link to={to} className={styles.row}>
+      {body}
+    </Link>
+  ) : (
+    <button type="button" className={styles.row} onClick={onClick}>
+      {body}
+    </button>
+  );
+}
+
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /** "Приседания со штангой" или "Приседания со штангой и ещё 2" */

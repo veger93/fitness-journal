@@ -10,6 +10,7 @@ import { Button, ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { StatTile } from '../components/ui/StatTile';
 import { useCurrentWorkout } from '../hooks/useWorkout';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { completedToday, todayOf } from '../lib/plan';
 import { workoutsApi } from '../api/workouts';
 import { TodayPlanCard } from '../components/home/TodayPlanCard';
@@ -18,6 +19,9 @@ import { currentMonth } from '../lib/month';
 import { formatChange, formatKg, formatMonth, formatExerciseResult, formatTonnage } from '../lib/format';
 import { useActingClient } from '../trainer/ActingClientProvider';
 import styles from './HomePage.module.css';
+
+/** Телефон: та же граница, что у раскладки в CSS (Home.module.css, max-width: 640px) */
+const PHONE = '(max-width: 640px)';
 
 /**
  * Главная. Данные — три запроса через TanStack Query:
@@ -37,6 +41,7 @@ export function HomePage() {
   const recent = useQuery({ queryKey: ['history', 'recent'], queryFn: () => workoutsApi.journal(0, 5) });
   const todayPlanned = plan.data?.days.find((d) => d.dayOfWeek === todayOf())?.template ?? null;
   const plannedPending = todayPlanned !== null && !completedToday(recent.data?.content ?? [], todayPlanned.id);
+  const phone = useMediaQuery(PHONE);
 
   return (
     <div className={styles.page}>
@@ -53,10 +58,11 @@ export function HomePage() {
             Отчёт за месяц →
           </Link>
         </div>
-        {/* идёт тренировка — главное действие "вернуться к ней"; сегодня по плану — кнопка "Начать" в карточке плана */}
+        {/* идёт тренировка — главное действие "вернуться к ней"; сегодня по плану — кнопка "Начать" в карточке плана.
+            На телефоне "Другая тренировка" не дублируем: она есть во вкладке "Тренировка" внизу, а место наверху дорогое */}
         {current.data ? (
           <ButtonLink to="/workout/active">Продолжить тренировку</ButtonLink>
-        ) : (
+        ) : phone && plannedPending ? null : (
           <ButtonLink to="/workout" variant={plannedPending ? 'secondary' : 'primary'}>
             {plannedPending ? 'Другая тренировка' : 'Начать тренировку'}
           </ButtonLink>
@@ -98,39 +104,48 @@ function EmptyState() {
 
 function Content({ dashboard }: { dashboard: Dashboard }) {
   const focus = dashboard.exercises.find((e) => e.exerciseId === dashboard.focusExerciseId) ?? null;
+  // на телефоне всё идёт столбиком, поэтому порядок другой: сначала "что сделать", потом цифры —
+  // и сигналы строками, а плитки сеткой 2×2 (иначе главная занимает 4–5 экранов)
+  const phone = useMediaQuery(PHONE);
+
+  const tiles = (
+    <div className={`${styles.tiles} ${phone ? styles.tilesCompact : ''}`}>
+      <StatTile
+        compact={phone}
+        variant="inverse"
+        label="Поднято за неделю"
+        value={formatTonnage(dashboard.weekTonnageKg)}
+        caption={
+          dashboard.weekTonnageChangePercent == null
+            ? 'на прошлой неделе тренировок не было'
+            : `${formatChange(dashboard.weekTonnageChangePercent)} к прошлой`
+        }
+        highlightCaption={dashboard.weekTonnageChangePercent != null}
+      />
+      {focus?.currentE1rmKg != null && (
+        <StatTile
+          compact={phone}
+          label={`Сила: ${focus.exerciseName.toLowerCase()}*`}
+          value={formatKg(focus.currentE1rmKg)}
+          caption="расчётный максимум"
+        />
+      )}
+      <StatTile
+        compact={phone}
+        label="Тренировок"
+        value={dashboard.workoutsThisMonth}
+        caption={`в ${formatMonthIn(dashboard.month)}`}
+      />
+      <RiskTile exercises={dashboard.exercises} compact={phone} />
+    </div>
+  );
 
   return (
     <>
-      <div className={styles.tiles}>
-        <StatTile
-          variant="inverse"
-          label="Поднято за неделю"
-          value={formatTonnage(dashboard.weekTonnageKg)}
-          caption={
-            dashboard.weekTonnageChangePercent == null
-              ? 'на прошлой неделе тренировок не было'
-              : `${formatChange(dashboard.weekTonnageChangePercent)} к прошлой`
-          }
-          highlightCaption={dashboard.weekTonnageChangePercent != null}
-        />
-        {focus?.currentE1rmKg != null && (
-          <StatTile
-            label={`Сила: ${focus.exerciseName.toLowerCase()}*`}
-            value={formatKg(focus.currentE1rmKg)}
-            caption="расчётный максимум"
-          />
-        )}
-        <StatTile
-          label="Тренировок"
-          value={dashboard.workoutsThisMonth}
-          caption={`в ${formatMonthIn(dashboard.month)}`}
-        />
-        <RiskTile exercises={dashboard.exercises} />
-      </div>
-
+      {phone && <SignalCards exercises={dashboard.exercises} compact />}
+      {tiles}
       {focus && <FocusChart exercise={focus} />}
-
-      <SignalCards exercises={dashboard.exercises} />
+      {!phone && <SignalCards exercises={dashboard.exercises} />}
       <ExerciseTicker exercises={dashboard.exercises} />
 
       <p className="footnote">* Сила — сколько ты поднял бы один раз, посчитано по твоим подходам.</p>
@@ -138,11 +153,12 @@ function Content({ dashboard }: { dashboard: Dashboard }) {
   );
 }
 
-function RiskTile({ exercises }: { exercises: ExerciseSummary[] }) {
+function RiskTile({ exercises, compact }: { exercises: ExerciseSummary[]; compact: boolean }) {
   const high = exercises.filter((e) => e.riskLevel === 'HIGH');
   if (high.length > 0) {
     return (
       <StatTile
+        compact={compact}
         variant="accent"
         label="Риск перегрузки"
         value="Высокий"
@@ -153,6 +169,7 @@ function RiskTile({ exercises }: { exercises: ExerciseSummary[] }) {
   const medium = exercises.some((e) => e.riskLevel === 'MEDIUM');
   return (
     <StatTile
+      compact={compact}
       label="Риск перегрузки"
       value={medium ? 'Средний' : 'Низкий'}
       caption={medium ? 'следите за восстановлением' : 'всё в порядке'}
