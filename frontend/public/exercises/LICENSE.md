@@ -11,3 +11,6 @@
 
 Имя файла: `<storage_key>-1.svg` и `<storage_key>-2.svg` — два положения движения.
 Ключ хранится в workout-service, таблица exercise_media (миграции 012 и 014).
+
+`overhead-dumbbell-extension` — Everkinetic №0198 «Standing Triceps Extension» (CC BY-SA 4.0):
+убран белый фон, обрезаны поля, SVG оптимизирован (svgo).

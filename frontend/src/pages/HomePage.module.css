@@ -98,8 +98,18 @@
   opacity: 0.85;
 }
 
-@media (max-width: 600px) {
+/* телефон: плитки сеткой 2×2 (класс ставит HomePage, когда экран узкий) */
+.tilesCompact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .page {
+    gap: var(--space-4);
+  }
+
   .title {
-    font-size: 32px;
+    font-size: 24px;
   }
 }

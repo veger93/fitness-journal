@@ -65,6 +65,7 @@
   --input-bg: #ffffff;
   --input-border: #d1d5db;
   --danger-text: #b91c1c;
+  --success-text: #15803d; /* спокойное «всё в порядке» */
   --focus: #2563eb;
 }
 
@@ -89,5 +90,6 @@
   --input-bg: #0f141e;
   --input-border: #374151;
   --danger-text: #fca5a5;
+  --success-text: #4ade80;
   --focus: #93c5fd;
 }

@@ -9,12 +9,21 @@ interface StatTileProps {
   /** подсветить подпись (например, рост) */
   highlightCaption?: boolean;
   variant?: 'default' | 'inverse' | 'accent';
+  /** мелкая плитка для сетки 2×2 на телефоне */
+  compact?: boolean;
 }
 
 /** Плитка "подпись · большая цифра · пояснение". Цвета текста наследуются от варианта карточки. */
-export function StatTile({ label, value, caption, highlightCaption = false, variant = 'default' }: StatTileProps) {
+export function StatTile({
+  label,
+  value,
+  caption,
+  highlightCaption = false,
+  variant = 'default',
+  compact = false,
+}: StatTileProps) {
   return (
-    <Card variant={variant}>
+    <Card variant={variant} className={compact ? styles.compact : undefined}>
       <span className={styles.label}>{label}</span>
       <span className={styles.value}>{value}</span>
       {caption && <span className={`${styles.caption} ${highlightCaption ? styles.highlight : ''}`}>{caption}</span>}

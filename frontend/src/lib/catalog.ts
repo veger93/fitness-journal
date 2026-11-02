@@ -14,7 +14,7 @@ export const BODY_PART_TILES: { bodyPart: BodyPart; imageKey: string }[] = [
   { bodyPart: 'CHEST', imageKey: 'bench-press' },
   { bodyPart: 'BACK', imageKey: 'pull-ups' },
   { bodyPart: 'LEGS', imageKey: 'squat' },
-  { bodyPart: 'SHOULDERS', imageKey: 'barbell-shoulder-press' },
+  { bodyPart: 'SHOULDERS', imageKey: 'seated-barbell-press' },
   { bodyPart: 'ARMS', imageKey: 'barbell-curl' },
   { bodyPart: 'CORE', imageKey: 'crunches' },
 ];
