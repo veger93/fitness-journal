@@ -228,6 +228,11 @@
     max-width: none;
     bottom: calc(var(--space-3) * 2 + 60px + env(safe-area-inset-bottom));
   }
+
+  /* на экране тренировки внизу закреплена "Записать подход" — напоминание встаёт над ней */
+  :global(body:has([data-dock])) .reminder {
+    bottom: calc(var(--space-3) * 2 + 60px + 112px + env(safe-area-inset-bottom));
+  }
 }
 
 /* ---------- карточки профиля: передача аккаунта, мой тренер ---------- */

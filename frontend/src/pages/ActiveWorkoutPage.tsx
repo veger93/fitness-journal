@@ -5,6 +5,7 @@ import { Card } from '../components/ui/Card';
 import { Chip } from '../components/ui/Chip';
 import { AddExerciseDialog } from '../components/workout/AddExerciseDialog';
 import { ConfirmDialog } from '../components/workout/ConfirmDialog';
+import { ExerciseCard } from '../components/workout/ExerciseCard';
 import { SaveTemplateDialog } from '../components/workout/SaveTemplateDialog';
 import { SetDialog } from '../components/workout/SetDialog';
 import { useNow } from '../hooks/useNow';
@@ -102,7 +103,12 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
         </div>
       )}
 
-      <h1 className={styles.title}>{exercise?.exerciseName ?? workout.name}</h1>
+      {/* текущее упражнение: картинка, название и "Как выполнять" — вся карточка нажимается */}
+      {exercise ? (
+        <ExerciseCard key={exercise.id} exercise={exercise} />
+      ) : (
+        <h1 className={styles.title}>{workout.name}</h1>
+      )}
 
       <div className={styles.chips} role="group" aria-label="Упражнения тренировки">
         {workout.exercises.map((e, index) => (
@@ -157,15 +163,21 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
             </ul>
           )}
 
-          <Button fullWidth onClick={() => setModal({ kind: 'set', editing: null })}>
-            {addSetLabel(exercise.trackingType, next)}
-          </Button>
-          {previousSame && (
-            <p className={styles.hint}>
-              {exercise.trackingType === 'DISTANCE' ? 'Прошлый раз' : 'Прошлый раз на этом подходе'}:{' '}
-              {describeSet(exercise.trackingType, previousSame)}
-            </p>
-          )}
+          {/*
+            На телефоне — закреплена внизу, над панелью вкладок: главное действие экрана всегда под большим
+            пальцем и не уезжает вниз, когда подходов много. Подсказка "прошлый раз" — над кнопкой.
+          */}
+          <div className={styles.dock} data-dock>
+            {previousSame && (
+              <p className={styles.dockHint}>
+                {exercise.trackingType === 'DISTANCE' ? 'Прошлый раз' : 'Прошлый раз на этом подходе'}:{' '}
+                {describeSet(exercise.trackingType, previousSame)}
+              </p>
+            )}
+            <Button fullWidth onClick={() => setModal({ kind: 'set', editing: null })}>
+              {addSetLabel(exercise.trackingType, next)}
+            </Button>
+          </div>
         </>
       )}
 

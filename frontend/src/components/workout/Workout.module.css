@@ -299,3 +299,61 @@
 .mineButton > span {
   white-space: nowrap;
 }
+
+/* ---------- карточка текущего упражнения на экране тренировки (ExerciseCard) ---------- */
+
+.exerciseCard {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* картинка — на подложке цвета фона, как в каталоге */
+.exerciseCard > span:first-child {
+  background: var(--bg);
+}
+
+.exerciseCard:disabled {
+  cursor: default;
+}
+
+.exerciseCardText {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.exerciseCardTitle {
+  margin: 0;
+  font-size: var(--text-lg);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.exerciseCardMeta {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.exerciseCardLink {
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* описание из каталога ещё грузится — ссылку не показываем, чтобы не нажимали впустую */
+.exerciseCard:disabled .exerciseCardLink {
+  visibility: hidden;
+}
