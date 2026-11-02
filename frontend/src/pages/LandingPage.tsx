@@ -1,7 +1,8 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { DemoScenario } from '../api/auth';
 import { useAuth } from '../auth/AuthProvider';
+import { useMarquee } from '../hooks/useMarquee';
 import { clearDemoSession, hasDemoSession } from '../lib/demo';
 import { ButtonLink } from '../components/ui/Button';
 import { DEMO_REFERENCE, DEMO_STRENGTH, chartPaths } from '../lib/landing';
@@ -92,6 +93,8 @@ function DemoEntry() {
 
 export function LandingPage() {
   useDarkBrowserBar();
+  const marqueeRef = useRef<HTMLDivElement>(null);
+  useMarquee(marqueeRef);
 
   return (
     <div data-theme="dark" className={styles.page}>
@@ -134,8 +137,8 @@ export function LandingPage() {
       </section>
 
       <div className={styles.marquee} aria-hidden="true">
-        {/* две одинаковые половины: анимация сдвигает ленту на 50% и незаметно начинает сначала */}
-        <div className={styles.marqueeTrack}>
+        {/* две одинаковые половины: пункты сдвигаются на половину ленты и незаметно начинают сначала (useMarquee) */}
+        <div ref={marqueeRef} className={styles.marqueeTrack}>
           {[...FEATURES, ...FEATURES].map((feature, i) => (
             <span key={i}>{feature}</span>
           ))}
