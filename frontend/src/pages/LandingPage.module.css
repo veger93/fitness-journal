@@ -248,12 +248,14 @@
 
 .marqueeTrack {
   display: inline-block;
-  animation: marquee 32s linear infinite;
   font: 700 22px var(--font-display);
 }
 
+/* каждый пункт — свой маленький слой: двигается сам (useMarquee), а не вся лента разом */
 .marqueeTrack span {
-  margin: 0 var(--space-5);
+  display: inline-block;
+  padding: 0 var(--space-5);
+  will-change: transform;
 }
 
 /* каждый второй пункт — оранжевым, между пунктами точка */
@@ -265,12 +267,6 @@
   content: '·';
   margin-left: calc(var(--space-5) * 2);
   color: var(--text-muted);
-}
-
-@keyframes marquee {
-  to {
-    transform: translateX(-50%);
-  }
 }
 
 /* ---------- секции ---------- */
@@ -562,11 +558,5 @@
 
   .final {
     margin-inline: var(--space-3);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .marqueeTrack {
-    animation: none;
   }
 }

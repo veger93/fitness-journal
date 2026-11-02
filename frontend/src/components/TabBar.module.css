@@ -65,7 +65,7 @@
   background: var(--surface);
   transform-origin: center;
   pointer-events: none;
-  will-change: transform, width;
+  will-change: transform; /* только transform: "width" здесь Safari понимал как повод держать старую картинку слоя */
 }
 
 /*
