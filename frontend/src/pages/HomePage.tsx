@@ -105,45 +105,44 @@ function EmptyState() {
 function Content({ dashboard }: { dashboard: Dashboard }) {
   const focus = dashboard.exercises.find((e) => e.exerciseId === dashboard.focusExerciseId) ?? null;
   // на телефоне всё идёт столбиком, поэтому порядок другой: сначала "что сделать", потом цифры —
-  // и сигналы строками, а плитки сеткой 2×2 (иначе главная занимает 4–5 экранов)
+  // и сигналы строками (иначе главная занимает 4–5 экранов)
   const phone = useMediaQuery(PHONE);
 
-  const tiles = (
-    <div className={`${styles.tiles} ${phone ? styles.tilesCompact : ''}`}>
-      <StatTile
-        compact={phone}
-        variant="inverse"
-        label="Поднято за неделю"
-        value={formatTonnage(dashboard.weekTonnageKg)}
-        caption={
-          dashboard.weekTonnageChangePercent == null
-            ? 'на прошлой неделе тренировок не было'
-            : `${formatChange(dashboard.weekTonnageChangePercent)} к прошлой`
-        }
-        highlightCaption={dashboard.weekTonnageChangePercent != null}
-      />
-      {focus?.currentE1rmKg != null && (
+  // "Неделя" — только общие цифры по всем упражнениям. Всё про одно упражнение (сила, последний подход)
+  // живёт в его карточке с графиком: раньше "Сила: жим" стояла среди общих плиток, и было непонятно, что к чему
+  const week = (
+    <section className={styles.week} aria-labelledby="week-title">
+      <h2 id="week-title" className={styles.weekTitle}>
+        Неделя
+      </h2>
+      <div className={`${styles.tiles} ${styles.tiles3}`}>
         <StatTile
           compact={phone}
-          label={`Сила: ${focus.exerciseName.toLowerCase()}*`}
-          value={formatKg(focus.currentE1rmKg)}
-          caption="расчётный максимум"
+          variant="inverse"
+          label={phone ? 'Поднято' : 'Поднято за неделю'}
+          value={formatTonnage(dashboard.weekTonnageKg)}
+          caption={
+            dashboard.weekTonnageChangePercent == null
+              ? 'прошлая неделя без тренировок'
+              : `${formatChange(dashboard.weekTonnageChangePercent)} к прошлой`
+          }
+          highlightCaption={dashboard.weekTonnageChangePercent != null}
         />
-      )}
-      <StatTile
-        compact={phone}
-        label="Тренировок"
-        value={dashboard.workoutsThisMonth}
-        caption={`в ${formatMonthIn(dashboard.month)}`}
-      />
-      <RiskTile exercises={dashboard.exercises} compact={phone} />
-    </div>
+        <StatTile
+          compact={phone}
+          label="Тренировок"
+          value={dashboard.workoutsThisMonth}
+          caption={`в ${formatMonthIn(dashboard.month)}`}
+        />
+        <RiskTile exercises={dashboard.exercises} compact={phone} />
+      </div>
+    </section>
   );
 
   return (
     <>
       {phone && <SignalCards exercises={dashboard.exercises} compact />}
-      {tiles}
+      {week}
       {focus && <FocusChart exercise={focus} />}
       {!phone && <SignalCards exercises={dashboard.exercises} />}
       <ExerciseTicker exercises={dashboard.exercises} />
@@ -154,13 +153,14 @@ function Content({ dashboard }: { dashboard: Dashboard }) {
 }
 
 function RiskTile({ exercises, compact }: { exercises: ExerciseSummary[]; compact: boolean }) {
+  const label = compact ? 'Риск' : 'Риск перегрузки';
   const high = exercises.filter((e) => e.riskLevel === 'HIGH');
   if (high.length > 0) {
     return (
       <StatTile
         compact={compact}
         variant="accent"
-        label="Риск перегрузки"
+        label={label}
         value="Высокий"
         caption={high.map((e) => e.exerciseName.toLowerCase()).join(', ')}
       />
@@ -170,9 +170,9 @@ function RiskTile({ exercises, compact }: { exercises: ExerciseSummary[]; compac
   return (
     <StatTile
       compact={compact}
-      label="Риск перегрузки"
+      label={label}
       value={medium ? 'Средний' : 'Низкий'}
-      caption={medium ? 'следите за восстановлением' : 'всё в порядке'}
+      caption={medium ? 'следите за отдыхом' : 'всё в порядке'}
     />
   );
 }
@@ -199,8 +199,8 @@ function FocusChart({ exercise }: { exercise: ExerciseSummary }) {
             {exercise.exerciseName} →
           </Link>
         </h2>
-        {lastSet && <span className={styles.muted}>последний подход: {lastSet}</span>}
       </div>
+      <Strength exercise={exercise} lastSet={lastSet} />
       <ProgressLegend plateauDays={plateau?.detected ? plateau.daysSinceProgress : null} />
       {progress.data ? (
         <ProgressChart points={progress.data.points} plateauFrom={plateau?.detected ? plateau.lastProgressAt : null} />
@@ -238,4 +238,35 @@ function FocusChart({ exercise }: { exercise: ExerciseSummary }) {
 function formatMonthIn(month: string): string {
   const name = formatMonth(month);
   return name.endsWith('ь') || name.endsWith('й') ? `${name.slice(0, -1)}е` : `${name}е`;
+}
+
+/**
+ * Сила упражнения и последний подход — рядом, чтобы было видно разницу:
+ * "Сила 36,7 кг (лучшее за 4 недели)" и "последний подход 15 кг × 10 — сила в нём 20 кг".
+ */
+function Strength({ exercise, lastSet }: { exercise: ExerciseSummary; lastSet: string | null }) {
+  const strength = exercise.strengthKg ?? exercise.currentE1rmKg;
+  const lastStrength = exercise.currentE1rmKg;
+  return (
+    <div className={styles.strength}>
+      {strength != null && (
+        <div>
+          <span className={styles.muted}>Сила*</span>
+          <p className={styles.strengthValue}>{formatKg(strength)}</p>
+          <span className={styles.muted}>
+            {exercise.strengthStale ? 'давно не делали — сила на последней тренировке' : 'лучшее за 4 недели'}
+          </span>
+        </div>
+      )}
+      {lastSet && (
+        <div className={styles.lastSet}>
+          <span className={styles.muted}>Последний подход</span>
+          <p className={styles.lastSetValue}>{lastSet}</p>
+          {lastStrength != null && strength != null && lastStrength < strength && (
+            <span className={styles.muted}>сила в нём {formatKg(lastStrength)}</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }

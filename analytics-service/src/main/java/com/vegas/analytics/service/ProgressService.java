@@ -47,7 +47,8 @@ public class ProgressService {
         ExercisePerformance anchor = withE1rm.isEmpty() ? null : withE1rm.get(0);
         ExercisePerformance latest = withE1rm.isEmpty() ? null : withE1rm.get(withE1rm.size() - 1);
         BigDecimal first = anchor == null ? null : anchor.getBestE1rmKg();
-        BigDecimal current = latest == null ? null : latest.getBestE1rmKg();
+        // "Сила" — лучшее за 4 недели, а не последняя тренировка: лёгкий день не роняет цифру (StrengthCalculator)
+        BigDecimal current = StrengthCalculator.of(withE1rm, now).kg();
 
         // все периоды не короче месяца, поэтому последняя неделя уже есть в выборке
         Instant weekAgo = now.minus(WEEK);

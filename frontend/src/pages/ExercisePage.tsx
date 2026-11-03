@@ -212,7 +212,7 @@ function Tiles({
       <StatTile
         variant="inverse"
         label="Сила*"
-        value={summary.currentE1rmKg != null ? formatKg(summary.currentE1rmKg) : '—'}
+        value={formatKgOrDash(summary.strengthKg ?? summary.currentE1rmKg)}
         caption={change != null ? `${formatChange(change)} ${PERIOD_CAPTION[period]}` : 'мало данных за период'}
         highlightCaption={change != null && change > 0}
       />
@@ -284,4 +284,9 @@ function History({ summary, progress }: { summary: ExerciseSummary; progress: Ex
       ))}
     </ul>
   );
+}
+
+/** Сила — лучшее за 4 недели (с сервера); у старых ответов без поля — 1ПМ последней тренировки */
+function formatKgOrDash(kg: number | null): string {
+  return kg != null ? formatKg(kg) : '—';
 }

@@ -128,13 +128,14 @@ public final class DashboardCalculator {
                 .filter(Objects::nonNull)
                 .toList();
         BigDecimal currentE1rm = e1rms.isEmpty() ? null : e1rms.get(e1rms.size() - 1);
+        StrengthCalculator.Strength strength = StrengthCalculator.of(history, now);
         List<BigDecimal> trend = e1rms.subList(Math.max(0, e1rms.size() - TREND_POINTS), e1rms.size());
 
         // без веса (подтягивания) показываем лучшие повторы, а не прочерк
         Integer lastReps = last.getMaxWeightReps() != null ? last.getMaxWeightReps() : last.getBestReps();
         return new ExerciseSummaryResponse(last.getExerciseId(), last.getExerciseName(), last.getTrackingType(),
                 last.getPerformedAt(), last.getMaxWeightKg(), lastReps, last.getBestDistanceM(), last.getBestDurationSec(),
-                currentE1rm, status, risk.level(), note, trend);
+                currentE1rm, status, risk.level(), note, trend, strength.kg(), strength.stale());
     }
 
     /**
@@ -171,7 +172,7 @@ public final class DashboardCalculator {
 
         return new ExerciseSummaryResponse(last.getExerciseId(), last.getExerciseName(), last.getTrackingType(),
                 last.getPerformedAt(), null, null, distance, duration, null, status,
-                load.warning() ? RiskLevel.HIGH : RiskLevel.LOW, note, trend);
+                load.warning() ? RiskLevel.HIGH : RiskLevel.LOW, note, trend, null, false);
     }
 
     private static boolean isRun(ExercisePerformance performance) {
