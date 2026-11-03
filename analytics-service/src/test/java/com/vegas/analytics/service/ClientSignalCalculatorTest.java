@@ -90,7 +90,7 @@ class ClientSignalCalculatorTest {
         return List.of(
                 perf(SQUAT, "Приседания", 25, "110", "1000"),
                 perf(SQUAT, "Приседания", 18, "110", "1000"),
-                perf(SQUAT, "Приседания", 11, "108", "1000"),
+                perf(SQUAT, "Приседания", 11, "104", "1000"),
                 perf(SQUAT, "Приседания", 3, "100", "2500"));
     }
 

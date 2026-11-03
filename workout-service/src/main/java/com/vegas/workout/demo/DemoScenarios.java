@@ -99,7 +99,9 @@ public final class DemoScenarios {
                     work("Выпады с гантелями", grow(14, 1, w / 3, 1), 10, 3)));
             // плечи и руки + становая: последняя неделя — перегрузка (см. ниже, отдельная тренировка)
             boolean lastWeek = w == weeks - 1;
-            double deadlift = lastWeek ? 132.5 : grow(110, 2.5, w / 2, 2.5);
+            // аналитика считает падение силы усталостью, только если просели ДВЕ тренировки подряд —
+            // поэтому и на последней неделе вес ниже пика, и в доп. тренировке ниже
+            double deadlift = lastWeek ? 122.5 : grow(110, 2.5, w / 2, 2.5);
             sessions.add(session(now, ago + 5, ATHLETE_ARMS, ATHLETE_ARMS,
                     lastWeek ? hard("Становая тяга", deadlift, 5, 5) : main("Становая тяга", deadlift, 5, 3),
                     work("Жим штанги стоя", grow(40, 2.5, w / 3, 2.5), 6, 3),
@@ -171,11 +173,12 @@ public final class DemoScenarios {
                     work("Жим гантелей лёжа", grow(8, 1, w / 2, 1), 10, 3),
                     work("Тяга верхнего блока", grow(25, 2.5, w / 2, 2.5), 10, 3)));
             sessions.add(session(now, ago + 6, "Тренировка с тренером", null,
-                    lastWeek ? hard("Приседания со штангой", 52.5, 5, 5)
+                    // две тренировки подряд: объём резко вырос, а вес ниже пика (50 кг) — перегрузка
+                    lastWeek ? hard("Приседания со штангой", 45, 5, 5)
                             : main("Приседания со штангой", grow(40, 2.5, w / 2, 2.5), 5, 3),
                     work("Румынская тяга", grow(30, 2.5, w / 2, 2.5), 10, 3)));
         }
-        sessions.add(session(now, 1, "Тренировка с тренером", null, hard("Приседания со штангой", 47.5, 5, 5)));
+        sessions.add(session(now, 1, "Тренировка с тренером", null, hard("Приседания со штангой", 45, 5, 5)));
         return sessions;
     }
 

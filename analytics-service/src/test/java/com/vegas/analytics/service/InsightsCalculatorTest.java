@@ -73,18 +73,44 @@ class InsightsCalculatorTest {
             List<ExercisePerformance> history = List.of(
                     perf(25, "110", "1000", null),
                     perf(18, "110", "1000", null),
-                    perf(11, "108", "1000", null),
-                    perf(3, "100", "2500", null));   // объём резко вырос, а 1ПМ упал
+                    perf(11, "104", "1000", null),
+                    perf(3, "100", "2500", null));   // объём резко вырос, а 1ПМ упал — две тренировки подряд
             PlateauResponse plateau = InsightsCalculator.plateau(history, NOW);
 
             OverloadRiskResponse risk = InsightsCalculator.overloadRisk(history, NOW, plateau);
 
             // неделя 2500 против среднего (5500 / 4 = 1375) -> 1.82
             assertThat(risk.acuteChronicRatio()).isEqualByComparingTo("1.82");
-            // (110 - 100) / 110 -> 9.1%
-            assertThat(risk.e1rmDropPercent()).isEqualByComparingTo("9.1");
+            // подтверждено обеими: меньшее падение (110 - 104) / 110 -> 5.5%
+            assertThat(risk.e1rmDropPercent()).isEqualByComparingTo("5.5");
             assertThat(risk.level()).isEqualTo(RiskLevel.HIGH);
             assertThat(risk.reasons()).hasSize(3);
+        }
+
+        @Test
+        void oneLightDayAfterPeak_isNotFatigue() {
+            // случай из дневника: 27,5 × 10 (36,7), потом лёгкий день 15 × 10 (20) — это не усталость
+            List<ExercisePerformance> history = List.of(
+                    perf(9, "26.7", "1000", null),
+                    perf(6, "30", "1000", null),
+                    perf(4, "36.7", "1000", null),
+                    perf(1, "20", "300", null));
+
+            OverloadRiskResponse risk = InsightsCalculator.overloadRisk(history, NOW, InsightsCalculator.plateau(history, NOW));
+
+            assertThat(risk.e1rmDropPercent()).isEqualByComparingTo("0");
+            assertThat(risk.level()).isEqualTo(RiskLevel.LOW);
+        }
+
+        @Test
+        void twoLightDaysInARow_isDrop() {
+            List<ExercisePerformance> history = List.of(
+                    perf(9, "100", "1000", null),
+                    perf(4, "94", "1000", null),
+                    perf(1, "90", "1000", null));
+
+            // меньшее из двух падений: (100 - 94) / 100
+            assertThat(InsightsCalculator.e1rmDropPercent(history)).isEqualByComparingTo("6");
         }
 
         @Test

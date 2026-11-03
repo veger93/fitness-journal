@@ -3,17 +3,28 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { workoutsApi, type WorkoutTemplate } from '../api/workouts';
-import { Button } from '../components/ui/Button';
+import { TodayPlanCard } from '../components/home/TodayPlanCard';
 import { ConfirmDialog } from '../components/workout/ConfirmDialog';
 import { CURRENT_WORKOUT_KEY, useCurrentWorkout } from '../hooks/useWorkout';
+import { completedToday, todayOf } from '../lib/plan';
 import styles from './WorkoutPages.module.css';
 
-/** "Начать тренировку": выбрать комплекс или пустую. Если тренировка уже идёт — сразу к ней. */
+/**
+ * "Начать тренировку": выбрать комплекс или пустую. Если тренировка уже идёт — сразу к ней.
+ * Сверху — то, что нажимают чаще всего: "сегодня по плану", "своя" и "повторить последнюю";
+ * ниже комплексы компактными плитками 2 в ряд (на телефоне раньше каждый был карточкой во всю ширину).
+ */
 export function StartWorkoutPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const current = useCurrentWorkout();
   const templates = useQuery({ queryKey: ['templates'], queryFn: workoutsApi.templates });
+  const plan = useQuery({ queryKey: ['plan'], queryFn: workoutsApi.plan });
+  // тот же ключ и запрос, что на главной: последняя тренировка для "повторить" и "сегодня уже сделано"
+  const recent = useQuery({ queryKey: ['history', 'recent'], queryFn: () => workoutsApi.journal(0, 5) });
+  const last = recent.data?.content[0] ?? null;
+  const todayPlanned = plan.data?.days.find((d) => d.dayOfWeek === todayOf())?.template ?? null;
+  const plannedPending = todayPlanned !== null && !completedToday(recent.data?.content ?? [], todayPlanned.id);
 
   const [deleting, setDeleting] = useState<WorkoutTemplate | null>(null);
   const remove = useMutation({
@@ -26,7 +37,9 @@ export function StartWorkoutPage() {
   });
 
   const start = useMutation({
-    mutationFn: workoutsApi.start,
+    // templateId — комплекс (null — пустая тренировка); repeatOf — повторить прошлую тренировку
+    mutationFn: ({ templateId, repeatOf }: { templateId?: string | null; repeatOf?: string }) =>
+      repeatOf ? workoutsApi.repeat(repeatOf) : workoutsApi.start(templateId ?? null),
     onSuccess: (workout) => {
       queryClient.setQueryData(CURRENT_WORKOUT_KEY, workout);
       navigate('/workout/active');
@@ -48,17 +61,36 @@ export function StartWorkoutPage() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Новая тренировка</h1>
-      <p className={styles.muted}>
+      <h1 className={`${styles.title} ${styles.startTitle}`}>Новая тренировка</h1>
+      <p className={`${styles.muted} ${styles.intro}`}>
         Выберите комплекс или соберите свою тренировку. Время пойдёт, только когда начнёте — можно подготовиться
         заранее.
       </p>
-      <Button fullWidth onClick={() => start.mutate(null)} disabled={start.isPending}>
-        Своя тренировка
-      </Button>
-      <Link to="/plan" className={styles.planLink}>
-        План на неделю →
-      </Link>
+
+      {plan.data && plannedPending && <TodayPlanCard plan={plan.data} recent={recent.data?.content ?? []} />}
+
+      <div className={styles.quick}>
+        <button
+          type="button"
+          className={styles.quickAction}
+          disabled={start.isPending}
+          onClick={() => start.mutate({ templateId: null })}
+        >
+          <span className={styles.quickTitle}>＋ Своя тренировка</span>
+          <span className={styles.muted}>любые упражнения</span>
+        </button>
+        {last && (
+          <button
+            type="button"
+            className={styles.quickAction}
+            disabled={start.isPending}
+            onClick={() => start.mutate({ repeatOf: last.id })}
+          >
+            <span className={styles.quickTitle}>↻ Повторить последнюю</span>
+            <span className={`${styles.muted} ${styles.ellipsis}`}>{last.name || 'Тренировка'}</span>
+          </button>
+        )}
+      </div>
       {start.isError && <p className={styles.muted}>{start.error.message}</p>}
 
       {mine.length > 0 && (
@@ -67,7 +99,7 @@ export function StartWorkoutPage() {
           title="Мои комплексы"
           templates={mine}
           disabled={start.isPending}
-          onPick={(id) => start.mutate(id)}
+          onPick={(id) => start.mutate({ templateId: id })}
         />
       )}
       {ready.length > 0 && (
@@ -75,10 +107,14 @@ export function StartWorkoutPage() {
           title="Готовые комплексы"
           templates={ready}
           disabled={start.isPending}
-          onPick={(id) => start.mutate(id)}
+          onPick={(id) => start.mutate({ templateId: id })}
         />
       )}
       {templates.isPending && <p className={styles.muted}>Загружаем комплексы…</p>}
+
+      <Link to="/plan" className={styles.planLink}>
+        План на неделю →
+      </Link>
 
       {deleting && (
         <ConfirmDialog
@@ -109,13 +145,18 @@ function TemplateGroup({
   onDelete?: (template: WorkoutTemplate) => void;
 }) {
   return (
-    <section className={styles.page}>
-      <h2 className={styles.sectionTitle}>{title}</h2>
+    <section className={styles.group}>
+      <h2 className={styles.groupTitle}>{title}</h2>
       <div className={styles.templates}>
         {templates.map((template) => (
           // две отдельные кнопки рядом, а не кнопка в кнопке: вложенные <button> в HTML запрещены
           <div key={template.id} className={`${styles.templateWrap} ${onDelete ? styles.withDelete : ''}`}>
             <button type="button" className={styles.template} disabled={disabled} onClick={() => onPick(template.id)}>
+              <span
+                className={styles.templateMark}
+                style={{ background: templateColor(template) }}
+                aria-hidden="true"
+              />
               <span className={styles.templateName}>{template.name}</span>
               <span className={styles.muted}>{exercisesLabel(template.exercises.length)}</span>
             </button>
@@ -145,6 +186,27 @@ function TemplateGroup({
       </div>
     </section>
   );
+}
+
+/** Цвета меток комплексов — читаются и на светлой, и на тёмной карточке */
+const TEMPLATE_COLORS: Record<string, string> = {
+  violet: '#7c3aed',
+  green: '#16a34a',
+  blue: '#2563eb',
+  orange: '#ea580c',
+};
+const PALETTE = Object.values(TEMPLATE_COLORS);
+
+/** Свой цвет у комплекса (у готовых он есть); нет — стабильный цвет по id, чтобы метка не "прыгала" */
+function templateColor(template: WorkoutTemplate): string {
+  if (template.color && TEMPLATE_COLORS[template.color]) {
+    return TEMPLATE_COLORS[template.color];
+  }
+  let hash = 0;
+  for (const char of template.id) {
+    hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  }
+  return PALETTE[Math.abs(hash) % PALETTE.length];
 }
 
 /** 1 упражнение, 2 упражнения, 5 упражнений — склонение по-русски */
