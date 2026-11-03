@@ -33,6 +33,11 @@ export function SignalCards({ exercises, compact = false }: { exercises: Exercis
   );
 
   if (compact) {
+    // на телефоне карточка только для того, что требует действий: перегрузка или плато.
+    // Рекорды без них — точка на вкладке "Рекорды" внизу (useNewRecord), отдельная карточка не нужна
+    if (overloads.length === 0 && plateaus.length === 0) {
+      return null;
+    }
     const calm = [overloads.length === 0 && 'перегрузки нет', plateaus.length === 0 && 'плато нет'].filter(Boolean);
     const running = overloads[0]?.trackingType === 'DISTANCE';
     return (

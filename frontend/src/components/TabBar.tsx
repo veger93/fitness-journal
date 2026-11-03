@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useCapsule } from '../hooks/useCapsule';
 import { useActingClient } from '../trainer/ActingClientProvider';
 import { useCurrentWorkout } from '../hooks/useWorkout';
+import { useNewRecord } from '../hooks/useNewRecord';
 import styles from './TabBar.module.css';
 
 /** Иконки — простые линии 24×24 одним stroke, как колокольчик в шапке */
@@ -25,6 +26,7 @@ const TABS: { to: string; label: string; icon: keyof typeof ICONS }[] = [
 /**
  * Нижняя панель вкладок на телефоне: до разделов дотягивается большой палец, шапка не съедает экран.
  * "Тренировка" посередине — главное действие приложения. Идёт тренировка — на вкладке оранжевая точка.
+ * Новый рекорд (за 14 дней, ещё не открывали страницу рекордов) — такая же точка на "Рекордах".
  * На компьютере панель скрыта (CSS), там меню в шапке.
  *
  * Светлая капсула под выбранной вкладкой — отдельный элемент: при смене раздела она перетекает
@@ -33,6 +35,7 @@ const TABS: { to: string; label: string; icon: keyof typeof ICONS }[] = [
 export function TabBar() {
   const current = useCurrentWorkout();
   const inProgress = current.data != null;
+  const { fresh: newRecord } = useNewRecord();
   const { pathname } = useLocation();
   const { client: acting } = useActingClient();
   const navRef = useRef<HTMLElement>(null);
@@ -54,12 +57,15 @@ export function TabBar() {
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d={ICONS[tab.icon]} />
             </svg>
-            {tab.icon === 'workout' && inProgress && <span className={styles.dot} />}
+            {((tab.icon === 'workout' && inProgress) || (tab.icon === 'records' && newRecord)) && (
+              <span className={styles.dot} />
+            )}
           </span>
           <span className={styles.label}>
             <span className={styles.labelText}>{tab.label}</span>
           </span>
           {tab.icon === 'workout' && inProgress && <span className="visually-hidden">, идёт тренировка</span>}
+          {tab.icon === 'records' && newRecord && <span className="visually-hidden">, новый рекорд</span>}
         </NavLink>
       ))}
     </nav>

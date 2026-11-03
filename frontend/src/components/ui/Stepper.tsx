@@ -10,12 +10,24 @@ interface StepperProps {
   max?: number;
   /** "decimal" — вес (2,5 кг), "numeric" — целые (повторы) */
   inputMode?: 'decimal' | 'numeric';
+  /** сколько знаков после запятой оставлять (0 — только целые) */
+  decimals?: number;
 }
 
 /** Число с кнопками − / +. Можно и вписать руками: в зале удобнее кнопки, дома — клавиатура. */
-export function Stepper({ label, value, onChange, step, min = 0, max = 100_000, inputMode = 'numeric' }: StepperProps) {
+export function Stepper({
+  label,
+  value,
+  onChange,
+  step,
+  min = 0,
+  max = 100_000,
+  inputMode = 'numeric',
+  decimals = 2,
+}: StepperProps) {
   const id = useId();
-  const clamp = (v: number) => Math.min(max, Math.max(min, Math.round(v * 100) / 100));
+  const factor = 10 ** decimals;
+  const clamp = (v: number) => Math.min(max, Math.max(min, Math.round(v * factor) / factor));
 
   return (
     <div className={styles.stepper}>

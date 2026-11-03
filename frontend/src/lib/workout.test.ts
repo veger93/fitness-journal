@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Workout, WorkoutSet } from '../api/workouts';
 import {
   describeSet,
+  fitWeight,
   distanceFromSpeed,
   formatClock,
   formatDuration,
@@ -26,7 +27,20 @@ const set = (number: number, weightKg: number, reps: number): WorkoutSet => ({
   warmup: false,
 });
 
+describe('fitWeight', () => {
+  it('тренажёр — только целые килограммы, остальное как было', () => {
+    expect(fitWeight(45.5, 'MACHINE')).toBe(46);
+    expect(fitWeight(47.5, 'MACHINE')).toBe(48);
+    expect(fitWeight(42.5, 'BARBELL')).toBe(42.5);
+    expect(fitWeight(null, 'MACHINE')).toBeNull();
+  });
+});
+
 describe('suggestNextSet', () => {
+  it('тренажёр: дробный вес из прошлой тренировки подставляется целым', () => {
+    expect(suggestNextSet([], [set(1, 45.5, 12)], 'WEIGHT_REPS', 'MACHINE').weightKg).toBe(46);
+  });
+
   it('разгрузка важнее прошлых подходов: облегчённый вес и повторы из плана', () => {
     const deload = { exerciseId: 'e', workingWeightKg: 70, sets: 3, reps: 5, startedAt: '', endsAt: '' };
 

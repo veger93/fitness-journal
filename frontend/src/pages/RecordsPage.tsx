@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useNewRecord } from '../hooks/useNewRecord';
 import { analyticsApi, type PersonalRecord, type RunningSummary } from '../api/analytics';
 import { formatClock, formatDistance } from '../lib/workout';
 import { Badge } from '../components/ui/Badge';
@@ -29,6 +30,13 @@ export function RecordsPage() {
   const records = useQuery({ queryKey: ['records'], queryFn: () => analyticsApi.records(200) });
   const running = useQuery({ queryKey: ['running'], queryFn: analyticsApi.running });
   const data = records.data ?? [];
+  // открыли рекорды — точка на вкладке гаснет (до следующего рекорда)
+  const { fresh, markSeen } = useNewRecord();
+  useEffect(() => {
+    if (fresh && records.isSuccess) {
+      markSeen();
+    }
+  }, [fresh, records.isSuccess, markSeen]);
 
   return (
     <div className={styles.page}>

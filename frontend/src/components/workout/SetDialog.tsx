@@ -2,7 +2,15 @@ import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { workoutsApi, type SetInput, type WorkoutExercise, type WorkoutSet } from '../../api/workouts';
 import { formatKg, formatShortDate } from '../../lib/format';
-import { distanceFromSpeed, formatPace, formatSpeed, speedKmh, suggestNextSet } from '../../lib/workout';
+import {
+  distanceFromSpeed,
+  formatPace,
+  formatSpeed,
+  speedKmh,
+  suggestNextSet,
+  WEIGHT_STEP,
+  weightDecimals,
+} from '../../lib/workout';
 import { ExerciseImage } from '../ExerciseImage';
 import { ExerciseInfo } from '../ExerciseInfo';
 import { SegmentedControl } from '../ui/SegmentedControl';
@@ -106,9 +114,10 @@ export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, 
             <Stepper
               label={exercise.equipment === 'BODYWEIGHT' ? 'Доп. вес, кг (0 — без веса)' : 'Вес, кг'}
               value={values.weightKg ?? 0}
-              step={2.5}
+              step={WEIGHT_STEP[exercise.equipment]}
+              decimals={weightDecimals(exercise.equipment)}
               max={9999}
-              inputMode="decimal"
+              inputMode={exercise.equipment === 'MACHINE' ? 'numeric' : 'decimal'}
               onChange={(weightKg) => change({ weightKg })}
             />
             <Stepper

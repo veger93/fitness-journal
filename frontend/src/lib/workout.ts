@@ -30,6 +30,32 @@ const FIRST_TIME_WEIGHT: Record<Equipment, number> = {
 };
 
 /**
+ * Шаг веса для кнопок ± по снаряжению. У тренажёров плитки стека бывают любыми (46, 52, 59 кг) —
+ * поэтому шаг 1 кг и вес только целый: дробь вроде 45,5 на тренажёре не выставить.
+ * Штанга и свой вес (диск на поясе) — блины 2,5 кг, гантели — тоже ряд через 2,5.
+ */
+export const WEIGHT_STEP: Record<Equipment, number> = {
+  BARBELL: 2.5,
+  DUMBBELL: 2.5,
+  MACHINE: 1,
+  BODYWEIGHT: 2.5,
+};
+
+/** Знаков после запятой у веса: тренажёр — только целые, остальное — до сотых (как и раньше) */
+export function weightDecimals(equipment: Equipment): number {
+  return equipment === 'MACHINE' ? 0 : 2;
+}
+
+/** Вес под снаряжение: 45,5 на тренажёре -> 46 (старые записи и вес разгрузки, округлённый до 2,5) */
+export function fitWeight(weightKg: number | null, equipment: Equipment): number | null {
+  if (weightKg == null) {
+    return weightKg;
+  }
+  const factor = 10 ** weightDecimals(equipment);
+  return Math.round(weightKg * factor) / factor;
+}
+
+/**
  * Что подставить в форму нового подхода (чтобы не набирать каждый раз):
  * 0) идёт разгрузка — её вес и повторы, а не "как в прошлый раз" (иначе подсказка тянула бы обратно к тяжёлому);
  * 1) последний подход этого упражнения сегодня — продолжаем с того веса, на котором остановились;
@@ -49,7 +75,7 @@ export function suggestNextSet(
   if (deload && trackingType === 'WEIGHT_REPS') {
     return {
       ...defaults,
-      weightKg: deload.workingWeightKg ?? sets.at(-1)?.weightKg ?? defaults.weightKg,
+      weightKg: fitWeight(deload.workingWeightKg ?? sets.at(-1)?.weightKg ?? defaults.weightKg, equipment),
       reps: deload.reps,
     };
   }
@@ -58,7 +84,7 @@ export function suggestNextSet(
     return { ...defaults };
   }
   return {
-    weightKg: source.weightKg ?? defaults.weightKg,
+    weightKg: fitWeight(source.weightKg ?? defaults.weightKg, equipment),
     reps: source.reps ?? defaults.reps,
     durationSec: source.durationSec ?? defaults.durationSec,
     distanceM: source.distanceM ?? defaults.distanceM,
