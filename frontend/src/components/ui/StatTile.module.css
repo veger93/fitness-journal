@@ -20,14 +20,14 @@
   opacity: 1;
 }
 
-/* сетка 2×2 на телефоне: та же плитка, но плотнее */
+/* три плитки в ряд на телефоне: та же плитка, но плотнее */
 .compact {
   padding: var(--space-3) var(--space-4);
   gap: 2px;
 }
 
 .compact .value {
-  font-size: 22px;
+  font-size: 18px;
 }
 
 .compact .label,

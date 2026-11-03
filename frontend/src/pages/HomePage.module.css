@@ -98,15 +98,73 @@
   opacity: 0.85;
 }
 
-/* телефон: плитки сеткой 2×2 (класс ставит HomePage, когда экран узкий) */
-.tilesCompact {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+/* ---------- "Неделя": три общие плитки ---------- */
+
+.week {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-2);
+}
+
+.weekTitle {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.tiles3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* ---------- сила и последний подход в карточке упражнения ---------- */
+
+.strength {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-5);
+}
+
+.strengthValue {
+  margin: 2px 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-num);
+  line-height: 1.1;
+}
+
+.lastSet {
+  text-align: right;
+}
+
+.lastSetValue {
+  margin: 2px 0;
+  font-weight: 600;
+  font-size: var(--text-lg);
 }
 
 @media (max-width: 640px) {
   .page {
     gap: var(--space-4);
+  }
+
+  /* три плитки в ряд на узком экране: "Тренировок 11" уже остальных, "Высокий" — шире */
+  .tiles3 {
+    grid-template-columns: 1fr 0.9fr 1.2fr;
+    gap: var(--space-2);
+  }
+
+  .tiles3 > * {
+    padding: var(--space-3) 10px;
+    min-width: 0;
+  }
+
+  .strengthValue {
+    font-size: 28px;
   }
 
   .title {

@@ -10,7 +10,8 @@ import java.util.UUID;
  * trackingType — что записываем: WEIGHT_REPS / TIME / DISTANCE (от этого зависит, как показывать результат);
  * lastWeightKg × lastReps — самый тяжёлый подход последней тренировки; без веса (подтягивания) — только lastReps;
  * lastDistanceM, lastDurationSec — лучшие дистанция и время последней тренировки (бег, планка);
- * currentE1rmKg — последний расчётный 1ПМ (null, если не считается);
+ * currentE1rmKg — 1ПМ последней тренировки (null, если не считается) — для сравнений "было/стало";
+ * strengthKg — "Сила": лучший 1ПМ за 4 недели (StrengthCalculator); strengthStale — упражнение не делали дольше 4 недель;
  * note — короткое пояснение к статусу простыми словами (null у NORMAL);
  * trend — последние значения 1ПМ по тренировкам, от старых к новым (мини-график на главной; пусто у упражнений без веса).
  */
@@ -27,6 +28,8 @@ public record ExerciseSummaryResponse(
         ExerciseStatus status,
         RiskLevel riskLevel,
         String note,
-        List<BigDecimal> trend
+        List<BigDecimal> trend,
+        BigDecimal strengthKg,
+        boolean strengthStale
 ) {
 }

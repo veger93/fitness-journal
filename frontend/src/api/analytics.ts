@@ -20,6 +20,10 @@ export interface ExerciseSummary {
   note: string | null;
   /** последние значения силы (1ПМ) по тренировкам — для мини-графика */
   trend: number[];
+  /** "Сила": лучший расчётный 1ПМ за 4 недели (null — у упражнения нет 1ПМ) */
+  strengthKg: number | null;
+  /** упражнение не делали дольше 4 недель — strengthKg на момент последней тренировки */
+  strengthStale: boolean;
 }
 
 export interface Dashboard {
