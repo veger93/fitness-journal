@@ -106,10 +106,10 @@ public final class InsightsCalculator {
         BigDecimal drop = e1rmDropPercent(history);
         if (drop != null && drop.compareTo(DROP_HIGH_PERCENT) >= 0) {
             score += 2;
-            reasons.add("1ПМ на " + format(drop) + "% ниже пика за последние 4 недели");
+            reasons.add("Две тренировки подряд 1ПМ на " + format(drop) + "%+ ниже пика за 4 недели");
         } else if (drop != null && drop.compareTo(DROP_ELEVATED_PERCENT) >= 0) {
             score += 1;
-            reasons.add("1ПМ немного просел: −" + format(drop) + "% от недавнего пика");
+            reasons.add("1ПМ две тренировки подряд немного ниже пика: −" + format(drop) + "%");
         }
 
         BigDecimal rpe = recentAverageRpe(history, now);
@@ -140,23 +140,34 @@ public final class InsightsCalculator {
         return acute.divide(chronicWeekly, 2, RoundingMode.HALF_UP);
     }
 
-    /** На сколько % последний 1ПМ ниже максимума за 4 недели ДО последней тренировки. 0 — не ниже. */
+    /**
+     * Падение силы как признак усталости: на сколько % 1ПМ ниже пика за 4 недели — но только если просели
+     * ДВЕ последние тренировки подряд. Одна лёгкая тренировка (техника, восстановление, плохой день) — не усталость:
+     * раньше "15 × 10 после 27,5 × 10" сразу давало "риск: средний". Возвращаем меньшее из двух падений —
+     * то, что подтверждено обеими тренировками. Пик — максимум за 4 недели до этих двух. 0 — падения нет,
+     * null — мало данных (нужны пик и две тренировки после него).
+     */
     static BigDecimal e1rmDropPercent(List<ExercisePerformance> history) {
         List<ExercisePerformance> withE1rm = history.stream().filter(p -> p.getBestE1rmKg() != null).toList();
-        if (withE1rm.size() < 2) {
+        if (withE1rm.size() < 3) {
             return null;
         }
         ExercisePerformance last = withE1rm.get(withE1rm.size() - 1);
+        ExercisePerformance previous = withE1rm.get(withE1rm.size() - 2);
         Instant windowStart = last.getPerformedAt().minus(FOUR_WEEKS);
-        BigDecimal peak = withE1rm.stream()
-                .filter(p -> p != last && !p.getPerformedAt().isBefore(windowStart))
+        BigDecimal peak = withE1rm.subList(0, withE1rm.size() - 2).stream()
+                .filter(p -> !p.getPerformedAt().isBefore(windowStart))
                 .map(ExercisePerformance::getBestE1rmKg)
                 .max(BigDecimal::compareTo)
                 .orElse(null);
-        if (peak == null || last.getBestE1rmKg().compareTo(peak) >= 0) {
-            return peak == null ? null : BigDecimal.ZERO;
+        if (peak == null) {
+            return null;
         }
-        return peak.subtract(last.getBestE1rmKg()).multiply(HUNDRED).divide(peak, 1, RoundingMode.HALF_UP);
+        BigDecimal confirmed = last.getBestE1rmKg().max(previous.getBestE1rmKg());
+        if (confirmed.compareTo(peak) >= 0) {
+            return BigDecimal.ZERO;
+        }
+        return peak.subtract(confirmed).multiply(HUNDRED).divide(peak, 1, RoundingMode.HALF_UP);
     }
 
     static BigDecimal recentAverageRpe(List<ExercisePerformance> history, Instant now) {

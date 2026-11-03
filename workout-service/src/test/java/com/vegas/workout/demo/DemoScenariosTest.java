@@ -151,18 +151,23 @@ class DemoScenariosTest {
         return points.size() >= 4 && days >= 21 && sessionsSince >= 3 ? days : 0;
     }
 
-    /** Высокий риск: объём за неделю > 1,5× среднего за 4 недели и последний 1ПМ на 5%+ ниже пика за 4 недели */
+    /**
+     * Высокий риск: объём за неделю > 1,5× среднего за 4 недели и две последние тренировки подряд
+     * на 5%+ ниже пика за 4 недели до них (как InsightsCalculator.e1rmDropPercent)
+     */
     private static boolean overload(List<Point> points) {
-        if (points.isEmpty() || points.get(0).at.isAfter(NOW.minus(Duration.ofDays(21)))) {
+        if (points.size() < 3 || points.get(0).at.isAfter(NOW.minus(Duration.ofDays(21)))) {
             return false;
         }
         double acute = volumeSince(points, NOW.minus(Duration.ofDays(7)));
         double chronic = volumeSince(points, NOW.minus(Duration.ofDays(28))) / 4;
         Point last = last(points);
-        double peak = points.stream()
-                .filter(p -> p != last && !p.at.isBefore(last.at.minus(Duration.ofDays(28))))
-                .mapToDouble(Point::e1rm).max().orElse(last.e1rm);
-        double drop = (peak - last.e1rm) / peak * 100;
+        Point previous = points.get(points.size() - 2);
+        double peak = points.subList(0, points.size() - 2).stream()
+                .filter(p -> !p.at.isBefore(last.at.minus(Duration.ofDays(28))))
+                .mapToDouble(Point::e1rm).max().orElse(Double.MAX_VALUE);
+        double confirmed = Math.max(last.e1rm, previous.e1rm);
+        double drop = (peak - confirmed) / peak * 100;
         return chronic > 0 && acute / chronic > 1.5 && drop >= 5;
     }
 
