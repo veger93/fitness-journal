@@ -12,6 +12,7 @@ import { StatTile } from '../components/ui/StatTile';
 import { useCurrentWorkout } from '../hooks/useWorkout';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { completedToday, todayOf } from '../lib/plan';
+import { strengthCaption } from '../lib/exercise';
 import { workoutsApi } from '../api/workouts';
 import { TodayPlanCard } from '../components/home/TodayPlanCard';
 import { MonthSummary } from '../components/report/MonthSummary';
@@ -253,9 +254,7 @@ function Strength({ exercise, lastSet }: { exercise: ExerciseSummary; lastSet: s
         <div>
           <span className={styles.muted}>Сила*</span>
           <p className={styles.strengthValue}>{formatKg(strength)}</p>
-          <span className={styles.muted}>
-            {exercise.strengthStale ? 'давно не делали — сила на последней тренировке' : 'лучшее за 4 недели'}
-          </span>
+          <span className={styles.muted}>{strengthCaption(exercise)}</span>
         </div>
       )}
       {lastSet && (

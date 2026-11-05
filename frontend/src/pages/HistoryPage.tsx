@@ -156,7 +156,7 @@ function JournalDay({
               {exercise.exerciseName}
               {recordExercises?.has(exercise.exerciseId) && <span className={styles.recordMark}> · рекорд</span>}
             </span>
-            <span>{summarizeSets(exercise.trackingType, exercise.sets)}</span>
+            <span>{summarizeSets(exercise.trackingType, exercise.sets, exercise.assisted)}</span>
           </li>
         ))}
       </ul>

@@ -20,6 +20,7 @@ import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,19 +91,48 @@ public final class DashboardCalculator {
         List<ExercisePerformance> runs = history.stream().filter(DashboardCalculator::isRun).toList();
         RunningSummaryResponse.Load runLoad = RunningCalculator.load(runs, now);
 
+        Map<String, ExercisePerformance> recentByPattern = recentByPattern(history, now);
+
         List<ExerciseSummaryResponse> result = new ArrayList<>();
         for (List<ExercisePerformance> exerciseHistory : byExercise.values()) {
             result.add(isRun(exerciseHistory.get(0))
                     ? runSummary(exerciseHistory, runLoad, now)
-                    : summary(exerciseHistory, freshRecord(records, exerciseHistory.get(0).getExerciseId(), now), now));
+                    : summary(exerciseHistory, freshRecord(records, exerciseHistory.get(0).getExerciseId(), now),
+                    recentByPattern, now));
         }
         result.sort(Comparator.comparing(ExerciseSummaryResponse::status)
                 .thenComparing(ExerciseSummaryResponse::lastPerformedAt, Comparator.reverseOrder()));
         return result;
     }
 
+    /**
+     * Семейство движения -> последняя тренировка этого семейства за 4 недели (окно силы, StrengthCalculator.WINDOW).
+     * Нужно для "сила поддерживается": жим штангой давно не делали, а жим гантелей — на прошлой неделе.
+     */
+    static Map<String, ExercisePerformance> recentByPattern(List<ExercisePerformance> history, Instant now) {
+        Instant from = now.minus(StrengthCalculator.WINDOW);
+        Map<String, ExercisePerformance> result = new HashMap<>();
+        for (ExercisePerformance performance : history) { // история от старых к новым — последняя перезапишет
+            if (performance.getMovementPattern() != null && !performance.getPerformedAt().isBefore(from)) {
+                result.put(performance.getMovementPattern(), performance);
+            }
+        }
+        return result;
+    }
+
+    /** Давно не делали, но было упражнение того же семейства за 4 недели — его название; иначе null */
+    private static String maintainedBy(List<ExercisePerformance> history, StrengthCalculator.Strength strength,
+                                       Map<String, ExercisePerformance> recentByPattern) {
+        ExercisePerformance last = history.get(history.size() - 1);
+        if (!strength.stale() || last.getMovementPattern() == null) {
+            return null;
+        }
+        ExercisePerformance other = recentByPattern.get(last.getMovementPattern());
+        return other == null || other.getExerciseId().equals(last.getExerciseId()) ? null : other.getExerciseName();
+    }
+
     private static ExerciseSummaryResponse summary(List<ExercisePerformance> history, Optional<PersonalRecordResponse> record,
-                                                   Instant now) {
+                                                   Map<String, ExercisePerformance> recentByPattern, Instant now) {
         ExercisePerformance last = history.get(history.size() - 1);
         PlateauResponse plateau = InsightsCalculator.plateau(history, now);
         OverloadRiskResponse risk = InsightsCalculator.overloadRisk(history, now, plateau);
@@ -135,7 +165,8 @@ public final class DashboardCalculator {
         Integer lastReps = last.getMaxWeightReps() != null ? last.getMaxWeightReps() : last.getBestReps();
         return new ExerciseSummaryResponse(last.getExerciseId(), last.getExerciseName(), last.getTrackingType(),
                 last.getPerformedAt(), last.getMaxWeightKg(), lastReps, last.getBestDistanceM(), last.getBestDurationSec(),
-                currentE1rm, status, risk.level(), note, trend, strength.kg(), strength.stale());
+                currentE1rm, status, risk.level(), note, trend, strength.kg(), strength.stale(),
+                maintainedBy(history, strength, recentByPattern));
     }
 
     /**
@@ -172,7 +203,7 @@ public final class DashboardCalculator {
 
         return new ExerciseSummaryResponse(last.getExerciseId(), last.getExerciseName(), last.getTrackingType(),
                 last.getPerformedAt(), null, null, distance, duration, null, status,
-                load.warning() ? RiskLevel.HIGH : RiskLevel.LOW, note, trend, null, false);
+                load.warning() ? RiskLevel.HIGH : RiskLevel.LOW, note, trend, null, false, null);
     }
 
     private static boolean isRun(ExercisePerformance performance) {

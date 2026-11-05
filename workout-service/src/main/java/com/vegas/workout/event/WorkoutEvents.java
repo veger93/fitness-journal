@@ -35,6 +35,8 @@ public final class WorkoutEvents {
                 exercise.getName(),
                 exercise.getBodyPart(),
                 exercise.getTrackingType().name(),
+                exercise.getMovementPattern(),
+                exercise.isAssisted(),
                 workoutExercise.getSets().stream().map(WorkoutEvents::toSetPerformed).toList()
         );
     }

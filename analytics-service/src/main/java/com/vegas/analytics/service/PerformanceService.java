@@ -1,7 +1,9 @@
 package com.vegas.analytics.service;
 
+import com.vegas.analytics.entity.AthleteProfile;
 import com.vegas.analytics.entity.ExercisePerformance;
 import com.vegas.analytics.event.AnalyticsEventsPublisher;
+import com.vegas.analytics.repository.AthleteProfileRepository;
 import com.vegas.analytics.repository.ExercisePerformanceRepository;
 import com.vegas.common.event.WorkoutCompletedEvent;
 import com.vegas.common.event.WorkoutDeletedEvent;
@@ -10,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +23,7 @@ import java.util.Optional;
 public class PerformanceService {
 
     private final ExercisePerformanceRepository performanceRepository;
+    private final AthleteProfileRepository profileRepository;
     private final AnalyticsEventsPublisher eventsPublisher;
 
     /**
@@ -31,8 +35,12 @@ public class PerformanceService {
     public void recordWorkout(WorkoutCompletedEvent event) {
         performanceRepository.deleteByWorkoutId(event.workoutId());
 
+        // вес тела — для гравитрона (нагрузка = вес тела − противовес)
+        BigDecimal bodyWeight = profileRepository.findById(event.userId())
+                .map(AthleteProfile::getBodyWeightKg)
+                .orElse(null);
         List<ExercisePerformance> performances = event.exercises().stream()
-                .map(exercise -> PerformanceCalculator.calculate(event, exercise))
+                .map(exercise -> PerformanceCalculator.calculate(event, exercise, bodyWeight))
                 .flatMap(Optional::stream)
                 .toList();
         performanceRepository.saveAll(performances);

@@ -12,6 +12,7 @@ const ex = (id: string, name: string, bodyPart: BodyPart, equipment: Equipment):
   custom: false,
   muscles: [],
   imageKey: null,
+  assisted: false,
 });
 
 const catalog = [

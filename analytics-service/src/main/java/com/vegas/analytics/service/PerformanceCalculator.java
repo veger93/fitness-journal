@@ -20,9 +20,16 @@ public final class PerformanceCalculator {
     private PerformanceCalculator() {
     }
 
-    /** Empty — если рабочих подходов не было (только разминка): такая тренировка прогресс не двигает. */
-    public static Optional<ExercisePerformance> calculate(WorkoutCompletedEvent event, ExercisePerformed exercise) {
-        List<SetPerformed> working = exercise.sets().stream().filter(set -> !set.warmup()).toList();
+    /**
+     * Empty — если рабочих подходов не было (только разминка): такая тренировка прогресс не двигает.
+     * bodyWeightKg — вес тела из профиля (null — не указан); нужен только упражнениям с помощью (гравитрон).
+     */
+    public static Optional<ExercisePerformance> calculate(WorkoutCompletedEvent event, ExercisePerformed exercise,
+                                                          BigDecimal bodyWeightKg) {
+        List<SetPerformed> working = exercise.sets().stream()
+                .filter(set -> !set.warmup())
+                .map(set -> Boolean.TRUE.equals(exercise.assisted()) ? assistedToLoad(set, bodyWeightKg) : set)
+                .toList();
         if (working.isEmpty()) {
             return Optional.empty();
         }
@@ -44,6 +51,7 @@ public final class PerformanceCalculator {
                 .exerciseName(exercise.exerciseName())
                 .bodyPart(exercise.bodyPart())
                 .trackingType(exercise.trackingType())
+                .movementPattern(exercise.movementPattern())
                 .performedAt(event.completedAt())
                 .workingSets(working.size())
                 .totalReps(sumReps(working))
@@ -61,6 +69,23 @@ public final class PerformanceCalculator {
                 .totalDurationSec(sumOf(working, SetPerformed::durationSec))
                 .bestPaceSecPerKm(bestPace(working))
                 .build());
+    }
+
+    /**
+     * Гравитрон: в подходе записан противовес (помощь), а работают мышцы с весом тела минус помощь.
+     * Подменяем вес подхода рабочей нагрузкой — дальше 1ПМ, объём, рекорды и плато считаются как обычно:
+     * противовес 20 кг при весе 80 → нагрузка 60 кг; уменьшил противовес до 15 → 65 кг — это рост силы.
+     * Вес тела берём на момент тренировки (событие обрабатывается сразу), поэтому история не "плывёт",
+     * когда вес тела потом меняется. Вес тела не указан или помощь не меньше веса — нагрузку не знаем:
+     * подход остаётся только повторами (как подтягивания без веса).
+     */
+    static SetPerformed assistedToLoad(SetPerformed set, BigDecimal bodyWeightKg) {
+        BigDecimal load = null;
+        if (bodyWeightKg != null && set.weightKg() != null) {
+            BigDecimal value = bodyWeightKg.subtract(set.weightKg());
+            load = value.signum() > 0 ? value : null;
+        }
+        return new SetPerformed(load, set.reps(), set.durationSec(), set.distanceM(), set.rpe(), set.warmup());
     }
 
     private static boolean isWeighted(SetPerformed set) {
