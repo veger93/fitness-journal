@@ -23,7 +23,8 @@ import { Dialog } from '../components/ui/Dialog';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { StatTile } from '../components/ui/StatTile';
 import { EQUIPMENT_NAMES } from '../lib/catalog';
-import { bestDuration, historyRows, strengthCaption } from '../lib/exercise';
+import { bestDuration, historyRows, strengthCaption, strengthPoints } from '../lib/exercise';
+import { ShareChartButton } from '../components/share/ShareChart';
 import { BODY_PART_NAMES } from '../lib/plan';
 import { formatChange, formatExerciseResult, formatKg, formatShortDate, formatTonnage } from '../lib/format';
 import { formatClock } from '../lib/workout';
@@ -116,7 +117,19 @@ export function ExercisePage() {
       {/* у упражнений на время нет веса — нет и силы (1ПМ), график силы для них не строим */}
       {!timed && (
         <Card as="section" size="section">
-          <h2 className={styles.cardTitle}>Сила*</h2>
+          <div className={styles.cardHead}>
+            <h2 className={styles.cardTitle}>Сила*</h2>
+            {progress.data && progress.data.points.some((p) => p.e1rmKg != null) && (
+              <ShareChartButton
+                exerciseName={summary.exerciseName}
+                periodCaption={PERIOD_CAPTION[period]}
+                strengthKg={summary.strengthKg ?? summary.currentE1rmKg}
+                changePercent={progress.data.changePercent}
+                points={strengthPoints(progress.data.points)}
+                record={summary.status === 'RECORD'}
+              />
+            )}
+          </div>
           <ProgressLegend
             plateauDays={insights.data?.plateau.detected ? insights.data.plateau.daysSinceProgress : null}
           />

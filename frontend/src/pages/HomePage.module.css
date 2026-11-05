@@ -29,13 +29,16 @@
 
 .chartHead {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start;
   gap: var(--space-2);
 }
 
 .chartTitle {
+  min-width: 0;
+  /* длинное название — перенос по словам, без "ган-телями": слово рвём, только если оно шире карточки */
+  overflow-wrap: break-word;
+  hyphens: manual;
   font-size: var(--text-xl);
   font-weight: 500;
 }
