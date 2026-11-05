@@ -96,7 +96,9 @@ export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 
                   {exercise.trackingType === 'DISTANCE' && exercise.sets.length === 1 ? 'Пробежка' : `${set.number}`}
                   {set.warmup && ' · разминка'}
                 </span>
-                <span className={styles.setValueSmall}>{describeSet(exercise.trackingType, set)}</span>
+                <span className={styles.setValueSmall}>
+                  {describeSet(exercise.trackingType, set, exercise.assisted)}
+                </span>
               </li>
             ))}
           </ol>

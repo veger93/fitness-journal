@@ -119,14 +119,18 @@ export function toRequest(trackingType: TrackingType, set: SetInput): SetInput {
   };
 }
 
-/** "80 кг × 8", "1:30", "1,2 км" — подход для списка. */
+/**
+ * "80 кг × 8", "1:30", "1,2 км" — подход для списка.
+ * assisted (гравитрон): вес — противовес, пишем с минусом "−20 кг × 8": помощь вычитается из веса тела.
+ */
 export function describeSet(
   trackingType: TrackingType,
   set: Pick<SetInput, 'weightKg' | 'reps' | 'durationSec' | 'distanceM'>,
+  assisted = false,
 ): string {
   switch (trackingType) {
     case 'WEIGHT_REPS':
-      return set.weightKg ? `${formatNumber(set.weightKg)} кг × ${set.reps}` : `${set.reps} повт.`;
+      return set.weightKg ? `${weightText(set.weightKg, assisted)} × ${set.reps}` : `${set.reps} повт.`;
     case 'TIME':
       return formatClock(set.durationSec ?? 0);
     case 'DISTANCE':
@@ -207,7 +211,12 @@ export function formatDuration(totalSec: number): string {
  * Все рабочие подходы упражнения одной строкой — для журнала:
  * "80 кг × 8, 8, 6 · 85 кг × 5" (одинаковый вес подряд не повторяем), "12, 10, 8 повт.", "1:30, 1:15".
  */
-export function summarizeSets(trackingType: TrackingType, sets: WorkoutSet[]): string {
+/** "80 кг" или у гравитрона "−20 кг" (противовес) */
+function weightText(weightKg: number, assisted: boolean): string {
+  return `${assisted ? '−' : ''}${formatNumber(weightKg)} кг`;
+}
+
+export function summarizeSets(trackingType: TrackingType, sets: WorkoutSet[], assisted = false): string {
   const working = sets.filter((s) => !s.warmup);
   if (working.length === 0) {
     return 'только разминка';
@@ -230,7 +239,7 @@ export function summarizeSets(trackingType: TrackingType, sets: WorkoutSet[]): s
       groups.push({ weight: set.weightKg ?? 0, reps: [set.reps] });
     }
   }
-  return groups.map((g) => `${formatNumber(g.weight)} кг × ${g.reps.join(', ')}`).join(' · ');
+  return groups.map((g) => `${weightText(g.weight, assisted)} × ${g.reps.join(', ')}`).join(' · ');
 }
 
 // ---------- обновление тренировки в кэше (иммутабельно: новые объекты вместо изменения старых) ----------

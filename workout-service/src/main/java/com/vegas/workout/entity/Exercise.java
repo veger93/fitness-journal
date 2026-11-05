@@ -65,6 +65,11 @@ public class Exercise {
     @Column(name = "movement_pattern", length = 32)
     private String movementPattern;
 
+    /** Вес в подходе — помощь (противовес гравитрона): чем он меньше, тем тяжелее. Рабочую нагрузку
+     *  (вес тела − противовес) считает аналитика. Только у системных упражнений (миграция 020). */
+    @Column(nullable = false)
+    private boolean assisted;
+
     @Column(length = 1000)
     private String note;
 

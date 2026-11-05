@@ -25,6 +25,8 @@ export interface WorkoutExercise {
   exerciseName: string;
   trackingType: TrackingType;
   equipment: Equipment;
+  /** вес в подходе — противовес (гравитрон): меньше = тяжелее; нагрузку (вес тела − противовес) считает аналитика */
+  assisted: boolean;
   sets: WorkoutSet[];
   previousSets: WorkoutSet[]; // как было в прошлый раз
   /** активная разгрузка: подсказка подхода берёт вес и повторы отсюда */
@@ -118,6 +120,8 @@ export interface CatalogExercise {
   muscles: ExerciseMuscle[];
   /** картинки /exercises/<imageKey>-1.svg и -2.svg; null — картинки нет (свои упражнения, бег, планка) */
   imageKey: string | null;
+  /** вес в подходе — противовес (гравитрон) */
+  assisted: boolean;
 }
 
 /** GET /api/exercises/{id}/technique */

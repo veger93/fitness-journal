@@ -77,6 +77,7 @@ public class WorkoutMapper {
                 exercise.getName(),
                 exercise.getTrackingType(),
                 exercise.getEquipment(),
+                exercise.isAssisted(),
                 toSetResponses(workoutExercise.getSets()),
                 toSetResponses(previous),
                 deload

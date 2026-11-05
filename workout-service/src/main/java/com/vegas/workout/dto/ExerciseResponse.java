@@ -21,6 +21,7 @@ public record ExerciseResponse(
         String note,
         boolean custom,
         List<MuscleResponse> muscles,
-        String imageKey     // картинка "начало → конец" (иллюстрации Everkinetic); null — картинки нет
+        String imageKey,    // картинка "начало → конец" (иллюстрации Everkinetic); null — картинки нет
+        boolean assisted    // вес — противовес (гравитрон), а не нагрузка
 ) {
 }

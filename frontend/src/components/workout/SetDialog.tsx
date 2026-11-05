@@ -19,6 +19,8 @@ import { Button } from '../ui/Button';
 import { Dialog } from '../ui/Dialog';
 import { Stepper } from '../ui/Stepper';
 import { TimeField } from '../ui/TimeField';
+import { usersApi } from '../../api/users';
+import { useActingClient } from '../../trainer/ActingClientProvider';
 import styles from './Workout.module.css';
 
 interface SetDialogProps {
@@ -112,7 +114,7 @@ export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, 
         {exercise.trackingType === 'WEIGHT_REPS' && (
           <>
             <Stepper
-              label={exercise.equipment === 'BODYWEIGHT' ? 'Доп. вес, кг (0 — без веса)' : 'Вес, кг'}
+              label={weightLabel(exercise)}
               value={values.weightKg ?? 0}
               step={WEIGHT_STEP[exercise.equipment]}
               decimals={weightDecimals(exercise.equipment)}
@@ -120,6 +122,7 @@ export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, 
               inputMode={exercise.equipment === 'MACHINE' ? 'numeric' : 'decimal'}
               onChange={(weightKg) => change({ weightKg })}
             />
+            {exercise.assisted && <AssistedHint />}
             <Stepper
               label="Повторы"
               value={values.reps ?? 0}
@@ -298,4 +301,29 @@ function RunFields({ values, change }: { values: SetInput; change: (patch: Parti
 
 function formatKm(meters: number): string {
   return `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(meters / 1000)} км`;
+}
+
+function weightLabel(exercise: WorkoutExercise): string {
+  if (exercise.assisted) {
+    return 'Противовес, кг';
+  }
+  return exercise.equipment === 'BODYWEIGHT' ? 'Доп. вес, кг (0 — без веса)' : 'Вес, кг';
+}
+
+/**
+ * Гравитрон: объясняем, что противовес — помощь, и что без веса тела нагрузку не посчитать.
+ * Вес тела проверяем только у себя: у тренера в дневнике клиента профиль запрашивался бы тренерский
+ * (user-service отвечает за того, кто вошёл), а аналитика всё равно берёт вес клиента.
+ */
+function AssistedHint() {
+  const { client: acting } = useActingClient();
+  const profile = useQuery({ queryKey: ['profile'], queryFn: usersApi.profile, enabled: !acting });
+  return (
+    <p className={styles.muted}>
+      Противовес помогает: чем он меньше, тем тяжелее. Нагрузка = вес тела − противовес.
+      {profile.data &&
+        profile.data.currentWeightKg == null &&
+        ' Укажите вес тела в профиле — без него не посчитать силу.'}
+    </p>
+  );
 }

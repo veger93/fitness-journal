@@ -18,6 +18,7 @@ public record WorkoutExerciseResponse(
         String exerciseName,
         TrackingType trackingType,
         Equipment equipment,        // штанга / гантели / тренажёр / свой вес — от этого стартовый вес нового подхода
+        boolean assisted,           // вес — противовес (гравитрон): в форме "Противовес, кг", меньше = тяжелее
         List<SetResponse> sets,
         List<SetResponse> previousSets,
         DeloadResponse deload        // активная разгрузка по упражнению — подсказка подхода берёт вес и схему отсюда; иначе null
