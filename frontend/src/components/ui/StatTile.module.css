@@ -27,7 +27,7 @@
 }
 
 .compact .value {
-  font-size: 18px;
+  font-size: var(--text-num-md);
 }
 
 .compact .label,

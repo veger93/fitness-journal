@@ -9,7 +9,7 @@ interface ProgressChartProps {
 }
 
 /**
- * График силы: линия "ты" и пунктир "норма для твоего уровня".
+ * График силы: линия "вы" и пунктир "норма для вашего уровня".
  * Цвета — из токенов темы (var(--...)): SVG понимает CSS-переменные, поэтому график сам перекрашивается.
  * Ось X — числовая (время в мс): так точки стоят на реальном расстоянии по датам, а не через равные шаги.
  */
@@ -28,7 +28,7 @@ export function ProgressChart({ points, plateauFrom }: ProgressChartProps) {
   return (
     <div
       role="img"
-      aria-label="График силы по тренировкам: твоя линия и норма для твоего уровня"
+      aria-label="График силы по тренировкам: ваша линия и норма для вашего уровня"
       style={{ width: '100%', height: 260 }}
     >
       <ResponsiveContainer>
@@ -58,7 +58,7 @@ export function ProgressChart({ points, plateauFrom }: ProgressChartProps) {
           />
           <Tooltip
             labelFormatter={(time) => formatShortDate(Number(time))}
-            formatter={(value, name) => [formatKg(Number(value)), name === 'you' ? 'ты' : 'норма']}
+            formatter={(value, name) => [formatKg(Number(value)), name === 'you' ? 'вы' : 'норма']}
             contentStyle={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',

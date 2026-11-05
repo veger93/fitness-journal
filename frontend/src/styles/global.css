@@ -12,7 +12,7 @@ body {
   color: var(--text);
   font-family: var(--font-body);
   font-size: var(--text-md);
-  line-height: 1.5;
+  line-height: var(--leading-body);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -46,6 +46,7 @@ a {
 .footnote {
   margin: 0;
   font-size: var(--text-xs);
+  line-height: var(--leading-tight);
   color: var(--text-muted);
 }
 

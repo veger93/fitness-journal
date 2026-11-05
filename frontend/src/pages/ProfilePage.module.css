@@ -27,9 +27,3 @@
   align-items: flex-end;
   gap: var(--space-4);
 }
-
-@media (max-width: 600px) {
-  .title {
-    font-size: 32px;
-  }
-}

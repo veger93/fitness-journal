@@ -271,7 +271,7 @@
 .confirmText {
   margin: 0;
   font-size: var(--text-sm);
-  line-height: 1.5;
+  line-height: var(--leading-body);
 }
 
 /* .confirmBox впереди — специфичность выше, чем у .primary кнопки: цвет точно перебьётся */

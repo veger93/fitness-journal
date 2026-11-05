@@ -9,6 +9,8 @@ import { ProgressLegend } from '../components/ProgressLegend';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { StatTile } from '../components/ui/StatTile';
+import { PageHeader } from '../components/ui/PageHeader';
+import { SectionLabel } from '../components/ui/SectionLabel';
 import { useCurrentWorkout } from '../hooks/useWorkout';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { completedToday, todayOf } from '../lib/plan';
@@ -47,29 +49,23 @@ export function HomePage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <p className={styles.greeting}>
-            {/* тренер в дневнике клиента — подписываем, чей он */}
-            {acting ? `Дневник: ${acting.displayName}` : `Привет, ${me.data?.displayName || me.data?.email || '…'}`}
-          </p>
-          <h1 className={styles.title}>
-            {dashboard.data ? `Прогресс за ${formatMonth(dashboard.data.month)}` : 'Прогресс'}
-          </h1>
-          <Link to={`/reports/${currentMonth()}`} className={styles.reportLink}>
-            Отчёт за месяц →
-          </Link>
-        </div>
-        {/* идёт тренировка — главное действие "вернуться к ней"; сегодня по плану — кнопка "Начать" в карточке плана.
-            На телефоне "Другая тренировка" не дублируем: она есть во вкладке "Тренировка" внизу, а место наверху дорогое */}
-        {current.data ? (
-          <ButtonLink to="/workout/active">Продолжить тренировку</ButtonLink>
-        ) : phone && plannedPending ? null : (
-          <ButtonLink to="/workout" variant={plannedPending ? 'secondary' : 'primary'}>
-            {plannedPending ? 'Другая тренировка' : 'Начать тренировку'}
-          </ButtonLink>
-        )}
-      </div>
+      <PageHeader
+        // тренер в дневнике клиента — подписываем, чей он
+        eyebrow={acting ? `Дневник: ${acting.displayName}` : `Привет, ${me.data?.displayName || me.data?.email || '…'}`}
+        title={dashboard.data ? `Прогресс за ${formatMonth(dashboard.data.month)}` : 'Прогресс'}
+        subtitle={<Link to={`/reports/${currentMonth()}`}>Отчёт за месяц →</Link>}
+        // идёт тренировка — главное действие "вернуться к ней"; сегодня по плану — кнопка "Начать" в карточке плана.
+        // На телефоне "Другая тренировка" не дублируем: она есть во вкладке "Тренировка" внизу, а место наверху дорогое
+        action={
+          current.data ? (
+            <ButtonLink to="/workout/active">Продолжить тренировку</ButtonLink>
+          ) : phone && plannedPending ? null : (
+            <ButtonLink to="/workout" variant={plannedPending ? 'secondary' : 'primary'}>
+              {plannedPending ? 'Другая тренировка' : 'Начать тренировку'}
+            </ButtonLink>
+          )
+        }
+      />
 
       {/* пока идёт тренировка, "сегодня по плану" не нужен — она уже начата */}
       {plan.data && !current.data && <TodayPlanCard plan={plan.data} recent={recent.data?.content ?? []} />}
@@ -106,17 +102,14 @@ function EmptyState() {
 
 function Content({ dashboard }: { dashboard: Dashboard }) {
   const focus = dashboard.exercises.find((e) => e.exerciseId === dashboard.focusExerciseId) ?? null;
-  // на телефоне всё идёт столбиком, поэтому порядок другой: сначала "что сделать", потом цифры —
-  // и сигналы строками (иначе главная занимает 4–5 экранов)
+  // порядок одинаковый на телефоне и ПК: что сделать → цифры недели → график → упражнения
   const phone = useMediaQuery(PHONE);
 
   // "Неделя" — только общие цифры по всем упражнениям. Всё про одно упражнение (сила, последний подход)
   // живёт в его карточке с графиком: раньше "Сила: жим" стояла среди общих плиток, и было непонятно, что к чему
   const week = (
     <section className={styles.week} aria-labelledby="week-title">
-      <h2 id="week-title" className={styles.weekTitle}>
-        Неделя
-      </h2>
+      <SectionLabel id="week-title">Неделя</SectionLabel>
       <div className={`${styles.tiles} ${styles.tiles3}`}>
         <StatTile
           compact={phone}
@@ -143,13 +136,12 @@ function Content({ dashboard }: { dashboard: Dashboard }) {
 
   return (
     <>
-      {phone && <SignalCards exercises={dashboard.exercises} compact />}
+      <SignalCards exercises={dashboard.exercises} />
       {week}
       {focus && <FocusChart exercise={focus} />}
-      {!phone && <SignalCards exercises={dashboard.exercises} />}
       <ExerciseTicker exercises={dashboard.exercises} />
 
-      <p className="footnote">* Сила — сколько ты поднял бы один раз, посчитано по твоим подходам.</p>
+      <p className="footnote">* Сила — сколько вы подняли бы один раз, посчитано по вашим подходам.</p>
     </>
   );
 }

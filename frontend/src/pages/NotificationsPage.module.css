@@ -103,6 +103,6 @@ button.action {
   background: var(--accent);
   color: var(--text-on-accent);
   font-family: var(--font-display);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 700;
 }

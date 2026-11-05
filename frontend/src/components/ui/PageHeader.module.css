@@ -1,0 +1,60 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.back {
+  align-self: flex-start;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text);
+  text-underline-offset: 4px;
+}
+
+.eyebrow,
+.subtitle {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  color: var(--text-muted);
+}
+
+.subtitle a {
+  color: var(--text);
+  font-weight: 500;
+  text-underline-offset: 4px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-h1);
+  font-weight: 700;
+  line-height: 1.1;
+  overflow-wrap: break-word;
+}
+
+.action {
+  flex-shrink: 0;
+}
+
+/* телефон: заголовок и действие в одной строке, кнопка справа; заголовок переносится, кнопка не сжимается */
+@media (max-width: 640px) {
+  .header {
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .text {
+    gap: 2px;
+  }
+}
