@@ -134,3 +134,10 @@
   font-weight: 500;
   text-underline-offset: 4px;
 }
+
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}

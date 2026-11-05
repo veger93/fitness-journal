@@ -1,0 +1,53 @@
+/* значок в шапке карточки: круглая кнопка 44px — удобно попасть пальцем */
+.iconButton {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--chip);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* превью не выше половины экрана — чтобы кнопка "Отправить" была видна без прокрутки */
+.preview {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 5;
+  max-height: 46vh;
+  margin: 0 auto;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: #111827;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.preview {
+  width: min(100%, calc(46vh * 4 / 5));
+}
+
+.story {
+  aspect-ratio: 9 / 16;
+  width: min(100%, calc(46vh * 9 / 16));
+}
+
+.preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger-text);
+  font-size: var(--text-sm);
+}

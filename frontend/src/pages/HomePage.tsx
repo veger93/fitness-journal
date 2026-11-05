@@ -12,7 +12,8 @@ import { StatTile } from '../components/ui/StatTile';
 import { useCurrentWorkout } from '../hooks/useWorkout';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { completedToday, todayOf } from '../lib/plan';
-import { strengthCaption } from '../lib/exercise';
+import { strengthCaption, strengthPoints } from '../lib/exercise';
+import { ShareChartButton } from '../components/share/ShareChart';
 import { workoutsApi } from '../api/workouts';
 import { TodayPlanCard } from '../components/home/TodayPlanCard';
 import { MonthSummary } from '../components/report/MonthSummary';
@@ -194,12 +195,23 @@ function FocusChart({ exercise }: { exercise: ExerciseSummary }) {
 
   return (
     <Card as="section" size="section">
+      {/* длинное название переносится, значок "поделиться" остаётся справа сверху (не уезжает на новую строку) */}
       <div className={styles.chartHead}>
         <h2 className={styles.chartTitle}>
           <Link to={`/exercises/${id}`} className={styles.chartLink}>
             {exercise.exerciseName} →
           </Link>
         </h2>
+        {progress.data && progress.data.points.some((p) => p.e1rmKg != null) && (
+          <ShareChartButton
+            exerciseName={exercise.exerciseName}
+            periodCaption="за 3 месяца"
+            strengthKg={exercise.strengthKg ?? exercise.currentE1rmKg}
+            changePercent={progress.data.changePercent}
+            points={strengthPoints(progress.data.points)}
+            record={exercise.status === 'RECORD'}
+          />
+        )}
       </div>
       <Strength exercise={exercise} lastSet={lastSet} />
       <ProgressLegend plateauDays={plateau?.detected ? plateau.daysSinceProgress : null} />

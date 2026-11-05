@@ -48,6 +48,11 @@ export function strengthCaption(summary: { strengthStale: boolean; strengthMaint
     : 'давно не делали — сила на последней тренировке';
 }
 
+/** Сила по тренировкам для линии графика (картинка "поделиться"): только точки с 1ПМ, по порядку */
+export function strengthPoints(points: { e1rmKg: number | null }[]): number[] {
+  return points.map((p) => p.e1rmKg).filter((v): v is number => v != null);
+}
+
 /** 1 подход, 2 подхода, 5 подходов, 11 подходов, 21 подход */
 export function setsLabel(count: number): string {
   return plural(count, 'подход', 'подхода', 'подходов');
