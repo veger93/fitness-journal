@@ -147,11 +147,11 @@ export function LandingPage() {
 
       <section id="how" className={styles.section}>
         <p className={styles.eyebrow}>Три шага</p>
-        <h2 className={styles.title}>Ты тренируешься. Vegas считает.</h2>
+        <h2 className={styles.title}>Вы тренируетесь. Vegas считает.</h2>
         <div className={styles.steps}>
           <article className={styles.step}>
             <span className={styles.stepNum}>01</span>
-            <h3>Записал подход</h3>
+            <h3>Записали подход</h3>
             <p>Вес и повторы — двумя кнопками, прямо между подходами. Прошлый результат подставится сам.</p>
             <div data-theme="light" className={styles.mock}>
               <b>Жим лёжа · подход 3</b>
@@ -164,7 +164,7 @@ export function LandingPage() {
           </article>
           <article className={styles.step}>
             <span className={styles.stepNum}>02</span>
-            <h3>Увидел рост</h3>
+            <h3>Увидели рост</h3>
             <p>График силы по каждому упражнению и пунктир-ориентир: как растут те, кто тренируется регулярно.</p>
             <div data-theme="light" className={styles.mock}>
               <DemoChart />
@@ -172,12 +172,12 @@ export function LandingPage() {
           </article>
           <article className={styles.step}>
             <span className={styles.stepNum}>03</span>
-            <h3>Получил подсказку</h3>
+            <h3>Получили подсказку</h3>
             <p>Пора добавить вес, впереди плато или нужна разгрузка — подскажет до того, как вы это почувствуете.</p>
             <div data-theme="light" className={styles.mock}>
               <div className={styles.todo}>
                 <span>Что сделать сейчас</span>
-                <b>Добавь 2,5 кг в жиме</b>
+                <b>Добавьте 2,5 кг в жиме</b>
                 <span>3 тренировки подряд вы сделали 8×4</span>
               </div>
             </div>
@@ -220,7 +220,7 @@ export function LandingPage() {
           <p className={styles.eyebrow}>Первая тренировка — сегодня</p>
           <h2 className={styles.finalTitle}>Через 12 недель вы скажете себе спасибо</h2>
           <p className={styles.lead}>
-            Регистрация — 30 секунд. Добавь Vegas на экран телефона, и он будет открываться как приложение.
+            Регистрация — 30 секунд. Добавьте Vegas на экран телефона, и он будет открываться как приложение.
           </p>
           <ButtonLink to="/register" variant="accent">
             Создать аккаунт

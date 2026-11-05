@@ -243,7 +243,8 @@
   margin: 0;
   text-align: center;
   color: var(--text-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
 }
 
 .links {
@@ -316,7 +317,8 @@
   margin: 0;
   text-align: center;
   color: var(--text-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
 }
 
 /*
