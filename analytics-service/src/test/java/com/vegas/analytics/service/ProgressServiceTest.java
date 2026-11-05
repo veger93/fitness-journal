@@ -71,7 +71,7 @@ class ProgressServiceTest {
         assertThat(response.points().get(1).referenceE1rmKg()).isEqualByComparingTo("103.58");
         // 30 сентября эталон 104.09, факт 110 -> на 5.7% быстрее
         assertThat(response.reference().gapPercent()).isEqualByComparingTo("5.7");
-        assertThat(response.reference().hint()).startsWith("идёшь быстрее обычного темпа на 5.7%");
+        assertThat(response.reference().hint()).startsWith("вы растёте быстрее обычного темпа на 5,7%");
     }
 
     @Test
@@ -88,7 +88,7 @@ class ProgressServiceTest {
         // продвинутый: 0.5% в месяц -> эталон 101.35, факт 100 -> отстаём на 1.3%
         assertThat(response.reference().levelAssumed()).isFalse();
         assertThat(response.reference().gapPercent()).isEqualByComparingTo("-1.3");
-        assertThat(response.reference().hint()).startsWith("на 1.3% ниже обычного темпа");
+        assertThat(response.reference().hint()).startsWith("на 1,3% ниже обычного темпа");
     }
 
     @Test

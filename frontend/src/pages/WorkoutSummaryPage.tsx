@@ -7,7 +7,10 @@ import { CURRENT_WORKOUT_KEY } from '../hooks/useWorkout';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { SaveTemplateDialog } from '../components/workout/SaveTemplateDialog';
 import { Card } from '../components/ui/Card';
+import { PageHeader } from '../components/ui/PageHeader';
+import { SectionLabel } from '../components/ui/SectionLabel';
 import { StatTile } from '../components/ui/StatTile';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { formatTonnage } from '../lib/format';
 import { describeSet, formatDistance, formatDuration } from '../lib/workout';
 import styles from './WorkoutPages.module.css';
@@ -29,6 +32,7 @@ export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 
   const { workoutId = '' } = useParams();
   const [saving, setSaving] = useState(false);
   const workout = useQuery({ queryKey: ['workout', workoutId], queryFn: () => workoutsApi.get(workoutId) });
+  const phone = useMediaQuery('(max-width: 640px)');
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   // "Повторить": новая тренировка с теми же упражнениями — сразу на экран тренировки (как старт из комплекса)
@@ -61,24 +65,31 @@ export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 
   ];
   const shown = tiles.filter((tile): tile is Tile => tile !== false);
 
-  return (
-    <div className={styles.page}>
-      <div>
-        <h1 className={styles.title}>
-          {mode === 'finished'
-            ? 'Тренировка завершена'
-            : capitalize(dayTitle.format(new Date(w.startedAt ?? w.completedAt ?? '')))}
-        </h1>
-        <p className={styles.muted}>
-          {w.name} · {formatDuration(w.durationSec ?? 0)}
-        </p>
-      </div>
+  const title =
+    mode === 'finished'
+      ? 'Тренировка завершена'
+      : capitalize(dayTitle.format(new Date(w.startedAt ?? w.completedAt ?? '')));
+  const repeatButton = (
+    <Button onClick={() => repeat.mutate()} disabled={repeat.isPending}>
+      Повторить
+    </Button>
+  );
 
-      <div className={styles.tiles}>
+  return (
+    <div className={styles.wide}>
+      <PageHeader
+        back={mode === 'view' ? { to: '/history', label: 'История' } : undefined}
+        title={title}
+        subtitle={`${w.name} · ${formatDuration(w.durationSec ?? 0)}`}
+        action={mode === 'finished' ? <ButtonLink to="/">На главную</ButtonLink> : repeatButton}
+      />
+
+      {/* плитки — 3 в ряд и на телефоне (компактные), первая — главная цифра тренировки */}
+      <div className={`${styles.summaryTiles} ${shown.length > 3 ? styles.summaryTiles4 : ''}`}>
         {shown.map((tile, index) => (
-          // первая плитка — главная цифра тренировки, она акцентная
           <StatTile
             key={tile.label}
+            compact={phone}
             variant={index === 0 ? 'inverse' : 'default'}
             label={tile.label}
             value={tile.value}
@@ -86,33 +97,6 @@ export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 
         ))}
       </div>
 
-      {done.map((exercise) => (
-        <Card key={exercise.id} as="section">
-          <h2 className={styles.exerciseTitle}>{exercise.exerciseName}</h2>
-          <ol className={styles.setList}>
-            {exercise.sets.map((set) => (
-              <li key={set.id} className={styles.summaryExercise}>
-                <span className={styles.muted}>
-                  {exercise.trackingType === 'DISTANCE' && exercise.sets.length === 1 ? 'Пробежка' : `${set.number}`}
-                  {set.warmup && ' · разминка'}
-                </span>
-                <span className={styles.setValueSmall}>
-                  {describeSet(exercise.trackingType, set, exercise.assisted)}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </Card>
-      ))}
-
-      {mode === 'finished' && (
-        <p className="footnote">Рекорды и прогресс обновятся на главной через несколько секунд.</p>
-      )}
-      {mode === 'view' && (
-        <Button onClick={() => repeat.mutate()} disabled={repeat.isPending}>
-          Повторить тренировку
-        </Button>
-      )}
       {repeat.isError && <p className={styles.muted}>{repeat.error.message}</p>}
       {/* 409 — уже идёт другая тренировка: предлагаем вернуться к ней */}
       {repeat.error instanceof ApiError && repeat.error.status === 409 && (
@@ -120,18 +104,43 @@ export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 
           Продолжить текущую
         </ButtonLink>
       )}
-      {!w.templateId && (
-        <Button variant="secondary" onClick={() => setSaving(true)}>
-          Сохранить как комплекс
-        </Button>
+
+      <section className={styles.summarySection}>
+        <SectionLabel>Упражнения</SectionLabel>
+        <div className={styles.summaryGrid}>
+          {done.map((exercise) => (
+            <Card key={exercise.id} as="article">
+              <h3 className={styles.cardTitle}>{exercise.exerciseName}</h3>
+              <ol className={styles.setList}>
+                {exercise.sets.map((set) => (
+                  <li key={set.id} className={styles.summaryExercise}>
+                    <span className={styles.muted}>
+                      {exercise.trackingType === 'DISTANCE' && exercise.sets.length === 1
+                        ? 'Пробежка'
+                        : `${set.number}`}
+                      {set.warmup && ' · разминка'}
+                    </span>
+                    <span className={styles.setValueSmall}>
+                      {describeSet(exercise.trackingType, set, exercise.assisted)}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {mode === 'finished' && (
+        <p className="footnote">Рекорды и прогресс обновятся на главной через несколько секунд.</p>
       )}
-      {mode === 'finished' ? (
-        <ButtonLink to="/">На главную</ButtonLink>
-      ) : (
-        <ButtonLink to="/history" variant="secondary">
-          ← К истории
-        </ButtonLink>
-      )}
+      <div className={styles.summaryActions}>
+        {!w.templateId && (
+          <Button variant="secondary" onClick={() => setSaving(true)}>
+            Сохранить как комплекс
+          </Button>
+        )}
+      </div>
       {saving && <SaveTemplateDialog exerciseIds={done.map((e) => e.exerciseId)} onClose={() => setSaving(false)} />}
     </div>
   );

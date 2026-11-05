@@ -101,15 +101,20 @@ public class ProgressService {
     private static ReferenceResponse reference(ExperienceLevel level, boolean assumed,
                                                BigDecimal current, BigDecimal expected) {
         BigDecimal gap = ReferenceCurve.gapPercent(current, expected);
-        String pace = "уровень «" + level.label() + "»: ~" + level.monthlyGainPercent().stripTrailingZeros().toPlainString()
+        String pace = "уровень «" + level.label() + "»: ~" + comma(level.monthlyGainPercent().stripTrailingZeros())
                 + "% в месяц" + (assumed ? " (уровень не указан в профиле)" : "");
         String hint;
         if (gap.signum() >= 0) {
-            hint = "идёшь быстрее обычного темпа на " + gap.abs().toPlainString() + "% — " + pace;
+            hint = "вы растёте быстрее обычного темпа на " + comma(gap.abs()) + "% — " + pace;
         } else {
-            hint = "на " + gap.abs().toPlainString() + "% ниже обычного темпа — " + pace;
+            hint = "на " + comma(gap.abs()) + "% ниже обычного темпа — " + pace;
         }
         return new ReferenceResponse(level.name(), assumed, level.monthlyGainPercent(), gap, hint);
+    }
+
+    /** 1.5 -> "1,5": дробь через запятую, как во всём приложении */
+    private static String comma(BigDecimal value) {
+        return value.toPlainString().replace('.', ',');
     }
 
     private static ProgressPointResponse toPoint(ExercisePerformance performance, BigDecimal reference) {
