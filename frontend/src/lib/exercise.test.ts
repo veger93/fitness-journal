@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ProgressPoint } from '../api/analytics';
-import { bestDuration, exerciseImageUrl, historyRows, musclesText, setsLabel } from './exercise';
+import { bestDuration, exerciseImageUrl, historyRows, musclesText, setsLabel, strengthCaption } from './exercise';
 
 const point = (date: string, extra: Partial<ProgressPoint> = {}): ProgressPoint => ({
   date,
@@ -84,5 +84,17 @@ describe('musclesText', () => {
 describe('exerciseImageUrl', () => {
   it('файл из public/exercises по ключу и положению', () => {
     expect(exerciseImageUrl('bench-press', 2)).toBe('/exercises/bench-press-2.svg');
+  });
+});
+
+describe('strengthCaption', () => {
+  it('свежая сила, давно не делали, поддерживается похожим', () => {
+    expect(strengthCaption({ strengthStale: false, strengthMaintainedBy: null })).toBe('лучшее за 4 недели');
+    expect(strengthCaption({ strengthStale: true, strengthMaintainedBy: null })).toBe(
+      'давно не делали — сила на последней тренировке',
+    );
+    expect(strengthCaption({ strengthStale: true, strengthMaintainedBy: 'Жим гантелей лёжа' })).toBe(
+      'поддерживается: жим гантелей лёжа',
+    );
   });
 });

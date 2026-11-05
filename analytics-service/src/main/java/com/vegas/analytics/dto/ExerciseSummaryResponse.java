@@ -12,6 +12,8 @@ import java.util.UUID;
  * lastDistanceM, lastDurationSec — лучшие дистанция и время последней тренировки (бег, планка);
  * currentE1rmKg — 1ПМ последней тренировки (null, если не считается) — для сравнений "было/стало";
  * strengthKg — "Сила": лучший 1ПМ за 4 недели (StrengthCalculator); strengthStale — упражнение не делали дольше 4 недель;
+ * strengthMaintainedBy — давно не делали, но за 4 недели было упражнение того же семейства движения: его название
+ *   ("поддерживается: жим гантелей лёжа"); null — нет такого или упражнение делали недавно;
  * note — короткое пояснение к статусу простыми словами (null у NORMAL);
  * trend — последние значения 1ПМ по тренировкам, от старых к новым (мини-график на главной; пусто у упражнений без веса).
  */
@@ -30,6 +32,7 @@ public record ExerciseSummaryResponse(
         String note,
         List<BigDecimal> trend,
         BigDecimal strengthKg,
-        boolean strengthStale
+        boolean strengthStale,
+        String strengthMaintainedBy
 ) {
 }

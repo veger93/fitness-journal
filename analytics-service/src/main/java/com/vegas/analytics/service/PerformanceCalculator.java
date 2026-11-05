@@ -44,6 +44,7 @@ public final class PerformanceCalculator {
                 .exerciseName(exercise.exerciseName())
                 .bodyPart(exercise.bodyPart())
                 .trackingType(exercise.trackingType())
+                .movementPattern(exercise.movementPattern())
                 .performedAt(event.completedAt())
                 .workingSets(working.size())
                 .totalReps(sumReps(working))

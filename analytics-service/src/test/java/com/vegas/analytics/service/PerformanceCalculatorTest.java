@@ -109,7 +109,7 @@ class PerformanceCalculatorTest {
     }
 
     private static ExercisePerformed exercise(String trackingType, SetPerformed... sets) {
-        return new ExercisePerformed(UUID.randomUUID(), "Упражнение", BodyPart.CHEST, trackingType, List.of(sets));
+        return new ExercisePerformed(UUID.randomUUID(), "Упражнение", BodyPart.CHEST, trackingType, null, List.of(sets));
     }
 
     private static SetPerformed set(String weight, int reps, boolean warmup) {

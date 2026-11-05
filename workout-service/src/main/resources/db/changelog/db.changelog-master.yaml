@@ -37,6 +37,8 @@ databaseChangeLog:
       file: db/changelog/changes/017-catalog-review.sql
   - include:
       file: db/changelog/changes/018-catalog-plate-row.sql
+  - include:
+      file: db/changelog/changes/019-movement-patterns.sql
   # общий файл из модуля common-trainer-access (лежит в его ресурсах, Liquibase найдёт в classpath)
   - include:
       file: db/changelog/common/trainer-links.sql
