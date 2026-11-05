@@ -24,6 +24,8 @@ export interface ExerciseSummary {
   strengthKg: number | null;
   /** упражнение не делали дольше 4 недель — strengthKg на момент последней тренировки */
   strengthStale: boolean;
+  /** давно не делали, но за 4 недели было упражнение того же семейства движения — его название */
+  strengthMaintainedBy: string | null;
 }
 
 export interface Dashboard {

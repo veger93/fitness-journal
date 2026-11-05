@@ -56,6 +56,10 @@ public class ExercisePerformance {
     @Column(name = "tracking_type", nullable = false, length = 20)
     private String trackingType;
 
+    /** семейство движения из события (null — нет); для "сила поддерживается похожим упражнением" */
+    @Column(name = "movement_pattern", length = 32)
+    private String movementPattern;
+
     @Column(name = "performed_at", nullable = false)
     private Instant performedAt;
 

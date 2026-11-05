@@ -35,6 +35,19 @@ function bestResult(point: ProgressPoint, trackingType: TrackingType): string {
   return formatSet(point.bestWeightKg, point.bestReps) ?? '—';
 }
 
+/**
+ * Подпись к "Силе": свежая — "лучшее за 4 недели"; давно не делали — честно говорим об этом,
+ * но если похожее упражнение было (то же семейство движения) — сила поддерживается (docs/analytics.md).
+ */
+export function strengthCaption(summary: { strengthStale: boolean; strengthMaintainedBy: string | null }): string {
+  if (!summary.strengthStale) {
+    return 'лучшее за 4 недели';
+  }
+  return summary.strengthMaintainedBy
+    ? `поддерживается: ${summary.strengthMaintainedBy.toLowerCase()}`
+    : 'давно не делали — сила на последней тренировке';
+}
+
 /** 1 подход, 2 подхода, 5 подходов, 11 подходов, 21 подход */
 export function setsLabel(count: number): string {
   return plural(count, 'подход', 'подхода', 'подходов');

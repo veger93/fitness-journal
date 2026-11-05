@@ -60,6 +60,11 @@ public class Exercise {
     @Column(length = 30)
     private String icon;
 
+    /** Семейство движения (HORIZONTAL_PUSH, SQUAT…): упражнения одного семейства поддерживают силу друг друга.
+     *  Заполнено у системных упражнений (миграция 019), у своих — null. Строка, а не enum: нужна только аналитике. */
+    @Column(name = "movement_pattern", length = 32)
+    private String movementPattern;
+
     @Column(length = 1000)
     private String note;
 

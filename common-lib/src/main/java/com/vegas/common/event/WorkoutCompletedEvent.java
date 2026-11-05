@@ -16,6 +16,8 @@ import java.util.UUID;
  *
  * trackingType — строка, а не enum: enum живёт в workout-service,
  * и контракт между сервисами не должен тянуть за собой его внутренние классы.
+ * movementPattern — семейство движения ("HORIZONTAL_PUSH", "SQUAT"…), null — нет семейства.
+ * В старых событиях поля нет — Jackson подставит null, ничего не ломается.
  */
 public record WorkoutCompletedEvent(
         UUID workoutId,
@@ -29,6 +31,7 @@ public record WorkoutCompletedEvent(
             String exerciseName,
             BodyPart bodyPart,
             String trackingType,
+            String movementPattern,
             List<SetPerformed> sets
     ) {
     }

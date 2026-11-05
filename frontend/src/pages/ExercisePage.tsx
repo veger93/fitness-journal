@@ -23,7 +23,7 @@ import { Dialog } from '../components/ui/Dialog';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { StatTile } from '../components/ui/StatTile';
 import { EQUIPMENT_NAMES } from '../lib/catalog';
-import { bestDuration, historyRows } from '../lib/exercise';
+import { bestDuration, historyRows, strengthCaption } from '../lib/exercise';
 import { BODY_PART_NAMES } from '../lib/plan';
 import { formatChange, formatExerciseResult, formatKg, formatShortDate, formatTonnage } from '../lib/format';
 import { formatClock } from '../lib/workout';
@@ -213,7 +213,13 @@ function Tiles({
         variant="inverse"
         label="Сила*"
         value={formatKgOrDash(summary.strengthKg ?? summary.currentE1rmKg)}
-        caption={change != null ? `${formatChange(change)} ${PERIOD_CAPTION[period]}` : 'мало данных за период'}
+        caption={
+          summary.strengthStale
+            ? strengthCaption(summary)
+            : change != null
+              ? `${formatChange(change)} ${PERIOD_CAPTION[period]}`
+              : 'мало данных за период'
+        }
         highlightCaption={change != null && change > 0}
       />
       <StatTile label="Последний подход" value={last} caption={formatShortDate(summary.lastPerformedAt)} />

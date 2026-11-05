@@ -9,6 +9,7 @@ import com.vegas.analytics.dto.RecordType;
 import com.vegas.analytics.entity.ExercisePerformance;
 import com.vegas.common.model.BodyPart;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -174,6 +175,38 @@ class DashboardCalculatorTest {
 
     private static List<ExercisePerformance> sorted(List<ExercisePerformance> list) {
         return list.stream().sorted(Comparator.comparing(ExercisePerformance::getPerformedAt)).toList();
+    }
+
+    @Test
+    void longNotDone_butSameMovementRecently_strengthMaintained() {
+        UUID dumbbellBench = UUID.randomUUID();
+        List<ExercisePerformance> history = sorted(new ArrayList<>(List.of(
+                withPattern(perf(BENCH, "Жим лёжа", 50, "100", "1000"), "HORIZONTAL_PUSH"),
+                withPattern(perf(BENCH, "Жим лёжа", 40, "102", "1000"), "HORIZONTAL_PUSH"),
+                withPattern(perf(dumbbellBench, "Жим гантелей лёжа", 5, "80", "800"), "HORIZONTAL_PUSH"),
+                withPattern(perf(CURL, "Сгибания", 45, "40", "300"), "BICEPS_CURL"))));
+
+        List<ExerciseSummaryResponse> exercises = DashboardCalculator.build(history, List.of(), NOW).exercises();
+        ExerciseSummaryResponse bench = exercises.stream().filter(e -> e.exerciseId().equals(BENCH)).findFirst().orElseThrow();
+        ExerciseSummaryResponse curl = exercises.stream().filter(e -> e.exerciseId().equals(CURL)).findFirst().orElseThrow();
+        ExerciseSummaryResponse dumbbell = exercises.stream()
+                .filter(e -> e.exerciseId().equals(dumbbellBench)).findFirst().orElseThrow();
+
+        // жим штангой давно (сила на последней тренировке), но жим гантелей был 5 дней назад — поддерживается
+        assertThat(bench.strengthStale()).isTrue();
+        assertThat(bench.strengthKg()).isEqualByComparingTo("102");
+        assertThat(bench.strengthMaintainedBy()).isEqualTo("Жим гантелей лёжа");
+        // сгибания давно и без похожих — просто "давно"
+        assertThat(curl.strengthStale()).isTrue();
+        assertThat(curl.strengthMaintainedBy()).isNull();
+        // свежее упражнение — не "давно" и не "поддерживается"
+        assertThat(dumbbell.strengthStale()).isFalse();
+        assertThat(dumbbell.strengthMaintainedBy()).isNull();
+    }
+
+    private static ExercisePerformance withPattern(ExercisePerformance performance, String pattern) {
+        ReflectionTestUtils.setField(performance, "movementPattern", pattern);
+        return performance;
     }
 
     private static ExercisePerformance perf(UUID exerciseId, String name, int daysAgo, String e1rm, String volume) {
