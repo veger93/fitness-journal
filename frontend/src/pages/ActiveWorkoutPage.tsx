@@ -11,7 +11,15 @@ import { SetDialog } from '../components/workout/SetDialog';
 import { useNow } from '../hooks/useNow';
 import { useCurrentWorkout, useWorkoutActions } from '../hooks/useWorkout';
 import { describeSet, formatClock, runParts, toRequest } from '../lib/workout';
+import { setsLabel } from '../lib/exercise';
+import { useMediaQuery } from '../hooks/useMediaQuery';
+import { PageHeader } from '../components/ui/PageHeader';
+import { SectionLabel } from '../components/ui/SectionLabel';
+import { ListRow, ListRowGroup } from '../components/ui/ListRow';
 import styles from './WorkoutPages.module.css';
+
+/** Две колонки — только на широком экране: до 768px «Записать подход» закреплена внизу (data-dock) */
+const DESKTOP = '(min-width: 900px)';
 
 export function ActiveWorkoutPage() {
   const current = useCurrentWorkout();
@@ -25,10 +33,11 @@ export function ActiveWorkoutPage() {
     // Не редирект, а сообщение: после "Завершить" кэш очищается раньше, чем React Router закончит переход
     // на экран итогов, и автоматический <Navigate> здесь перебил бы тот переход.
     return (
-      <div className={styles.page}>
-        <h1 className={styles.title}>Тренировка</h1>
-        <p className={styles.muted}>Сейчас тренировка не идёт.</p>
-        <ButtonLink to="/workout">Начать тренировку</ButtonLink>
+      <div className={styles.wide}>
+        <PageHeader title="Тренировка" subtitle="Сейчас тренировка не идёт." />
+        <ButtonLink to="/workout" className={styles.alignStart}>
+          Начать тренировку
+        </ButtonLink>
       </div>
     );
   }
@@ -78,128 +87,143 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
   const next = exercise ? exercise.sets.length + 1 : 1;
   const previousSame = exercise?.previousSets[next - 1];
 
+  // ПК (от 900px): слева текущее упражнение и подходы, справа список упражнений и действия.
+  // Телефон: упражнения — полоса чипов сверху, «Записать подход» закреплена у большого пальца.
+  const desktop = useMediaQuery(DESKTOP);
+
+  const exerciseList = (
+    <section className={styles.group} aria-labelledby="workout-exercises">
+      <SectionLabel id="workout-exercises">Упражнения</SectionLabel>
+      <ListRowGroup>
+        {workout.exercises.map((e, index) => (
+          <ListRow
+            key={e.id}
+            title={`${index + 1}. ${e.exerciseName}`}
+            text={e.sets.length > 0 ? setsLabel(e.sets.length) : 'ещё нет подходов'}
+            selected={e.id === exercise?.id}
+            onClick={() => setSelectedId(e.id)}
+          />
+        ))}
+        <ListRow mark="+" title="Добавить упражнение" onClick={() => setModal({ kind: 'addExercise' })} />
+      </ListRowGroup>
+    </section>
+  );
+
+  const links = (
+    <div className={styles.links}>
+      {exercise && exercise.sets.length === 0 && (
+        <button
+          type="button"
+          className={styles.link}
+          onClick={() => actions.removeExercise.mutate(exercise.id)}
+          disabled={actions.removeExercise.isPending}
+        >
+          Убрать упражнение
+        </button>
+      )}
+      {!workout.templateId && workout.exercises.length > 0 && (
+        <button type="button" className={styles.link} onClick={() => setModal({ kind: 'saveTemplate' })}>
+          Сохранить как комплекс
+        </button>
+      )}
+      <button type="button" className={styles.linkDanger} onClick={() => setModal({ kind: 'cancel' })}>
+        Отменить тренировку
+      </button>
+    </div>
+  );
+
   return (
-    <div className={styles.page}>
+    <div className={styles.wide}>
       {workout.startedAt ? (
-        <div className={styles.topBar}>
-          <p className={styles.timerBlock}>
-            <span className={styles.muted}>Тренировка идёт</span>
-            <span className={styles.timer}>{formatClock(elapsedSec)}</span>
-          </p>
-          <Button variant="secondary" onClick={() => setModal({ kind: hasSets ? 'complete' : 'cancel' })}>
-            Завершить
-          </Button>
-        </div>
+        <PageHeader
+          eyebrow="Тренировка идёт"
+          title={<span className={styles.timerTitle}>{formatClock(elapsedSec)}</span>}
+          subtitle={workout.name}
+          action={
+            <Button variant="secondary" onClick={() => setModal({ kind: hasSets ? 'complete' : 'cancel' })}>
+              Завершить
+            </Button>
+          }
+        />
       ) : (
         // подготовка: выбираем упражнения заранее, время не идёт
-        <div className={styles.topBar}>
-          <p className={styles.timerBlock}>
-            <span className={styles.timer}>Подготовка</span>
-            <span className={styles.muted}>Время пойдёт, когда нажмёте «Начать» или запишете первый подход</span>
-          </p>
-          <Button onClick={() => actions.begin.mutate()} disabled={actions.begin.isPending}>
-            Начать
-          </Button>
-        </div>
+        <PageHeader
+          title="Подготовка"
+          subtitle="Время пойдёт, когда нажмёте «Начать» или запишете первый подход"
+          action={
+            <Button onClick={() => actions.begin.mutate()} disabled={actions.begin.isPending}>
+              Начать
+            </Button>
+          }
+        />
       )}
 
-      {/* текущее упражнение: картинка, название и "Как выполнять" — вся карточка нажимается */}
-      {exercise ? (
-        <ExerciseCard key={exercise.id} exercise={exercise} />
-      ) : (
-        <h1 className={styles.title}>{workout.name}</h1>
-      )}
+      <div className={styles.workoutGrid}>
+        <div className={styles.workoutMain}>
+          {/* текущее упражнение: картинка, название и "Как выполнять" — вся карточка нажимается */}
+          {exercise && <ExerciseCard key={exercise.id} exercise={exercise} />}
 
-      <div className={styles.chips} role="group" aria-label="Упражнения тренировки">
-        {workout.exercises.map((e, index) => (
-          <Chip key={e.id} selected={e.id === exercise?.id} onClick={() => setSelectedId(e.id)}>
-            {index + 1}. {e.exerciseName}
-          </Chip>
-        ))}
-        <Chip onClick={() => setModal({ kind: 'addExercise' })}>+ упражнение</Chip>
-      </div>
-
-      {!exercise && (
-        <Card>
-          <p className={styles.muted}>В тренировке пока нет упражнений.</p>
-          <Button onClick={() => setModal({ kind: 'addExercise' })}>Добавить упражнение</Button>
-        </Card>
-      )}
-
-      {exercise && (
-        <>
-          {exercise.sets.length > 0 && (
-            <ul className={styles.sets}>
-              {exercise.sets.map((set) => (
-                <li key={set.id}>
-                  <button
-                    type="button"
-                    className={styles.setRow}
-                    onClick={() => setModal({ kind: 'set', editing: set })}
-                    aria-label={`${setLabel(exercise.trackingType, set.number, exercise.sets.length)}: ${describeSet(exercise.trackingType, set, exercise.assisted)}. Изменить`}
-                  >
-                    <span>
-                      {setLabel(exercise.trackingType, set.number, exercise.sets.length)}
-                      {set.warmup && <span className={styles.muted}> · разминка</span>}
-                    </span>
-                    <SetValue trackingType={exercise.trackingType} set={set} assisted={exercise.assisted} />
-                    <svg
-                      className={styles.check}
-                      aria-hidden="true"
-                      width="22"
-                      height="22"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M5 12l5 5L20 7" />
-                    </svg>
-                  </button>
-                </li>
+          {!desktop && (
+            <div className={styles.chips} role="group" aria-label="Упражнения тренировки">
+              {workout.exercises.map((e, index) => (
+                <Chip key={e.id} selected={e.id === exercise?.id} onClick={() => setSelectedId(e.id)}>
+                  {index + 1}. {e.exerciseName}
+                </Chip>
               ))}
-            </ul>
+              <Chip onClick={() => setModal({ kind: 'addExercise' })}>+ упражнение</Chip>
+            </div>
           )}
 
-          {/*
-            На телефоне — закреплена внизу, над панелью вкладок: главное действие экрана всегда под большим
-            пальцем и не уезжает вниз, когда подходов много. Подсказка "прошлый раз" — над кнопкой.
-          */}
-          <div className={styles.dock} data-dock>
-            {previousSame && (
-              <p className={styles.dockHint}>
-                {exercise.trackingType === 'DISTANCE' ? 'Прошлый раз' : 'Прошлый раз на этом подходе'}:{' '}
-                {describeSet(exercise.trackingType, previousSame, exercise.assisted)}
-              </p>
-            )}
-            <Button fullWidth onClick={() => setModal({ kind: 'set', editing: null })}>
-              {addSetLabel(exercise.trackingType, next)}
-            </Button>
-          </div>
-        </>
-      )}
+          {!exercise && (
+            <Card>
+              <p className={styles.muted}>В тренировке пока нет упражнений.</p>
+              <Button onClick={() => setModal({ kind: 'addExercise' })}>Добавить упражнение</Button>
+            </Card>
+          )}
 
-      <div className={styles.links}>
-        {exercise && exercise.sets.length === 0 && (
-          <button
-            type="button"
-            className={styles.link}
-            onClick={() => actions.removeExercise.mutate(exercise.id)}
-            disabled={actions.removeExercise.isPending}
-          >
-            Убрать упражнение
-          </button>
+          {exercise && (
+            <>
+              {exercise.sets.length > 0 && (
+                <ListRowGroup label={`Подходы: ${exercise.exerciseName}`}>
+                  {exercise.sets.map((set) => (
+                    <ListRow
+                      key={set.id}
+                      title={setLabel(exercise.trackingType, set.number, exercise.sets.length)}
+                      text={set.warmup ? 'разминка' : undefined}
+                      value={<SetValue trackingType={exercise.trackingType} set={set} assisted={exercise.assisted} />}
+                      onClick={() => setModal({ kind: 'set', editing: set })}
+                    />
+                  ))}
+                </ListRowGroup>
+              )}
+
+              {/*
+                На телефоне — закреплена внизу, над панелью вкладок: главное действие экрана всегда под большим
+                пальцем и не уезжает вниз, когда подходов много. Подсказка "прошлый раз" — над кнопкой.
+              */}
+              <div className={styles.dock} data-dock>
+                {previousSame && (
+                  <p className={styles.dockHint}>
+                    {exercise.trackingType === 'DISTANCE' ? 'Прошлый раз' : 'Прошлый раз на этом подходе'}:{' '}
+                    {describeSet(exercise.trackingType, previousSame, exercise.assisted)}
+                  </p>
+                )}
+                <Button fullWidth onClick={() => setModal({ kind: 'set', editing: null })}>
+                  {addSetLabel(exercise.trackingType, next)}
+                </Button>
+              </div>
+            </>
+          )}
+
+          {!desktop && links}
+        </div>
+
+        {desktop && (
+          <aside className={styles.workoutSide}>
+            {exerciseList}
+            {links}
+          </aside>
         )}
-        {!workout.templateId && workout.exercises.length > 0 && (
-          <button type="button" className={styles.link} onClick={() => setModal({ kind: 'saveTemplate' })}>
-            Сохранить как комплекс
-          </button>
-        )}
-        <button type="button" className={styles.linkDanger} onClick={() => setModal({ kind: 'cancel' })}>
-          Отменить тренировку
-        </button>
       </div>
 
       {modal?.kind === 'set' && exercise && (

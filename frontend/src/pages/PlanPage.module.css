@@ -79,10 +79,6 @@
 }
 
 @media (max-width: 600px) {
-  .title {
-    font-size: 32px;
-  }
-
   .day {
     grid-template-columns: 1fr;
     gap: var(--space-1);

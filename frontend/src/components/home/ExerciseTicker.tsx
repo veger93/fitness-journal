@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useCarousel } from '../../hooks/useCarousel';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { ExerciseRow } from '../ExerciseRow';
+import { SectionLabel } from '../ui/SectionLabel';
 import styles from './Home.module.css';
 
 const SWIPE_PX = 40;
@@ -49,14 +50,9 @@ export function ExerciseTicker({ exercises }: { exercises: ExerciseSummary[] }) 
 
   return (
     <section className={styles.section} aria-labelledby="exercises-title">
-      <div className={styles.sectionHead}>
-        <h2 id="exercises-title" className={styles.sectionTitle}>
-          Упражнения
-        </h2>
-        <Link to="/exercises" className={styles.sectionLink}>
-          Все упражнения →
-        </Link>
-      </div>
+      <SectionLabel id="exercises-title" action={<Link to="/exercises">Все упражнения →</Link>}>
+        Упражнения
+      </SectionLabel>
       <div
         className={styles.ticker}
         aria-roledescription="карусель"

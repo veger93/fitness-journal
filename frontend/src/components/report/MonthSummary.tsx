@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { analyticsApi, type MonthlyReport } from '../../api/analytics';
 import { formatKg, formatMonth, formatTonnage } from '../../lib/format';
 import { summaryMonthToShow } from '../../lib/month';
-import { Button, ButtonLink } from '../ui/Button';
-import { Card } from '../ui/Card';
+import { ButtonLink } from '../ui/Button';
+import { ListRow, ListRowGroup } from '../ui/ListRow';
 import { Dialog } from '../ui/Dialog';
 import { ChangeText } from './ChangeText';
 import styles from './Report.module.css';
@@ -57,20 +57,22 @@ export function MonthSummary() {
 
   return (
     <>
-      <Card as="section" variant="inverse" className={styles.banner}>
-        <div>
-          <h2 className={styles.cardTitle}>Итоги за {formatMonth(month)} готовы</h2>
-          <p className={styles.onInverse}>Сравним с прошлым месяцем: сила, объём, тренировки.</p>
-        </div>
-        <div className={styles.bannerActions}>
-          <Button variant="surface" onClick={() => setOpen(true)}>
-            Посмотреть
-          </Button>
-          <Button variant="secondary" onClick={hide}>
-            Скрыть
-          </Button>
-        </div>
-      </Card>
+      {/* строка, а не вторая тёмная карточка: главная карточка экрана одна — «Сегодня по плану» */}
+      <section aria-label={`Итоги за ${formatMonth(month)}`}>
+        <ListRowGroup>
+          <ListRow
+            mark="↗"
+            title={`Итоги за ${formatMonth(month)} готовы`}
+            text="Сила, объём, тренировки — в сравнении с прошлым месяцем"
+            onClick={() => setOpen(true)}
+          />
+          <div className={styles.bannerFoot}>
+            <button type="button" className={styles.textButton} onClick={hide}>
+              Скрыть
+            </button>
+          </div>
+        </ListRowGroup>
+      </section>
       {open && <SummaryDialog report={report.data} onClose={() => setOpen(false)} />}
     </>
   );

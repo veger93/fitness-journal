@@ -116,7 +116,7 @@ export function LandingPage() {
             Мышцы растут от <em>прогресса</em>
           </h1>
           <p className={styles.heroText}>
-            Записывай подходы за секунды — Vegas покажет, где ты растёшь, где застрял и сколько добавить на следующей
+            Записывайте подходы за секунды — Vegas покажет, где вы растёте, где застряли и сколько добавить на следующей
             тренировке.
           </p>
           <div className={styles.actions}>
@@ -173,12 +173,12 @@ export function LandingPage() {
           <article className={styles.step}>
             <span className={styles.stepNum}>03</span>
             <h3>Получил подсказку</h3>
-            <p>Пора добавить вес, впереди плато или нужна разгрузка — подскажет до того, как ты это почувствуешь.</p>
+            <p>Пора добавить вес, впереди плато или нужна разгрузка — подскажет до того, как вы это почувствуете.</p>
             <div data-theme="light" className={styles.mock}>
               <div className={styles.todo}>
                 <span>Что сделать сейчас</span>
                 <b>Добавь 2,5 кг в жиме</b>
-                <span>3 тренировки подряд ты сделал 8×4</span>
+                <span>3 тренировки подряд вы сделали 8×4</span>
               </div>
             </div>
           </article>
@@ -218,7 +218,7 @@ export function LandingPage() {
       <section className={styles.final}>
         <div className={styles.finalContent}>
           <p className={styles.eyebrow}>Первая тренировка — сегодня</p>
-          <h2 className={styles.finalTitle}>Через 12 недель ты скажешь себе спасибо</h2>
+          <h2 className={styles.finalTitle}>Через 12 недель вы скажете себе спасибо</h2>
           <p className={styles.lead}>
             Регистрация — 30 секунд. Добавь Vegas на экран телефона, и он будет открываться как приложение.
           </p>

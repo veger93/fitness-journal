@@ -4,6 +4,8 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { workoutsApi, type WorkoutTemplate } from '../api/workouts';
 import { TodayPlanCard } from '../components/home/TodayPlanCard';
+import { PageHeader } from '../components/ui/PageHeader';
+import { SectionLabel } from '../components/ui/SectionLabel';
 import { ConfirmDialog } from '../components/workout/ConfirmDialog';
 import { CURRENT_WORKOUT_KEY, useCurrentWorkout } from '../hooks/useWorkout';
 import { completedToday, todayOf } from '../lib/plan';
@@ -60,36 +62,38 @@ export function StartWorkoutPage() {
   const ready = templates.data?.filter((t) => !t.custom) ?? [];
 
   return (
-    <div className={styles.page}>
-      <h1 className={`${styles.title} ${styles.startTitle}`}>Новая тренировка</h1>
-      <p className={`${styles.muted} ${styles.intro}`}>
-        Выберите комплекс или соберите свою тренировку. Время пойдёт, только когда начнёте — можно подготовиться
-        заранее.
-      </p>
+    <div className={styles.wide}>
+      <PageHeader
+        title="Новая тренировка"
+        subtitle="Время пойдёт, только когда начнёте — можно подготовиться заранее"
+      />
 
-      {plan.data && plannedPending && <TodayPlanCard plan={plan.data} recent={recent.data?.content ?? []} />}
+      {/* ПК: план на сегодня слева, быстрые действия справа столбиком; телефон: одно под другим */}
+      <div className={`${styles.startTop} ${plan.data && plannedPending ? styles.withPlan : ''}`}>
+        {plan.data && plannedPending && <TodayPlanCard plan={plan.data} recent={recent.data?.content ?? []} />}
 
-      <div className={styles.quick}>
-        <button
-          type="button"
-          className={styles.quickAction}
-          disabled={start.isPending}
-          onClick={() => start.mutate({ templateId: null })}
-        >
-          <span className={styles.quickTitle}>＋ Своя тренировка</span>
-          <span className={styles.muted}>любые упражнения</span>
-        </button>
-        {last && (
+        <div className={styles.quick}>
           <button
             type="button"
             className={styles.quickAction}
             disabled={start.isPending}
-            onClick={() => start.mutate({ repeatOf: last.id })}
+            onClick={() => start.mutate({ templateId: null })}
           >
-            <span className={styles.quickTitle}>↻ Повторить последнюю</span>
-            <span className={`${styles.muted} ${styles.ellipsis}`}>{last.name || 'Тренировка'}</span>
+            <span className={styles.quickTitle}>＋ Своя тренировка</span>
+            <span className={styles.muted}>любые упражнения</span>
           </button>
-        )}
+          {last && (
+            <button
+              type="button"
+              className={styles.quickAction}
+              disabled={start.isPending}
+              onClick={() => start.mutate({ repeatOf: last.id })}
+            >
+              <span className={styles.quickTitle}>↻ Повторить последнюю</span>
+              <span className={`${styles.muted} ${styles.ellipsis}`}>{last.name || 'Тренировка'}</span>
+            </button>
+          )}
+        </div>
       </div>
       {start.isError && <p className={styles.muted}>{start.error.message}</p>}
 
@@ -146,7 +150,7 @@ function TemplateGroup({
 }) {
   return (
     <section className={styles.group}>
-      <h2 className={styles.groupTitle}>{title}</h2>
+      <SectionLabel>{title}</SectionLabel>
       <div className={styles.templates}>
         {templates.map((template) => (
           // две отдельные кнопки рядом, а не кнопка в кнопке: вложенные <button> в HTML запрещены

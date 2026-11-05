@@ -1,52 +1,36 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import type { ExerciseSummary } from '../../api/analytics';
 import { formatExerciseResult } from '../../lib/format';
-import { Button, ButtonLink } from '../ui/Button';
-import { Card } from '../ui/Card';
+import { ListRow, ListRowGroup } from '../ui/ListRow';
+import { SectionLabel } from '../ui/SectionLabel';
 import { DeloadDialog } from './DeloadDialog';
 import { PlateauDialog } from './PlateauDialog';
 import styles from './Home.module.css';
 
 /**
- * "Что сделать сейчас" — три постоянных места, у каждого своя роль:
- *   1. перегрузка (оранжевая) -> план разгрузки;
- *   2. плато (обычная карточка) -> что попробовать;
- *   3. рекорды (акцентная тёмная/светлая) -> все рекорды.
- * Если по своей теме сказать нечего, карточка остаётся на месте, но спокойного цвета и с хорошей новостью:
- * оранжевый — только когда действительно пора обратить внимание.
- *
- * compact (телефон): те же сигналы строками в одной карточке — только то, что требует внимания;
- * спокойные темы сворачиваются в одну строку "✓ Перегрузки нет · плато нет". Окна те же.
+ * "Что сделать сейчас" — строки в одной карточке (дизайн-система: ListRow), на телефоне и на ПК одинаково:
+ *   перегрузка (оранжевый значок) -> план разгрузки; плато -> что попробовать; рекорды -> все рекорды.
+ * Блок есть только когда есть перегрузка или плато: рекорды без них — точка на вкладке "Рекорды" (useNewRecord).
+ * Спокойные темы — одной строкой "✓ Перегрузки нет".
  */
-export function SignalCards({ exercises, compact = false }: { exercises: ExerciseSummary[]; compact?: boolean }) {
+export function SignalCards({ exercises }: { exercises: ExerciseSummary[] }) {
   const [open, setOpen] = useState<{ dialog: 'deload' | 'plateau'; exercise: ExerciseSummary } | null>(null);
   const overloads = exercises.filter((e) => e.status === 'OVERLOAD');
   const plateaus = exercises.filter((e) => e.status === 'PLATEAU');
   const records = exercises.filter((e) => e.status === 'RECORD');
 
-  const dialogs = (
-    <>
-      {open?.dialog === 'deload' && <DeloadDialog exercise={open.exercise} onClose={() => setOpen(null)} />}
-      {open?.dialog === 'plateau' && <PlateauDialog exercise={open.exercise} onClose={() => setOpen(null)} />}
-    </>
-  );
+  if (overloads.length === 0 && plateaus.length === 0) {
+    return null;
+  }
+  const calm = [overloads.length === 0 && 'перегрузки нет', plateaus.length === 0 && 'плато нет'].filter(Boolean);
+  const running = overloads[0]?.trackingType === 'DISTANCE';
 
-  if (compact) {
-    // на телефоне карточка только для того, что требует действий: перегрузка или плато.
-    // Рекорды без них — точка на вкладке "Рекорды" внизу (useNewRecord), отдельная карточка не нужна
-    if (overloads.length === 0 && plateaus.length === 0) {
-      return null;
-    }
-    const calm = [overloads.length === 0 && 'перегрузки нет', plateaus.length === 0 && 'плато нет'].filter(Boolean);
-    const running = overloads[0]?.trackingType === 'DISTANCE';
-    return (
-      <Card as="section" className={styles.signalList} aria-labelledby="signals-title">
-        <h2 id="signals-title" className={styles.signalListTitle}>
-          Что сделать сейчас
-        </h2>
+  return (
+    <section className={styles.section} aria-labelledby="signals-title">
+      <SectionLabel id="signals-title">Что сделать сейчас</SectionLabel>
+      <ListRowGroup>
         {overloads.length > 0 && (
-          <SignalRow
+          <ListRow
             mark="!"
             tone="accent"
             title={running ? 'Притормозите с километражем' : 'Пора неделю полегче'}
@@ -57,16 +41,15 @@ export function SignalCards({ exercises, compact = false }: { exercises: Exercis
           />
         )}
         {plateaus.length > 0 && (
-          <SignalRow
+          <ListRow
             mark="≈"
-            tone="plain"
             title={plateauTitle(plateaus[0])}
             text={withMore(plateaus)}
             onClick={() => setOpen({ dialog: 'plateau', exercise: plateaus[0] })}
           />
         )}
         {records.length > 0 && (
-          <SignalRow
+          <ListRow
             mark="★"
             tone="inverse"
             title={
@@ -81,133 +64,10 @@ export function SignalCards({ exercises, compact = false }: { exercises: Exercis
             <span aria-hidden="true">✓</span> {capitalize(calm.join(' · '))}
           </p>
         )}
-        {dialogs}
-      </Card>
-    );
-  }
-
-  return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Что сделать сейчас</h2>
-      <div className={styles.signals}>
-        {overloads.length > 0 ? (
-          <Card as="article" variant="accent" className={styles.signal}>
-            <span className={styles.signalLabel}>{withMore(overloads)}</span>
-            <h3 className={styles.signalTitle}>
-              {overloads[0].trackingType === 'DISTANCE' ? 'Притормозите с километражем' : 'Пора неделю полегче'}
-            </h3>
-            <p className={styles.signalText}>{overloads[0].note ?? 'Похоже, накопилась усталость.'}</p>
-            {overloads[0].trackingType === 'DISTANCE' ? (
-              // у бега своя перегрузка (рост километража) — план разгрузки для силовых тут не подходит
-              <ButtonLink to="/running" variant="surface" className={styles.signalAction}>
-                Подробнее
-              </ButtonLink>
-            ) : (
-              <Button
-                variant="surface"
-                className={styles.signalAction}
-                onClick={() => setOpen({ dialog: 'deload', exercise: overloads[0] })}
-              >
-                План разгрузки
-              </Button>
-            )}
-          </Card>
-        ) : (
-          <Card as="article" className={styles.signal}>
-            <span className={styles.signalLabel}>Восстановление</span>
-            <h3 className={styles.signalTitle}>Перегрузки нет</h3>
-            <p className={styles.signalText}>Нагрузка растёт в нормальном темпе — отдых не нужен.</p>
-          </Card>
-        )}
-
-        {plateaus.length > 0 ? (
-          <Card as="article" className={styles.signal}>
-            <span className={styles.signalLabel}>{withMore(plateaus)}</span>
-            <h3 className={styles.signalTitle}>{plateauTitle(plateaus[0])}</h3>
-            <p className={styles.signalText}>Вес не растёт, хотя тренировки идут. Помогут небольшие перемены.</p>
-            <Button
-              variant="secondary"
-              className={styles.signalAction}
-              onClick={() => setOpen({ dialog: 'plateau', exercise: plateaus[0] })}
-            >
-              Что попробовать
-            </Button>
-          </Card>
-        ) : (
-          <Card as="article" className={styles.signal}>
-            <span className={styles.signalLabel}>Прогресс</span>
-            <h3 className={styles.signalTitle}>Плато нет</h3>
-            <p className={styles.signalText}>Во всех упражнениях вес растёт или пока рано делать выводы.</p>
-          </Card>
-        )}
-
-        <Card as="article" variant="inverse" className={styles.signal}>
-          {records.length > 0 ? (
-            <>
-              <span className={styles.signalLabel}>{withMore(records)}</span>
-              <h3 className={styles.signalTitle}>
-                {records.length === 1
-                  ? `Рекорд: ${formatExerciseResult(records[0]) ?? ''}`
-                  : `Рекордов: ${records.length}`}
-              </h3>
-              <p className={styles.signalText}>
-                {records.length === 1
-                  ? `${records[0].note ?? 'Новый рекорд'}. Так держать!`
-                  : 'За последние две недели. Так держать!'}
-              </p>
-            </>
-          ) : (
-            <>
-              <span className={styles.signalLabel}>Рекорды</span>
-              <h3 className={styles.signalTitle}>Новых рекордов нет</h3>
-              <p className={styles.signalText}>Здесь появятся рекорды за последние две недели.</p>
-            </>
-          )}
-          <ButtonLink to="/records" variant="secondary" className={styles.signalAction}>
-            Все рекорды
-          </ButtonLink>
-        </Card>
-      </div>
-
-      {dialogs}
+      </ListRowGroup>
+      {open?.dialog === 'deload' && <DeloadDialog exercise={open.exercise} onClose={() => setOpen(null)} />}
+      {open?.dialog === 'plateau' && <PlateauDialog exercise={open.exercise} onClose={() => setOpen(null)} />}
     </section>
-  );
-}
-
-interface SignalRowProps {
-  mark: string;
-  tone: 'accent' | 'plain' | 'inverse';
-  title: string;
-  text: string;
-  /** строка — ссылка (to) или кнопка, открывающая окно (onClick) */
-  to?: string;
-  onClick?: () => void;
-}
-
-/** Строка сигнала: значок · заголовок и пояснение · стрелка. Вся строка — одна цель для пальца (>= 44px). */
-function SignalRow({ mark, tone, title, text, to, onClick }: SignalRowProps) {
-  const body = (
-    <>
-      <span className={`${styles.mark} ${styles[`mark_${tone}`]}`} aria-hidden="true">
-        {mark}
-      </span>
-      <span className={styles.rowBody}>
-        <span className={styles.rowTitle}>{title}</span>
-        <span className={styles.rowText}>{text}</span>
-      </span>
-      <span className={styles.rowArrow} aria-hidden="true">
-        ›
-      </span>
-    </>
-  );
-  return to ? (
-    <Link to={to} className={styles.row}>
-      {body}
-    </Link>
-  ) : (
-    <button type="button" className={styles.row} onClick={onClick}>
-      {body}
-    </button>
   );
 }
 
