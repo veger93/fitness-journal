@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { renderShareImage, type ShareChartData, type ShareFormat } from '../../lib/shareImage';
 import { Button } from '../ui/Button';
 import { Dialog } from '../ui/Dialog';
@@ -54,6 +55,7 @@ function ShareDialog({ onClose, ...data }: Props & { onClose: () => void }) {
   const [image, setImage] = useState<{ blob: Blob; url: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [copied, setCopied] = useState(false);
   // данные графика сравниваем по значению: новый массив points на каждый рендер не должен перерисовывать картинку
   const key = JSON.stringify(data);
 
@@ -65,6 +67,7 @@ function ShareDialog({ onClose, ...data }: Props & { onClose: () => void }) {
         if (cancelled) {
           return;
         }
+        setCopied(false); // новая картинка — в буфере старая
         url = URL.createObjectURL(blob);
         setImage({ blob, url });
         setError(null);
@@ -81,8 +84,26 @@ function ShareDialog({ onClose, ...data }: Props & { onClose: () => void }) {
 
   const fileName = `vegas-${data.exerciseName.toLowerCase().replace(/[^a-zа-яё0-9]+/gi, '-')}.png`;
   const file = image ? new File([image.blob], fileName, { type: 'image/png' }) : null;
-  // телефон умеет отправлять файлы — системное меню; иначе (большинство компьютеров) — просто скачать
-  const canShare = file !== null && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
+  // Системное меню "Поделиться" — только на телефоне: там в нём мессенджеры и "Сохранить в фото".
+  // На компьютере Windows тоже его открывает, но там почта и "устройства поблизости", а скачать нельзя —
+  // поэтому на компьютере "Скачать" и "Скопировать" (вставить в Telegram Desktop через Ctrl+V).
+  const touch = useMediaQuery('(pointer: coarse)');
+  const canShare =
+    touch && file !== null && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
+  const canCopy = typeof ClipboardItem !== 'undefined' && typeof navigator.clipboard?.write === 'function';
+
+  const copy = async () => {
+    if (!image) {
+      return;
+    }
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': image.blob })]);
+      setCopied(true);
+      setError(null);
+    } catch {
+      setError('Не получилось скопировать — скачайте картинку.');
+    }
+  };
 
   const send = async () => {
     if (!file || !image) {
@@ -122,6 +143,11 @@ function ShareDialog({ onClose, ...data }: Props & { onClose: () => void }) {
         <Button fullWidth onClick={send} disabled={!image || sending}>
           {canShare ? 'Отправить…' : 'Скачать картинку'}
         </Button>
+        {!canShare && canCopy && (
+          <Button variant="secondary" fullWidth onClick={copy} disabled={!image}>
+            {copied ? 'Скопировано — вставьте в чат (Ctrl+V)' : 'Скопировать картинку'}
+          </Button>
+        )}
       </div>
     </Dialog>
   );
