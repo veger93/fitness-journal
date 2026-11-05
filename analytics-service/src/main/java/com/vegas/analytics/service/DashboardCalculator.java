@@ -226,7 +226,7 @@ public final class DashboardCalculator {
         if (item.deltaKg() == null) {
             return "Новый рекорд";
         }
-        return "+" + item.deltaKg().stripTrailingZeros().toPlainString() + " кг к прошлому лучшему";
+        return "+" + item.deltaKg().stripTrailingZeros().toPlainString().replace('.', ',') + " кг к прошлому лучшему";
     }
 
     private static BigDecimal tonnageBetween(List<ExercisePerformance> history, Instant from, Instant to) {

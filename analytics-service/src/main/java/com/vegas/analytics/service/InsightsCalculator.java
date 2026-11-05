@@ -272,8 +272,8 @@ public final class InsightsCalculator {
         return values.isEmpty() ? null : median(values);
     }
 
-    /** 1.50 -> "1.5", 80.00 -> "80": без лишних нулей. */
+    /** 1.50 -> "1,5", 80.00 -> "80": без лишних нулей, дробь через запятую. */
     private static String format(BigDecimal value) {
-        return value.stripTrailingZeros().toPlainString();
+        return value.stripTrailingZeros().toPlainString().replace('.', ',');
     }
 }

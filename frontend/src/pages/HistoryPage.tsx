@@ -1,5 +1,4 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { useId } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { analyticsApi } from '../api/analytics';
 import { workoutsApi, type Workout } from '../api/workouts';
@@ -7,17 +6,20 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
+import { PageColumns } from '../components/ui/PageColumns';
+import { PageHeader } from '../components/ui/PageHeader';
+import { SectionLabel } from '../components/ui/SectionLabel';
+import { Select } from '../components/ui/Select';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { formatTonnage } from '../lib/format';
 import { groupByMonth, recordsByWorkout } from '../lib/history';
 import { formatDistance, formatDuration, summarizeSets } from '../lib/workout';
 import styles from './ListPages.module.css';
 
-const dayFormat = new Intl.DateTimeFormat('ru-RU', {
-  weekday: 'short',
-  day: '2-digit',
-  month: '2-digit',
-  year: '2-digit',
-});
+// «Ср, 4 нояб.»: год и так виден в подписи месяца
+const dayFormat = new Intl.DateTimeFormat('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
+
+const DESKTOP = '(min-width: 900px)';
 
 /**
  * История как дневник: по карточке на тренировку — дата, комплекс и сразу все упражнения с весами.
@@ -30,7 +32,7 @@ const dayFormat = new Intl.DateTimeFormat('ru-RU', {
 export function HistoryPage() {
   const [params, setParams] = useSearchParams();
   const exerciseId = params.get('exercise') ?? '';
-  const selectId = useId();
+  const desktop = useMediaQuery(DESKTOP);
 
   const journal = useInfiniteQuery({
     // фильтр в ключе: у каждого фильтра свой кэш, переключение назад — без нового запроса
@@ -49,64 +51,69 @@ export function HistoryPage() {
   const workouts = journal.data?.pages.flatMap((page) => page.content) ?? [];
   const exercises = dashboard.data?.exercises ?? [];
 
+  // фильтр: на ПК — справа и не уезжает при прокрутке, на телефоне — сверху над лентой
+  const filter = exercises.length > 0 && (
+    <Select label="Упражнение" value={exerciseId} onChange={(value) => setParams(value ? { exercise: value } : {})}>
+      <option value="">Все тренировки</option>
+      {exercises.map((e) => (
+        <option key={e.exerciseId} value={e.exerciseId}>
+          {e.exerciseName}
+        </option>
+      ))}
+    </Select>
+  );
+
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>История</h1>
+      <PageHeader title="История" />
+      <PageColumns
+        stickyAside
+        aside={
+          desktop &&
+          filter && (
+            <>
+              {filter}
+              <p className="footnote">Покажем только тренировки, где было это упражнение — его строка выделена.</p>
+            </>
+          )
+        }
+      >
+        {!desktop && filter}
 
-      {exercises.length > 0 && (
-        <div className={styles.filter}>
-          <label htmlFor={selectId} className={styles.muted}>
-            Упражнение
-          </label>
-          <select
-            id={selectId}
-            className={styles.select}
-            value={exerciseId}
-            onChange={(e) => setParams(e.target.value ? { exercise: e.target.value } : {})}
-          >
-            <option value="">Все тренировки</option>
-            {exercises.map((e) => (
-              <option key={e.exerciseId} value={e.exerciseId}>
-                {e.exerciseName}
-              </option>
+        {journal.isPending && <p className={styles.muted}>Загружаем…</p>}
+        {journal.isError && <p className={styles.muted}>{journal.error.message}</p>}
+        {journal.data && workouts.length === 0 && (
+          <EmptyState
+            title={exerciseId ? 'С этим упражнением тренировок нет' : 'Тренировок пока нет'}
+            text={
+              exerciseId
+                ? 'Выберите другое упражнение или «Все тренировки».'
+                : 'Завершите первую тренировку — здесь появится дневник: что делали, с каким весом, где поставили рекорд.'
+            }
+            action={exerciseId ? undefined : { to: '/workout', label: 'Начать тренировку' }}
+          />
+        )}
+
+        {groupByMonth(workouts).map((month) => (
+          <section key={month.key} className={styles.section} aria-label={month.title}>
+            <SectionLabel>{month.title}</SectionLabel>
+            {month.workouts.map((workout) => (
+              <JournalDay
+                key={workout.id}
+                workout={workout}
+                recordExercises={recordMap.get(workout.id)}
+                highlight={exerciseId}
+              />
             ))}
-          </select>
-        </div>
-      )}
+          </section>
+        ))}
 
-      {journal.isPending && <p className={styles.muted}>Загружаем…</p>}
-      {journal.isError && <p className={styles.muted}>{journal.error.message}</p>}
-      {journal.data && workouts.length === 0 && (
-        <EmptyState
-          title={exerciseId ? 'С этим упражнением тренировок нет' : 'Тренировок пока нет'}
-          text={
-            exerciseId
-              ? 'Выберите другое упражнение или «Все тренировки».'
-              : 'Завершите первую тренировку — здесь появится дневник: что делали, с каким весом, где поставили рекорд.'
-          }
-          action={exerciseId ? undefined : { to: '/workout', label: 'Начать тренировку' }}
-        />
-      )}
-
-      {groupByMonth(workouts).map((month) => (
-        <section key={month.key} className={styles.month} aria-label={month.title}>
-          <h2 className={styles.monthTitle}>{month.title}</h2>
-          {month.workouts.map((workout) => (
-            <JournalDay
-              key={workout.id}
-              workout={workout}
-              recordExercises={recordMap.get(workout.id)}
-              highlight={exerciseId}
-            />
-          ))}
-        </section>
-      ))}
-
-      {journal.hasNextPage && (
-        <Button variant="secondary" onClick={() => journal.fetchNextPage()} disabled={journal.isFetchingNextPage}>
-          {journal.isFetchingNextPage ? 'Загружаем…' : 'Показать ещё'}
-        </Button>
-      )}
+        {journal.hasNextPage && (
+          <Button variant="secondary" onClick={() => journal.fetchNextPage()} disabled={journal.isFetchingNextPage}>
+            {journal.isFetchingNextPage ? 'Загружаем…' : 'Показать ещё'}
+          </Button>
+        )}
+      </PageColumns>
     </div>
   );
 }
@@ -138,7 +145,7 @@ function JournalDay({
       <header className={styles.dayHead}>
         <div className={styles.dayTitleRow}>
           <h3 className={styles.dayTitle}>
-            {dayFormat.format(new Date(workout.startedAt ?? workout.completedAt ?? ''))}
+            {capitalize(dayFormat.format(new Date(workout.startedAt ?? workout.completedAt ?? '')))}
           </h3>
           {recordExercises && <Badge variant="inverse">рекорд</Badge>}
         </div>
@@ -154,7 +161,12 @@ function JournalDay({
           >
             <span className={styles.dayExerciseName}>
               {exercise.exerciseName}
-              {recordExercises?.has(exercise.exerciseId) && <span className={styles.recordMark}> · рекорд</span>}
+              {recordExercises?.has(exercise.exerciseId) && (
+                <span className={styles.recordMark} title="рекорд">
+                  {' '}
+                  ★<span className="visually-hidden"> рекорд</span>
+                </span>
+              )}
             </span>
             <span>{summarizeSets(exercise.trackingType, exercise.sets, exercise.assisted)}</span>
           </li>
@@ -165,4 +177,8 @@ function JournalDay({
       </Link>
     </Card>
   );
+}
+
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }

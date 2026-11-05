@@ -50,8 +50,8 @@ class RecordsServiceTest {
         assertThat(card.weightKg()).isEqualByComparingTo("145");
         assertThat(card.reps()).isEqualTo(5);
         assertThat(card.records()).extracting(RecordItemResponse::type).containsExactly(RecordType.WEIGHT, RecordType.E1RM);
-        assertThat(card.records().get(0).hint()).isEqualTo("на 2.5 кг больше прошлого максимума (142.5 кг)");
-        assertThat(card.records().get(1).hint()).isEqualTo("на 2.5 кг больше при тех же повторах");
+        assertThat(card.records().get(0).hint()).isEqualTo("на 2,5 кг больше прошлого максимума (142,5 кг)");
+        assertThat(card.records().get(1).hint()).isEqualTo("на 2,5 кг больше при тех же повторах");
     }
 
     @Test

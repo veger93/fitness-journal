@@ -18,7 +18,7 @@ final class RecordHints {
     /** Сравниваем подход-рекорд с прошлым лучшим подходом: что именно стало лучше. */
     static String strength(BigDecimal weight, int reps, BigDecimal previousWeight, Integer previousReps, BigDecimal e1rm) {
         if (previousWeight == null || previousReps == null) {
-            return "≈ " + kg(e1rm) + " кг, если бы делал 1 повтор";
+            return "≈ " + kg(e1rm) + " кг — столько вы подняли бы один раз";
         }
         int weightCompare = weight.compareTo(previousWeight);
         int repsDiff = reps - previousReps;
@@ -54,8 +54,8 @@ final class RecordHints {
         return "повторов";
     }
 
-    /** 2.50 -> "2.5", 145.00 -> "145". */
+    /** 2.50 -> "2,5", 145.00 -> "145": дробь через запятую, как во всём приложении. */
     private static String kg(BigDecimal value) {
-        return value.stripTrailingZeros().toPlainString();
+        return value.stripTrailingZeros().toPlainString().replace('.', ',');
     }
 }

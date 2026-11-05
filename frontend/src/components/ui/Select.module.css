@@ -1,0 +1,48 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.wrap {
+  position: relative;
+  display: block;
+}
+
+/* стрелка: уголок из двух рамок, цвет — как у текста (в тёмной теме сам станет светлым) */
+.wrap::after {
+  content: '';
+  position: absolute;
+  right: var(--space-5);
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--text);
+  border-bottom: 2px solid var(--text);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.select {
+  appearance: none;
+  width: 100%;
+  min-height: var(--control-height);
+  padding: 0 calc(var(--space-5) + 20px) 0 var(--space-5);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font: 600 var(--text-md) var(--font-body);
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}

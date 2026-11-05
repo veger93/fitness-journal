@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PersonalRecord } from '../api/analytics';
-import { bestPerExercise, groupByMonth } from './RecordsPage';
+import { bestPerExercise, groupByMonth, recordSummary } from './RecordsPage';
 
 const record = (exerciseId: string, achievedAt: string, weightKg: number): PersonalRecord => ({
   workoutId: `w-${achievedAt}`,
@@ -32,5 +32,30 @@ describe('рекорды', () => {
       ['октябрь 2026', 2],
       ['сентябрь 2026', 1],
     ]);
+  });
+});
+
+describe('строка рекорда', () => {
+  const base = record('bench', '2026-11-04T10:00:00Z', 92.5);
+
+  it('новый вес: ★ и «было»', () => {
+    const summary = recordSummary({
+      ...base,
+      records: [
+        { type: 'WEIGHT', valueKg: 92.5, deltaKg: 2.5, hint: null },
+        { type: 'E1RM', valueKg: 107.9, deltaKg: 2.9, hint: null },
+      ],
+    });
+    expect(summary.mark).toBe('★');
+    expect(summary.text).toContain('было 90 кг');
+  });
+
+  it('только сила: ↗ и пояснение с сервера', () => {
+    const summary = recordSummary({
+      ...base,
+      records: [{ type: 'E1RM', valueKg: 110, deltaKg: 2, hint: 'тот же вес, но на 2 повтора больше' }],
+    });
+    expect(summary.mark).toBe('↗');
+    expect(summary.text).toContain('тот же вес, но на 2 повтора больше');
   });
 });

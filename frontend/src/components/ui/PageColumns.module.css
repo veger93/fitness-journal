@@ -1,0 +1,29 @@
+.columns,
+.main,
+.aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .columns {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .sticky {
+    position: sticky;
+    top: var(--space-5);
+  }
+}
+
+@media (max-width: 640px) {
+  .columns,
+  .main,
+  .aside {
+    gap: var(--space-4);
+  }
+}
