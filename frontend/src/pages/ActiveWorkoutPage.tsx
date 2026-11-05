@@ -136,13 +136,13 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
                     type="button"
                     className={styles.setRow}
                     onClick={() => setModal({ kind: 'set', editing: set })}
-                    aria-label={`${setLabel(exercise.trackingType, set.number, exercise.sets.length)}: ${describeSet(exercise.trackingType, set)}. Изменить`}
+                    aria-label={`${setLabel(exercise.trackingType, set.number, exercise.sets.length)}: ${describeSet(exercise.trackingType, set, exercise.assisted)}. Изменить`}
                   >
                     <span>
                       {setLabel(exercise.trackingType, set.number, exercise.sets.length)}
                       {set.warmup && <span className={styles.muted}> · разминка</span>}
                     </span>
-                    <SetValue trackingType={exercise.trackingType} set={set} />
+                    <SetValue trackingType={exercise.trackingType} set={set} assisted={exercise.assisted} />
                     <svg
                       className={styles.check}
                       aria-hidden="true"
@@ -171,7 +171,7 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
             {previousSame && (
               <p className={styles.dockHint}>
                 {exercise.trackingType === 'DISTANCE' ? 'Прошлый раз' : 'Прошлый раз на этом подходе'}:{' '}
-                {describeSet(exercise.trackingType, previousSame)}
+                {describeSet(exercise.trackingType, previousSame, exercise.assisted)}
               </p>
             )}
             <Button fullWidth onClick={() => setModal({ kind: 'set', editing: null })}>
@@ -278,9 +278,9 @@ function addSetLabel(trackingType: TrackingType, next: number): string {
 }
 
 /** Значение подхода в строке. У бега темп — отдельной строкой: целиком "5 км · 26:40 · 5:20 /км" на телефон не влезает. */
-function SetValue({ trackingType, set }: { trackingType: TrackingType; set: WorkoutSet }) {
+function SetValue({ trackingType, set, assisted }: { trackingType: TrackingType; set: WorkoutSet; assisted: boolean }) {
   if (trackingType !== 'DISTANCE') {
-    return <span className={styles.setValue}>{describeSet(trackingType, set)}</span>;
+    return <span className={styles.setValue}>{describeSet(trackingType, set, assisted)}</span>;
   }
   const { main, sub } = runParts(set.distanceM, set.durationSec);
   return (

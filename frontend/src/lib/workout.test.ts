@@ -27,6 +27,17 @@ const set = (number: number, weightKg: number, reps: number): WorkoutSet => ({
   warmup: false,
 });
 
+describe('гравитрон: вес — противовес', () => {
+  it('подход и сводка — с минусом', () => {
+    expect(describeSet('WEIGHT_REPS', { weightKg: 20, reps: 8, durationSec: null, distanceM: null }, true)).toBe(
+      '−20 кг × 8',
+    );
+    expect(summarizeSets('WEIGHT_REPS', [set(1, 20, 8), set(2, 20, 8), set(3, 15, 6)], true)).toBe(
+      '−20 кг × 8, 8 · −15 кг × 6',
+    );
+  });
+});
+
 describe('fitWeight', () => {
   it('тренажёр — только целые килограммы, остальное как было', () => {
     expect(fitWeight(45.5, 'MACHINE')).toBe(46);
@@ -176,6 +187,7 @@ describe('обновление кэша', () => {
         exerciseName: 'Жим',
         trackingType: 'WEIGHT_REPS',
         equipment: 'BARBELL',
+        assisted: false,
         sets: [set(1, 80, 8), set(2, 80, 8)],
         previousSets: [],
         deload: null,
