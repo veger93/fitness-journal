@@ -47,4 +47,11 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     int revokeAllOfUser(@Param("userId") UUID userId,
                         @Param("reason") RefreshToken.RevokeReason reason,
                         @Param("now") Instant now);
+
+    /**
+     * Уборка: удалить записи, истёкшие раньше cutoff (ExpiredTokensCleanupJob). Одним DELETE, без загрузки в память.
+     */
+    @Modifying
+    @Query("delete from RefreshToken t where t.expiresAt < :cutoff")
+    int deleteExpiredBefore(@Param("cutoff") Instant cutoff);
 }
