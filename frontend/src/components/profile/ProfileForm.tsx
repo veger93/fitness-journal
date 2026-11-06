@@ -7,12 +7,12 @@ import { Stepper } from '../ui/Stepper';
 import { TextField } from '../ui/TextField';
 import styles from './Profile.module.css';
 
-const GENDERS: { value: Gender; title: string }[] = [
+export const GENDERS: { value: Gender; title: string }[] = [
   { value: 'MALE', title: 'Мужской' },
   { value: 'FEMALE', title: 'Женский' },
 ];
 
-const LEVELS: { value: ExperienceLevel; title: string; description: string }[] = [
+export const LEVELS: { value: ExperienceLevel; title: string; description: string }[] = [
   { value: 'BEGINNER', title: 'Новичок', description: 'тренируюсь меньше полугода' },
   { value: 'INTERMEDIATE', title: 'Средний', description: 'от полугода до 2 лет' },
   { value: 'ADVANCED', title: 'Опытный', description: 'больше 2 лет' },
@@ -31,6 +31,7 @@ export function ProfileForm({
   submitLabel,
   withWeight = true,
   onSaved,
+  onCancel,
 }: {
   profile: Profile | undefined;
   submitLabel: string;
@@ -40,6 +41,8 @@ export function ProfileForm({
    */
   withWeight?: boolean;
   onSaved?: () => void;
+  /** профиль: «Отмена» рядом с «Сохранить» — вернуться к просмотру без изменений */
+  onCancel?: () => void;
 }) {
   const queryClient = useQueryClient();
   const [gender, setGender] = useState<Gender | null>(profile?.gender ?? null);
@@ -116,9 +119,16 @@ export function ProfileForm({
           {error}
         </p>
       )}
-      <Button type="submit" disabled={save.isPending}>
-        {save.isPending ? 'Сохраняем…' : submitLabel}
-      </Button>
+      <div className={styles.formActions}>
+        <Button type="submit" disabled={save.isPending}>
+          {save.isPending ? 'Сохраняем…' : submitLabel}
+        </Button>
+        {onCancel && (
+          <Button type="button" variant="secondary" onClick={onCancel}>
+            Отмена
+          </Button>
+        )}
+      </div>
       <p className="footnote">
         * Уровень задаёт обычный темп роста силы — пунктир «норма для вашего уровня» на графиках. Пол и вес нужны для
         подсказок по весам.

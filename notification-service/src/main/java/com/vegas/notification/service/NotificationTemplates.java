@@ -7,6 +7,7 @@ import com.vegas.common.event.PlateauDetectedEvent;
 import com.vegas.notification.entity.EmailMessage;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
@@ -190,7 +191,7 @@ public final class NotificationTemplates {
         return ym.getMonth().getDisplayName(TextStyle.FULL_STANDALONE, RU) + " " + ym.getYear();
     }
 
-    /** 100.00 -> "100 кг", 102.50 -> "102.5 кг". */
+    /** 100.00 -> "100 кг", 102.50 -> "102,5 кг", 107.92 -> "107,9 кг": как в приложении — одна цифра после запятой. */
     static String kg(BigDecimal value) {
         return number(value) + " кг";
     }
@@ -200,6 +201,6 @@ public final class NotificationTemplates {
     }
 
     private static String number(BigDecimal value) {
-        return value.stripTrailingZeros().toPlainString();
+        return value.setScale(1, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString().replace('.', ',');
     }
 }

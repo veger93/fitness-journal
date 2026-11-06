@@ -28,9 +28,9 @@ class NotificationTemplatesTest {
         assertThat(message.subject()).isEqualTo("Новый рекорд: Жим лёжа");
         assertThat(message.body())
                 .startsWith("Сергей, новый рекорд!")
-                .contains("Жим лёжа: 102.5 кг × 5")
-                .contains("• Вес: 102.5 кг (+2.5 кг)*\n")
-                .contains("• Сила: 119.58 кг (+1.2 кг)**\n")
+                .contains("Жим лёжа: 102,5 кг × 5")
+                .contains("• Вес: 102,5 кг (+2,5 кг)*\n")
+                .contains("• Сила: 119,6 кг (+1,2 кг)**\n")
                 .contains("* Самый большой вес")
                 .contains("** Тот же вес, но больше повторов");
     }
@@ -79,7 +79,7 @@ class NotificationTemplatesTest {
         assertThat(message.body())
                 .contains("• Тренировок: 12")
                 .contains("• Рекордов: 4")
-                .contains("• Сила: +3.4%*")
+                .contains("• Сила: +3,4%*")
                 .contains("• Поднято за месяц: 45200 кг (-5%)**")
                 .contains("Подробный отчёт: http://localhost:5173/reports/2026-09");
     }

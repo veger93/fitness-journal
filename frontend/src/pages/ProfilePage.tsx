@@ -4,10 +4,12 @@ import { authApi } from '../api/auth';
 import { usersApi } from '../api/users';
 import { useAuth } from '../auth/AuthProvider';
 import { BodyWeightCard } from '../components/profile/BodyWeightCard';
-import { ProfileForm } from '../components/profile/ProfileForm';
+import { ProfileSummary } from '../components/profile/ProfileSummary';
 import { RemindersCard } from '../components/profile/RemindersCard';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { PageColumns } from '../components/ui/PageColumns';
+import { PageHeader } from '../components/ui/PageHeader';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { DeleteAccountCard } from '../components/account/DeleteAccountCard';
 import { EmailVerifyCard } from '../components/account/EmailVerifyCard';
@@ -44,7 +46,7 @@ export function ProfilePage() {
   if (acting) {
     return (
       <div className={styles.page}>
-        <h1 className={styles.title}>{acting.displayName}</h1>
+        <PageHeader eyebrow="Профиль клиента" title={acting.displayName} />
         <ClientProfileCard clientId={acting.id} />
       </div>
     );
@@ -52,51 +54,51 @@ export function ProfilePage() {
 
   return (
     <div className={styles.page}>
-      <div>
-        <h1 className={styles.title}>Профиль</h1>
-        {me.data?.email && (
-          <p className={styles.muted}>
-            {me.data.email}
-            {me.data.emailVerified && ' · подтверждён ✓'}
-          </p>
-        )}
-      </div>
+      <PageHeader
+        title="Профиль"
+        subtitle={me.data?.email && `${me.data.email}${me.data.emailVerified ? ' · подтверждён ✓' : ''}`}
+      />
 
-      <EmailVerifyCard />
+      {/* ПК: «я» — данные и вес (2/3) | настройки — напоминания, тренер, тема, выход (1/3) */}
+      <PageColumns
+        aside={
+          <>
+            {/* напоминания — письма; у демо нет почты (docs/demo.md) */}
+            {!demo && <RemindersCard />}
 
-      <Card>
-        <h2 className={styles.sectionTitle}>Физические данные</h2>
+            <MyTrainerCard />
+
+            <TrainerModeCard />
+
+            <Card as="section">
+              <h2 className={styles.sectionTitle}>Оформление</h2>
+              <SegmentedControl legend="Тема оформления" options={THEME_OPTIONS} value={choice} onChange={setChoice} />
+              <p className={styles.muted}>
+                «Как в системе» — тема переключится вместе с настройкой телефона или компьютера.
+              </p>
+            </Card>
+
+            {/* внизу одной строкой: "Выйти" слева, редкое "Удалить аккаунт" справа, по нижнему краю */}
+            <div className={styles.bottomRow}>
+              <Button variant="secondary" onClick={demo ? exitDemo : logout}>
+                {demo ? 'Выйти из демо' : 'Выйти'}
+              </Button>
+              {/* демо удаляется само через сутки — удалять его вручную (с паролем, которого нет) не нужно */}
+              {!demo && <DeleteAccountCard />}
+            </div>
+          </>
+        }
+      >
+        <EmailVerifyCard />
+
         {profile.data ? (
-          // форма появляется только когда профиль загружен: useState в ней берёт начальные значения один раз
-          <ProfileForm profile={profile.data} submitLabel="Сохранить" withWeight={false} />
+          <ProfileSummary profile={profile.data} />
         ) : (
           <p className={styles.muted}>{profile.isError ? profile.error.message : 'Загружаем…'}</p>
         )}
-      </Card>
 
-      {profile.data && <BodyWeightCard currentWeightKg={profile.data.currentWeightKg} />}
-
-      {/* напоминания — письма; у демо нет почты (docs/demo.md) */}
-      {!demo && <RemindersCard />}
-
-      <MyTrainerCard />
-
-      <TrainerModeCard />
-
-      <Card>
-        <h2 className={styles.sectionTitle}>Оформление</h2>
-        <SegmentedControl legend="Тема оформления" options={THEME_OPTIONS} value={choice} onChange={setChoice} />
-        <p className={styles.muted}>«Как в системе» — тема переключится вместе с настройкой телефона или компьютера.</p>
-      </Card>
-
-      {/* внизу одной строкой: "Выйти" слева, редкое "Удалить аккаунт" справа, по нижнему краю */}
-      <div className={styles.bottomRow}>
-        <Button variant="secondary" onClick={demo ? exitDemo : logout}>
-          {demo ? 'Выйти из демо' : 'Выйти'}
-        </Button>
-        {/* демо удаляется само через сутки — удалять его вручную (с паролем, которого нет) не нужно */}
-        {!demo && <DeleteAccountCard />}
-      </div>
+        {profile.data && <BodyWeightCard currentWeightKg={profile.data.currentWeightKg} />}
+      </PageColumns>
     </div>
   );
 }

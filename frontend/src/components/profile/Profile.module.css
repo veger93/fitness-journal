@@ -50,7 +50,49 @@
 
 .sectionTitle {
   font-size: var(--text-lg);
-  font-weight: 500;
+}
+
+.formActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.formActions > * {
+  flex: 1 1 160px;
+}
+
+/* ---------- физические данные: только чтение ---------- */
+
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-5);
+}
+
+.facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.facts dt {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.facts dd {
+  margin: 0;
+  font-weight: 600;
 }
 
 /* ---------- напоминания ---------- */

@@ -125,7 +125,7 @@ class InsightsCalculatorTest {
 
             assertThat(risk.recentAvgRpe()).isEqualByComparingTo("9.3"); // (9.5 + 9) / 2 = 9.25 -> 9.3
             assertThat(risk.level()).isEqualTo(RiskLevel.LOW);           // 1 балл
-            assertThat(risk.reasons()).singleElement().asString().contains("RPE");
+            assertThat(risk.reasons()).singleElement().asString().contains("средняя тяжесть 9,3 из 10");
         }
 
         @Test

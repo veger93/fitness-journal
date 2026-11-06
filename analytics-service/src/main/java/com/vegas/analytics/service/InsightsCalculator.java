@@ -115,7 +115,7 @@ public final class InsightsCalculator {
         BigDecimal rpe = recentAverageRpe(history, now);
         if (rpe != null && rpe.compareTo(RPE_HIGH) >= 0) {
             score += 1;
-            reasons.add("Подходы почти до отказа: средний RPE " + format(rpe) + " за неделю");
+            reasons.add("Подходы почти до отказа: средняя тяжесть " + format(rpe) + " из 10 за неделю");
         }
 
         if (plateau.detected()) {

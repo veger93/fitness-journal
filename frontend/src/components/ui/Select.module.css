@@ -46,3 +46,36 @@
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
+
+/* подпись слева, список справа */
+.row {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.row .label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.inset .select {
+  background: var(--bg);
+}
+
+/* телефон: подпись уже, бейдж «сегодня» переносится под название дня */
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .row .label {
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+}
