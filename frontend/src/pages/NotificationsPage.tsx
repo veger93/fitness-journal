@@ -4,6 +4,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { notificationsApi, type AppNotification } from '../api/notifications';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
+import { ListRow, ListRowGroup } from '../components/ui/ListRow';
+import { PageColumns } from '../components/ui/PageColumns';
+import { PageHeader } from '../components/ui/PageHeader';
+import { SectionLabel } from '../components/ui/SectionLabel';
 import { useIsTrainer } from '../hooks/useTrainer';
 import { NOTIFICATION_LABELS, toFeedItem } from '../lib/notifications';
 import { initial } from '../lib/trainer';
@@ -44,23 +48,41 @@ export function NotificationsPage() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Уведомления</h1>
-      <p className={styles.muted}>
-        Рекорды, плато, перегрузки и итоги месяца — то же, что приходит на почту. Напоминания настраиваются в{' '}
-        <Link to="/profile">профиле</Link>.{isTrainer && ' О ваших клиентах — только здесь, без писем.'}
-      </p>
-      {list.isPending && <p className={styles.muted}>Загружаем…</p>}
-      {list.isError && <p className={styles.muted}>{list.error.message}</p>}
-      {list.data?.content.length === 0 && (
-        <EmptyState title="Пока тихо" text="Здесь появятся новые рекорды, подсказки при плато и итоги месяца." />
-      )}
-      {list.data && list.data.content.length > 0 && (
-        <ul className={styles.list}>
-          {list.data.content.map((n) => (
-            <NotificationItem key={n.id} notification={n} />
-          ))}
-        </ul>
-      )}
+      <PageHeader title="Уведомления" subtitle="То же, что приходит на почту — собрано в одном месте." />
+      {/* ПК: лента (2/3) | что сюда приходит (1/3). Телефон: пояснение — под лентой */}
+      <PageColumns
+        aside={
+          <section className={styles.section}>
+            <SectionLabel>Что сюда приходит</SectionLabel>
+            <ListRowGroup>
+              <ListRow mark="★" tone="inverse" title="Рекорды" text="новый максимальный вес или сила" />
+              <ListRow mark="≈" title="Плато" text="3 недели и больше без нового рекорда" />
+              <ListRow mark="!" tone="accent" title="Перегрузка" text="признаки накопленной усталости" />
+              <ListRow mark="↗" title="Итоги месяца" text="было / стало по силе и объёму" />
+              <ListRow
+                mark="↻"
+                title="Напоминания"
+                text="о тренировке по плану — настраиваются в профиле"
+                to="/profile"
+              />
+            </ListRowGroup>
+            {isTrainer && <p className="footnote">О ваших клиентах — только здесь, без писем.</p>}
+          </section>
+        }
+      >
+        {list.isPending && <p className={styles.muted}>Загружаем…</p>}
+        {list.isError && <p className={styles.muted}>{list.error.message}</p>}
+        {list.data?.content.length === 0 && (
+          <EmptyState title="Пока тихо" text="Здесь появятся новые рекорды, подсказки при плато и итоги месяца." />
+        )}
+        {list.data && list.data.content.length > 0 && (
+          <ul className={styles.list}>
+            {list.data.content.map((n) => (
+              <NotificationItem key={n.id} notification={n} />
+            ))}
+          </ul>
+        )}
+      </PageColumns>
     </div>
   );
 }
@@ -84,7 +106,7 @@ function NotificationItem({ notification }: { notification: AppNotification }) {
           {NOTIFICATION_LABELS[notification.type]}
         </Badge>
         <span className={styles.muted}>{dateTime.format(new Date(notification.createdAt))}</span>
-        {!notification.read && <span className={styles.newMark}>новое</span>}
+        {!notification.read && <Badge variant="accent">новое</Badge>}
       </div>
       <h2 className={styles.subject}>{notification.subject}</h2>
       {/* текст письма с переносами строк: white-space: pre-line в CSS */}

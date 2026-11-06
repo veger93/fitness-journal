@@ -1,18 +1,13 @@
+/* Профиль: на ПК две колонки (PageColumns) — «я» слева, настройки справа */
+
 .page {
-  /* настройки — узкой колонкой: формы на всю ширину монитора читаются плохо */
-  max-width: 720px;
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
 }
 
-.title {
-  font-size: var(--text-h1);
-}
-
 .sectionTitle {
   font-size: var(--text-lg);
-  font-weight: 500;
 }
 
 .muted {
@@ -23,7 +18,14 @@
 
 .bottomRow {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-end;
   gap: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .page {
+    gap: var(--space-4);
+  }
 }
