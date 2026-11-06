@@ -2,10 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { analyticsApi, type MonthlyReport } from '../api/analytics';
 import { ChangeText } from '../components/report/ChangeText';
-import { BackLink } from '../components/ui/BackLink';
+import { ListRow, ListRowGroup } from '../components/ui/ListRow';
+import { PageHeader } from '../components/ui/PageHeader';
+import { SectionLabel } from '../components/ui/SectionLabel';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { Card } from '../components/ui/Card';
 import { StatTile } from '../components/ui/StatTile';
-import { formatChange, formatKg, formatTonnage } from '../lib/format';
+import { formatChange, formatKg, formatTonnage, plural } from '../lib/format';
 import { addMonths, currentMonth, monthTitle } from '../lib/month';
 import styles from '../components/report/Report.module.css';
 
@@ -32,15 +35,17 @@ export function ReportPage() {
 
   return (
     <div className={styles.page}>
-      <BackLink to="/">Главная</BackLink>
-      <div>
-        <p className={styles.muted}>Отчёт за месяц</p>
-        <h1 className={styles.title}>{capitalize(monthTitle(month))}</h1>
-      </div>
-      <nav className={styles.monthNav} aria-label="Другой месяц">
-        <Link to={`/reports/${addMonths(month, -1)}`}>← {monthTitle(addMonths(month, -1))}</Link>
-        {!isCurrent && <Link to={`/reports/${addMonths(month, 1)}`}>{monthTitle(addMonths(month, 1))} →</Link>}
-      </nav>
+      <PageHeader
+        back={{ to: '/', label: 'Главная' }}
+        eyebrow="Отчёт за месяц"
+        title={capitalize(monthTitle(month))}
+        subtitle={
+          <nav className={styles.monthNav} aria-label="Другой месяц">
+            <Link to={`/reports/${addMonths(month, -1)}`}>← {monthTitle(addMonths(month, -1))}</Link>
+            {!isCurrent && <Link to={`/reports/${addMonths(month, 1)}`}>{monthTitle(addMonths(month, 1))} →</Link>}
+          </nav>
+        }
+      />
 
       {report.isPending && <p className={styles.muted}>Загружаем…</p>}
       {report.isError && <p className={styles.muted}>{report.error.message}</p>}
@@ -60,12 +65,15 @@ export function ReportPage() {
 }
 
 function ReportContent({ report, isCurrent }: { report: MonthlyReport; isCurrent: boolean }) {
+  // телефон: плитки компактные 2 × 2, упражнения — строками вместо таблицы на 5 колонок
+  const phone = useMediaQuery('(max-width: 640px)');
   return (
     <>
       {isCurrent && <p className={styles.muted}>Месяц ещё идёт — цифры обновятся после каждой тренировки.</p>}
       <div className={styles.tiles}>
         {report.strength?.after != null && (
           <StatTile
+            compact={phone}
             variant="inverse"
             label="Сила в среднем*"
             value={formatKg(report.strength.after)}
@@ -74,44 +82,61 @@ function ReportContent({ report, isCurrent }: { report: MonthlyReport; isCurrent
           />
         )}
         <StatTile
+          compact={phone}
           label="Поднято за месяц**"
           value={report.tonnage.after != null ? formatTonnage(report.tonnage.after) : '—'}
           caption={changeCaption(report.tonnage.changePercent)}
         />
-        <StatTile label="Тренировок" value={report.workouts.count} caption={report.workouts.hint} />
-        <StatTile label="Рекордов" value={report.recordsCount} caption="новых максимумов" />
+        <StatTile compact={phone} label="Тренировок" value={report.workouts.count} caption={report.workouts.hint} />
+        <StatTile compact={phone} label="Рекордов" value={report.recordsCount} caption="новых максимумов" />
       </div>
 
       {report.exercises.length > 0 && (
         <section className={styles.section}>
-          <h2 className={styles.cardTitle}>По упражнениям</h2>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th scope="col">Упражнение</th>
-                <th scope="col">Было*</th>
-                <th scope="col">Стало*</th>
-                <th scope="col">Изменение</th>
-                <th scope="col">Тренировок</th>
-              </tr>
-            </thead>
-            <tbody>
+          <SectionLabel>По упражнениям</SectionLabel>
+          {phone ? (
+            <ListRowGroup>
               {report.exercises.map((row) => (
-                <tr key={row.exerciseId}>
-                  <th scope="row">
-                    <Link to={`/exercises/${row.exerciseId}`}>{row.exerciseName}</Link>
-                  </th>
-                  {/* data-label — подпись ячейки на телефоне, где таблица превращается в карточки */}
-                  <td data-label="Было">{row.beforeE1rmKg != null ? formatKg(row.beforeE1rmKg) : '—'}</td>
-                  <td data-label="Стало">{row.afterE1rmKg != null ? formatKg(row.afterE1rmKg) : '—'}</td>
-                  <td data-label="Изм.">
-                    <ChangeText percent={row.changePercent} />
-                  </td>
-                  <td data-label="Трен.">{row.sessions}</td>
-                </tr>
+                <ListRow
+                  key={row.exerciseId}
+                  to={`/exercises/${row.exerciseId}`}
+                  title={row.exerciseName}
+                  text={`${row.beforeE1rmKg != null ? formatKg(row.beforeE1rmKg) : '—'} → ${
+                    row.afterE1rmKg != null ? formatKg(row.afterE1rmKg) : '—'
+                  } · ${plural(row.sessions, 'тренировка', 'тренировки', 'тренировок')}`}
+                  value={<ChangeText percent={row.changePercent} />}
+                />
               ))}
-            </tbody>
-          </table>
+            </ListRowGroup>
+          ) : (
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th scope="col">Упражнение</th>
+                  <th scope="col">Сила* было</th>
+                  <th scope="col">Стало</th>
+                  <th scope="col">Изменение</th>
+                  <th scope="col">Тренировок</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.exercises.map((row) => (
+                  <tr key={row.exerciseId}>
+                    <th scope="row">
+                      <Link to={`/exercises/${row.exerciseId}`}>{row.exerciseName}</Link>
+                    </th>
+                    {/* data-label — подпись ячейки на телефоне, где таблица превращается в карточки */}
+                    <td data-label="Было">{row.beforeE1rmKg != null ? formatKg(row.beforeE1rmKg) : '—'}</td>
+                    <td data-label="Стало">{row.afterE1rmKg != null ? formatKg(row.afterE1rmKg) : '—'}</td>
+                    <td data-label="Изм.">
+                      <ChangeText percent={row.changePercent} />
+                    </td>
+                    <td data-label="Трен.">{row.sessions}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </section>
       )}
 

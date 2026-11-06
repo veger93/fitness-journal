@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { ExerciseStatus, ExerciseSummary } from '../api/analytics';
 import { formatExerciseResult, formatShortDate } from '../lib/format';
+import { formatDistance } from '../lib/workout';
 import { Badge } from './ui/Badge';
 import { Sparkline } from './ui/Sparkline';
 import styles from './ExerciseRow.module.css';
@@ -25,7 +26,7 @@ export function ExerciseRow({ exercise }: { exercise: ExerciseSummary }) {
           {exercise.note ?? `последняя тренировка ${formatShortDate(exercise.lastPerformedAt)}`}
         </span>
       </div>
-      <span className={styles.set}>{formatExerciseResult(exercise) ?? '—'}</span>
+      <span className={styles.set}>{rowResult(exercise)}</span>
       <span className={styles.spark}>
         <Sparkline values={exercise.trend} accent={exercise.status === 'OVERLOAD'} />
       </span>
@@ -39,4 +40,12 @@ export function ExerciseRow({ exercise }: { exercise: ExerciseSummary }) {
       {content}
     </Link>
   );
+}
+
+/** В строке — коротко: у бега только километры (темп и время — на странице «Бег»), иначе строка переносится */
+function rowResult(exercise: ExerciseSummary): string {
+  if (exercise.trackingType === 'DISTANCE') {
+    return exercise.lastDistanceM ? formatDistance(exercise.lastDistanceM) : '—';
+  }
+  return formatExerciseResult(exercise) ?? '—';
 }

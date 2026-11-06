@@ -4,10 +4,6 @@
   gap: var(--space-5);
 }
 
-.title {
-  font-size: var(--text-h1);
-}
-
 .cardTitle {
   font-size: var(--text-lg);
 }
@@ -29,8 +25,26 @@
 
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-auto-flow: column;
   gap: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .page {
+    gap: var(--space-4);
+  }
+
+  /* телефон: три компактные плитки в ряд */
+  .tiles {
+    gap: var(--space-2);
+  }
+
+  /* поуже поля, чтобы «7,55 км» помещалось в одну строку (как плитки недели на главной) */
+  .tiles > * {
+    padding: var(--space-3) 10px;
+    min-width: 0;
+  }
 }
 
 .effortBar {

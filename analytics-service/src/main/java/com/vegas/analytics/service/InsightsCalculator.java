@@ -251,8 +251,8 @@ public final class InsightsCalculator {
             notes.add("Рабочий вес " + format(workingWeight) + " кг — " + DELOAD_INTENSITY_PERCENT
                     + "% от текущего 1ПМ " + format(currentE1rm) + " кг");
         }
-        notes.add("Подходы не до отказа: оставляй 3–4 повтора в запасе");
-        notes.add("После разгрузки возвращайся к обычным рабочим весам");
+        notes.add("Подходы не до отказа: оставляйте 3–4 повтора в запасе");
+        notes.add("После разгрузки возвращайтесь к обычным рабочим весам");
 
         return new DeloadPlanResponse(last.getExerciseId(), last.getExerciseName(), reason, DELOAD_DAYS,
                 DELOAD_INTENSITY_PERCENT, currentE1rm, workingWeight, sets, reps, notes);

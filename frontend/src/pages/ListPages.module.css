@@ -6,11 +6,6 @@
   gap: var(--space-5);
 }
 
-/* старое: заголовок страницы «Упражнения» (переедет на PageHeader в следующей ветке) */
-.title {
-  font-size: var(--text-h1);
-}
-
 .muted {
   margin: 0;
   color: var(--text-muted);

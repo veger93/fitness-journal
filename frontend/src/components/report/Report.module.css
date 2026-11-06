@@ -4,10 +4,6 @@
   gap: var(--space-5);
 }
 
-.title {
-  font-size: var(--text-h1);
-}
-
 .cardTitle {
   font-size: var(--text-lg);
 }
@@ -24,14 +20,16 @@
 }
 
 .up {
-  color: var(--accent-strong);
+  /* рост — зелёным текстом: оранжевый на белом не читается (3,4:1), и оранжевый у нас — «внимание» */
+  color: var(--success-text);
   font-weight: 600;
 }
 
 .monthNav {
   display: flex;
-  justify-content: space-between;
-  gap: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin-top: var(--space-1);
   font-weight: 500;
 }
 
@@ -41,14 +39,14 @@
 
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-3);
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 /* ---------- таблица по упражнениям ---------- */
@@ -120,50 +118,20 @@
   font-size: var(--text-lg);
 }
 
-/* На телефоне пять колонок не помещаются: каждая строка — карточка, подписи берём из data-label */
-@media (max-width: 640px) {
-  /* плитки по две в ряд — цифры поменьше, как на странице упражнения */
+@media (max-width: 900px) {
   .tiles {
-    --text-num: 22px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* телефон: плитки 2 × 2 компактные; вместо таблицы — строки ListRow (ReportPage) */
+@media (max-width: 640px) {
+  .page {
+    gap: var(--space-4);
   }
 
-  .table thead {
-    display: none;
-  }
-
-  .table,
-  .table tbody,
-  .table tr,
-  .table th,
-  .table td {
-    display: block;
-  }
-
-  /* строка-карточка: название сверху, под ним четыре колонки "подпись над значением" */
-  .table tbody tr {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  .tiles {
     gap: var(--space-2);
-    padding: var(--space-3) var(--space-4);
-  }
-
-  .table tbody th {
-    grid-column: 1 / -1;
-    padding: 0;
-  }
-
-  .table td {
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-  }
-
-  .table td::before {
-    content: attr(data-label);
-    color: var(--text-muted);
-    font-size: var(--text-sm);
   }
 }
 
