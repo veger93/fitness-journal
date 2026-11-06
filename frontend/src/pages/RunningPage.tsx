@@ -1,17 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { analyticsApi, type RunningSummary } from '../api/analytics';
-import { BackLink } from '../components/ui/BackLink';
+import { PageColumns } from '../components/ui/PageColumns';
+import { PageHeader } from '../components/ui/PageHeader';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { Card } from '../components/ui/Card';
 import { StatTile } from '../components/ui/StatTile';
 import { formatChange, formatShortDate } from '../lib/format';
 import { formatClock, formatDistance } from '../lib/workout';
 import styles from './RunningPage.module.css';
 
-/** Темп из секунд на км: 290 -> "4:50 /км" и скорость "12,4 км/ч" */
+/** Скорость из темпа: 290 с/км -> "12,4 км/ч" */
+function speedText(secPerKm: number): string {
+  return `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(3600 / secPerKm)} км/ч`;
+}
+
+/** Темп из секунд на км: 290 -> "4:50 /км · 12,4 км/ч" (на телефоне в плитке — только скорость, темп и так крупно) */
 function paceText(secPerKm: number): string {
-  const kmh = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(3600 / secPerKm);
-  return `${formatClock(secPerKm)} /км · ${kmh} км/ч`;
+  return `${formatClock(secPerKm)} /км · ${speedText(secPerKm)}`;
 }
 
 /** "Бег": километраж по неделям, рост нагрузки, рекорды, баланс лёгких и тяжёлых пробежек. */
@@ -20,8 +26,7 @@ export function RunningPage() {
 
   return (
     <div className={styles.page}>
-      <BackLink to="/exercises">Все упражнения</BackLink>
-      <h1 className={styles.title}>Бег</h1>
+      <PageHeader back={{ to: '/exercises', label: 'Все упражнения' }} title="Бег" />
       {running.isPending && <p className={styles.muted}>Загружаем…</p>}
       {running.isError && <p className={styles.muted}>{running.error.message}</p>}
       {running.data?.empty && (
@@ -41,6 +46,8 @@ function Content({ data }: { data: RunningSummary }) {
   const thisWeek = data.weeks.at(-1)?.distanceM ?? 0;
   const { load, effort } = data;
   const rated = effort.easy + effort.moderate + effort.hard;
+  // телефон: три плитки в ряд, компактные (как на главной)
+  const compact = useMediaQuery('(max-width: 640px)');
 
   return (
     <>
@@ -52,78 +59,97 @@ function Content({ data }: { data: RunningSummary }) {
       )}
 
       <div className={styles.tiles}>
-        <StatTile variant="inverse" label="На этой неделе" value={formatDistance(thisWeek)} />
+        <StatTile
+          compact={compact}
+          variant="inverse"
+          label="На этой неделе"
+          value={thisWeek > 0 ? formatDistance(thisWeek) : '0 км'}
+        />
         {data.longestRun?.distanceM != null && (
           <StatTile
+            compact={compact}
             label="Самая длинная"
             value={formatDistance(data.longestRun.distanceM)}
-            caption={`${formatShortDate(data.longestRun.date)}${data.longestRun.fresh ? ' · новый рекорд' : ''}`}
+            caption={`${formatShortDate(data.longestRun.date)}${data.longestRun.fresh ? (compact ? ' · рекорд' : ' · новый рекорд') : ''}`}
             highlightCaption={data.longestRun.fresh}
           />
         )}
         {data.bestPace?.paceSecPerKm != null && (
           <StatTile
+            compact={compact}
             label="Лучший темп**"
             value={formatClock(data.bestPace.paceSecPerKm)}
-            caption={`${paceText(data.bestPace.paceSecPerKm)}${data.bestPace.fresh ? ' · новый рекорд' : ''}`}
+            caption={`${compact ? speedText(data.bestPace.paceSecPerKm) : paceText(data.bestPace.paceSecPerKm)}${data.bestPace.fresh ? ' · рекорд' : ''}`}
             highlightCaption={data.bestPace.fresh}
           />
         )}
       </div>
 
-      <Card as="section" size="section">
-        <h2 className={styles.cardTitle}>Километраж по неделям</h2>
-        <WeeksChart weeks={data.weeks} />
-        <p className={styles.muted}>
-          За 2 недели: {formatDistance(load.lastTwoWeeksM)}
-          {load.changePercent != null && ` (${formatChange(load.changePercent)} к двум предыдущим)`}
-        </p>
-      </Card>
-
-      <Card as="section">
-        <h2 className={styles.cardTitle}>Как давались пробежки</h2>
-        <p className={styles.muted}>За последние 4 недели, по отметке «Как далась пробежка?»</p>
-        {rated > 0 ? (
+      {/* ПК: километраж (ему нужна ширина) | как давались пробежки и сноски */}
+      <PageColumns
+        aside={
           <>
-            <div className={styles.effortBar} aria-hidden="true">
-              <span className={styles.easy} style={{ flexGrow: effort.easy }} />
-              <span className={styles.moderate} style={{ flexGrow: effort.moderate }} />
-              <span className={styles.hard} style={{ flexGrow: effort.hard }} />
+            <EffortCard effort={effort} rated={rated} />
+            <div className={styles.footnotes}>
+              {load.warning && (
+                <p className="footnote">
+                  * Исследование начинающих бегунов: при росте больше 30% за две недели травм от перегрузки было больше.
+                  Связь не строгая, но прибавлять плавнее — безопаснее.
+                </p>
+              )}
+              <p className="footnote">** Темп — сколько минут уходит на 1 км. Считаем по отрезкам от 1 км.</p>
             </div>
-            <ul className={styles.effortLegend}>
-              <li>
-                <span className={`${styles.dot} ${styles.easy}`} aria-hidden="true" />
-                Легко: {effort.easy}
-              </li>
-              <li>
-                <span className={`${styles.dot} ${styles.moderate}`} aria-hidden="true" />
-                Средне: {effort.moderate}
-              </li>
-              <li>
-                <span className={`${styles.dot} ${styles.hard}`} aria-hidden="true" />
-                Тяжело: {effort.hard}
-              </li>
-            </ul>
           </>
-        ) : (
-          <p className={styles.plain}>
-            Отмечайте после пробежки, как она далась, — здесь появится баланс лёгких и тяжёлых.
+        }
+      >
+        <Card as="section" size="section">
+          <h2 className={styles.cardTitle}>Километраж по неделям</h2>
+          <WeeksChart weeks={data.weeks} />
+          <p className={styles.muted}>
+            За 2 недели: {formatDistance(load.lastTwoWeeksM)}
+            {load.changePercent != null && ` (${formatChange(load.changePercent)} к двум предыдущим)`}
           </p>
-        )}
-        {effort.unrated > 0 && rated > 0 && <p className={styles.muted}>Без отметки: {effort.unrated}</p>}
-        {effort.hint && <p className={styles.plain}>{effort.hint}</p>}
-      </Card>
-
-      <div className={styles.footnotes}>
-        {load.warning && (
-          <p className="footnote">
-            * Исследование начинающих бегунов: при росте больше 30% за две недели травм от перегрузки было больше. Связь
-            не строгая, но прибавлять плавнее — безопаснее.
-          </p>
-        )}
-        <p className="footnote">** Темп — сколько минут уходит на 1 км. Считаем по отрезкам от 1 км.</p>
-      </div>
+        </Card>
+      </PageColumns>
     </>
+  );
+}
+
+function EffortCard({ effort, rated }: { effort: RunningSummary['effort']; rated: number }) {
+  return (
+    <Card as="section">
+      <h2 className={styles.cardTitle}>Как давались пробежки</h2>
+      <p className={styles.muted}>За последние 4 недели, по отметке «Как далась пробежка?»</p>
+      {rated > 0 ? (
+        <>
+          <div className={styles.effortBar} aria-hidden="true">
+            <span className={styles.easy} style={{ flexGrow: effort.easy }} />
+            <span className={styles.moderate} style={{ flexGrow: effort.moderate }} />
+            <span className={styles.hard} style={{ flexGrow: effort.hard }} />
+          </div>
+          <ul className={styles.effortLegend}>
+            <li>
+              <span className={`${styles.dot} ${styles.easy}`} aria-hidden="true" />
+              Легко: {effort.easy}
+            </li>
+            <li>
+              <span className={`${styles.dot} ${styles.moderate}`} aria-hidden="true" />
+              Средне: {effort.moderate}
+            </li>
+            <li>
+              <span className={`${styles.dot} ${styles.hard}`} aria-hidden="true" />
+              Тяжело: {effort.hard}
+            </li>
+          </ul>
+        </>
+      ) : (
+        <p className={styles.plain}>
+          Отмечайте после пробежки, как она далась, — здесь появится баланс лёгких и тяжёлых.
+        </p>
+      )}
+      {effort.unrated > 0 && rated > 0 && <p className={styles.muted}>Без отметки: {effort.unrated}</p>}
+      {effort.hint && <p className={styles.plain}>{effort.hint}</p>}
+    </Card>
   );
 }
 

@@ -16,10 +16,14 @@ import { PlateauTips } from '../components/home/PlateauTips';
 import { STATUS_BADGES } from '../components/ExerciseRow';
 import { ProgressChart } from '../components/ProgressChart';
 import { ProgressLegend } from '../components/ProgressLegend';
-import { BackLink } from '../components/ui/BackLink';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
 import { Dialog } from '../components/ui/Dialog';
+import { ListRow, ListRowGroup } from '../components/ui/ListRow';
+import { PageColumns } from '../components/ui/PageColumns';
+import { PageHeader } from '../components/ui/PageHeader';
+import { SectionLabel } from '../components/ui/SectionLabel';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { StatTile } from '../components/ui/StatTile';
 import { EQUIPMENT_NAMES } from '../lib/catalog';
@@ -57,6 +61,7 @@ const PERIOD_CAPTION: Record<ProgressPeriod, string> = {
 export function ExercisePage() {
   const { exerciseId = '' } = useParams();
   const [period, setPeriod] = useState<ProgressPeriod>('M3');
+  const phone = useMediaQuery('(max-width: 640px)');
 
   const dashboard = useQuery({ queryKey: ['dashboard'], queryFn: analyticsApi.dashboard });
   const progress = useQuery({
@@ -83,14 +88,15 @@ export function ExercisePage() {
   if (dashboard.isError) {
     return <p className={styles.muted}>{dashboard.error.message}</p>;
   }
+  const back = { to: '/exercises', label: 'Все упражнения' };
   if (!summary) {
     return (
       <div className={styles.page}>
-        <BackLink to="/exercises">Все упражнения</BackLink>
-        <div className={styles.titleBlock}>
-          <h1 className={styles.title}>{name ?? exercise.data?.name ?? 'Упражнение'}</h1>
-          {exercise.data && <HowTo exercise={exercise.data} />}
-        </div>
+        <PageHeader
+          back={back}
+          title={name ?? exercise.data?.name ?? 'Упражнение'}
+          subtitle={exercise.data && <HowTo exercise={exercise.data} />}
+        />
         <p className={styles.muted}>Пока нет завершённых тренировок с этим упражнением.</p>
       </div>
     );
@@ -101,68 +107,75 @@ export function ExercisePage() {
 
   return (
     <div className={styles.page}>
-      <BackLink to="/exercises">Все упражнения</BackLink>
-      <div className={styles.titleBlock}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>{summary.exerciseName}</h1>
-          {badge && <Badge variant={badge.variant}>{badge.label}</Badge>}
-        </div>
-        {exercise.data && <HowTo exercise={exercise.data} />}
-      </div>
+      <PageHeader
+        back={back}
+        title={summary.exerciseName}
+        subtitle={
+          <div className={styles.subtitleRow}>
+            {exercise.data && <HowTo exercise={exercise.data} />}
+            {badge && <Badge variant={badge.variant}>{badge.label}</Badge>}
+          </div>
+        }
+      />
 
       <SegmentedControl legend="Период" options={PERIODS} value={period} onChange={setPeriod} />
 
-      <Tiles summary={summary} progress={progress.data} insights={insights.data} period={period} />
+      <Tiles summary={summary} progress={progress.data} insights={insights.data} period={period} compact={phone} />
 
-      {/* у упражнений на время нет веса — нет и силы (1ПМ), график силы для них не строим */}
-      {!timed && (
-        <Card as="section" size="section">
-          <div className={styles.cardHead}>
-            <h2 className={styles.cardTitle}>Сила*</h2>
-            {progress.data && progress.data.points.some((p) => p.e1rmKg != null) && (
-              <ShareChartButton
-                exerciseName={summary.exerciseName}
-                periodCaption={PERIOD_CAPTION[period]}
-                strengthKg={summary.strengthKg ?? summary.currentE1rmKg}
-                changePercent={progress.data.changePercent}
-                points={strengthPoints(progress.data.points)}
-                record={summary.status === 'RECORD'}
-              />
-            )}
-          </div>
-          <ProgressLegend
-            plateauDays={insights.data?.plateau.detected ? insights.data.plateau.daysSinceProgress : null}
-          />
-          {progress.data ? (
-            <ProgressChart
-              points={progress.data.points}
-              plateauFrom={insights.data?.plateau.detected ? insights.data.plateau.lastProgressAt : null}
-            />
-          ) : (
-            <div className={`${styles.muted} ${styles.chartPlaceholder}`}>
-              {progress.isError ? progress.error.message : 'Загружаем график…'}
+      {/* ПК: график и совет — слева (им нужна ширина), история по тренировкам — справа узким списком.
+          Телефон: график → совет → история */}
+      <PageColumns
+        aside={
+          <section className={styles.section}>
+            <SectionLabel>История</SectionLabel>
+            <History summary={summary} progress={progress.data} />
+            <Link to={`/history?exercise=${summary.exerciseId}`} className={styles.historyLink}>
+              Все тренировки с этим упражнением →
+            </Link>
+          </section>
+        }
+      >
+        {/* у упражнений на время нет веса — нет и силы (1ПМ), график силы для них не строим */}
+        {!timed && (
+          <Card as="section" size="section">
+            <div className={styles.cardHead}>
+              <h2 className={styles.cardTitle}>Сила*</h2>
+              {progress.data && progress.data.points.some((p) => p.e1rmKg != null) && (
+                <ShareChartButton
+                  exerciseName={summary.exerciseName}
+                  periodCaption={PERIOD_CAPTION[period]}
+                  strengthKg={summary.strengthKg ?? summary.currentE1rmKg}
+                  changePercent={progress.data.changePercent}
+                  points={strengthPoints(progress.data.points)}
+                  record={summary.status === 'RECORD'}
+                />
+              )}
             </div>
-          )}
-          {progress.data?.reference && <p className={styles.muted}>Темп: {progress.data.reference.hint}.</p>}
-        </Card>
-      )}
+            <ProgressLegend
+              plateauDays={insights.data?.plateau.detected ? insights.data.plateau.daysSinceProgress : null}
+            />
+            {progress.data ? (
+              <ProgressChart
+                points={progress.data.points}
+                plateauFrom={insights.data?.plateau.detected ? insights.data.plateau.lastProgressAt : null}
+              />
+            ) : (
+              <div className={`${styles.muted} ${styles.chartPlaceholder}`}>
+                {progress.isError ? progress.error.message : 'Загружаем график…'}
+              </div>
+            )}
+            {progress.data?.reference && <p className={styles.muted}>Темп: {progress.data.reference.hint}.</p>}
+          </Card>
+        )}
 
-      {insights.data && <Advice summary={summary} insights={insights.data} />}
+        {insights.data && <Advice summary={summary} insights={insights.data} />}
 
-      <section className={styles.section}>
-        <h2 className={styles.cardTitle}>История</h2>
-        <p className={styles.muted}>Лучший подход каждой тренировки{timed ? '' : ' и сила* по нему'}.</p>
-        <History summary={summary} progress={progress.data} />
-        <Link to={`/history?exercise=${summary.exerciseId}`} className={styles.historyLink}>
-          Все тренировки с этим упражнением →
-        </Link>
-      </section>
-
-      {!timed && (
-        <p className="footnote">
-          * Сила — сколько ты поднял бы один раз, посчитано по лучшему подходу тренировки (формула Эпли).
-        </p>
-      )}
+        {!timed && (
+          <p className="footnote">
+            * Сила — сколько вы подняли бы один раз, посчитано по лучшему подходу тренировки (формула Эпли).
+          </p>
+        )}
+      </PageColumns>
     </div>
   );
 }
@@ -194,11 +207,14 @@ function Tiles({
   progress,
   insights,
   period,
+  compact,
 }: {
   summary: ExerciseSummary;
   progress: ExerciseProgress | undefined;
   insights: ExerciseInsights | undefined;
   period: ProgressPeriod;
+  /** телефон: плитки 2 × 2 компактные — четыре крупные плитки занимали весь первый экран */
+  compact: boolean;
 }) {
   const last = formatExerciseResult(summary) ?? '—';
   const sessions = insights?.sessionsCount;
@@ -208,13 +224,19 @@ function Tiles({
     return (
       <div className={styles.tiles}>
         <StatTile
+          compact={compact}
           variant="inverse"
           label="Лучшее время"
           value={best != null ? formatClock(best) : '—'}
           caption={PERIOD_CAPTION[period]}
         />
-        <StatTile label="Последний результат" value={last} caption={formatShortDate(summary.lastPerformedAt)} />
-        <StatTile label="Тренировок" value={sessions ?? '—'} caption="с этим упражнением" />
+        <StatTile
+          compact={compact}
+          label="Последний результат"
+          value={last}
+          caption={formatShortDate(summary.lastPerformedAt)}
+        />
+        <StatTile compact={compact} label="Тренировок" value={sessions ?? '—'} caption="с этим упражнением" />
       </div>
     );
   }
@@ -223,6 +245,7 @@ function Tiles({
   return (
     <div className={styles.tiles}>
       <StatTile
+        compact={compact}
         variant="inverse"
         label="Сила*"
         value={formatKgOrDash(summary.strengthKg ?? summary.currentE1rmKg)}
@@ -235,13 +258,19 @@ function Tiles({
         }
         highlightCaption={change != null && change > 0}
       />
-      <StatTile label="Последний подход" value={last} caption={formatShortDate(summary.lastPerformedAt)} />
       <StatTile
+        compact={compact}
+        label="Последний подход"
+        value={last}
+        caption={formatShortDate(summary.lastPerformedAt)}
+      />
+      <StatTile
+        compact={compact}
         label="Объём за неделю"
         value={progress?.weeklyVolumeKg != null ? formatTonnage(progress.weeklyVolumeKg) : '—'}
         caption="вес × повторы"
       />
-      <StatTile label="Тренировок" value={sessions ?? '—'} caption="с этим упражнением" />
+      <StatTile compact={compact} label="Тренировок" value={sessions ?? '—'} caption="с этим упражнением" />
     </div>
   );
 }
@@ -256,7 +285,9 @@ function Advice({ summary, insights }: { summary: ExerciseSummary; insights: Exe
   // идёт разгрузка — блок остаётся, даже если перегрузка уже ушла: из него разгрузку можно закончить
   if (summary.status === 'OVERLOAD' || deloading) {
     return (
-      <Card as="section" variant="accent" size="section">
+      // обычная карточка, а не оранжевая: внутри много текста и сносок, на оранжевом они не читаются.
+      // «Внимание» уже видно по бейджу «перегрузка» под заголовком
+      <Card as="section" size="section">
         <h2 className={styles.cardTitle}>{deloading ? 'Разгрузка' : 'Пора неделю полегче'}</h2>
         <DeloadPlanContent exerciseId={summary.exerciseId} />
       </Card>
@@ -289,19 +320,19 @@ function History({ summary, progress }: { summary: ExerciseSummary; progress: Ex
     return <p className={styles.muted}>За этот период тренировок с упражнением не было — выберите период побольше.</p>;
   }
   const rows = historyRows(progress.points, summary.trackingType);
+  const timed = summary.trackingType === 'TIME';
+  // строка: дата · лучший подход и сколько подходов · справа сила (у упражнений на время — лучшее время)
   return (
-    <ul className={styles.history}>
+    <ListRowGroup>
       {rows.map((row) => (
-        <li key={row.date} className={styles.historyRow}>
-          <span className={styles.historyDate}>{formatShortDate(row.date)}</span>
-          <span className={styles.historyBest}>
-            {row.best}
-            <span className={styles.muted}>{row.sets}</span>
-          </span>
-          {row.strength && <span className={styles.historyStrength}>{row.strength}</span>}
-        </li>
+        <ListRow
+          key={row.date}
+          title={formatShortDate(row.date)}
+          text={timed ? row.sets : `${row.best} · ${row.sets}`}
+          value={timed ? row.best : row.strength}
+        />
       ))}
-    </ul>
+    </ListRowGroup>
   );
 }
 
