@@ -11,7 +11,8 @@ import { Card } from '../components/ui/Card';
 import { StatTile } from '../components/ui/StatTile';
 import { PageHeader } from '../components/ui/PageHeader';
 import { SectionLabel } from '../components/ui/SectionLabel';
-import { useCurrentWorkout } from '../hooks/useWorkout';
+import { useCurrentWorkout, useFailedSetsCount } from '../hooks/useWorkout';
+import { ListRow, ListRowGroup } from '../components/ui/ListRow';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { completedToday, todayOf } from '../lib/plan';
 import { strengthCaption, strengthPoints } from '../lib/exercise';
@@ -40,6 +41,7 @@ export function HomePage() {
     queryFn: analyticsApi.dashboard,
   });
   const current = useCurrentWorkout();
+  const failedSets = useFailedSetsCount();
   const plan = useQuery({ queryKey: ['plan'], queryFn: workoutsApi.plan });
   // последние тренировки — понять, сделана ли сегодняшняя по плану (ключ под 'history': обновится после "Завершить")
   const recent = useQuery({ queryKey: ['history', 'recent'], queryFn: () => workoutsApi.journal(0, 5) });
@@ -58,7 +60,8 @@ export function HomePage() {
         // На телефоне "Другая тренировка" не дублируем: она есть во вкладке "Тренировка" внизу, а место наверху дорогое
         action={
           current.data ? (
-            <ButtonLink to="/workout/active">Продолжить тренировку</ButtonLink>
+            // на телефоне коротко: длинная кнопка сжимала заголовок до «Про-гресс за ноябрь» в 4 строки
+            <ButtonLink to="/workout/active">{phone ? 'Продолжить' : 'Продолжить тренировку'}</ButtonLink>
           ) : phone && plannedPending ? null : (
             <ButtonLink to="/workout" variant={plannedPending ? 'secondary' : 'primary'}>
               {plannedPending ? 'Другая тренировка' : 'Начать тренировку'}
@@ -66,6 +69,19 @@ export function HomePage() {
           )
         }
       />
+
+      {/* подходы не сохранились (плохая связь) — не молчим: первым делом на главной */}
+      {failedSets > 0 && (
+        <ListRowGroup>
+          <ListRow
+            to="/workout/active"
+            mark="!"
+            tone="accent"
+            title={`Не сохранены подходы: ${failedSets}`}
+            text="Не было связи с сервером — откройте тренировку и нажмите на подход, чтобы повторить"
+          />
+        </ListRowGroup>
+      )}
 
       {/* пока идёт тренировка, "сегодня по плану" не нужен — она уже начата */}
       {plan.data && !current.data && <TodayPlanCard plan={plan.data} recent={recent.data?.content ?? []} />}

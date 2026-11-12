@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useCapsule } from '../hooks/useCapsule';
 import { useActingClient } from '../trainer/ActingClientProvider';
-import { useCurrentWorkout } from '../hooks/useWorkout';
+import { useCurrentWorkout, useFailedSetsCount } from '../hooks/useWorkout';
 import { useNewRecord } from '../hooks/useNewRecord';
 import styles from './TabBar.module.css';
 
@@ -36,6 +36,7 @@ export function TabBar() {
   const current = useCurrentWorkout();
   const inProgress = current.data != null;
   const { fresh: newRecord } = useNewRecord();
+  const failedSets = useFailedSetsCount();
   const { pathname } = useLocation();
   const { client: acting } = useActingClient();
   const navRef = useRef<HTMLElement>(null);
@@ -57,14 +58,22 @@ export function TabBar() {
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d={ICONS[tab.icon]} />
             </svg>
-            {((tab.icon === 'workout' && inProgress) || (tab.icon === 'records' && newRecord)) && (
-              <span className={styles.dot} />
+            {/* не сохранились подходы — заметный «!» вместо точки: точка и так горит, пока идёт тренировка */}
+            {tab.icon === 'workout' && failedSets > 0 ? (
+              <span className={styles.alert}>!</span>
+            ) : (
+              ((tab.icon === 'workout' && inProgress) || (tab.icon === 'records' && newRecord)) && (
+                <span className={styles.dot} />
+              )
             )}
           </span>
           <span className={styles.label}>
             <span className={styles.labelText}>{tab.label}</span>
           </span>
           {tab.icon === 'workout' && inProgress && <span className="visually-hidden">, идёт тренировка</span>}
+          {tab.icon === 'workout' && failedSets > 0 && (
+            <span className="visually-hidden">, не сохранены подходы: {failedSets}</span>
+          )}
           {tab.icon === 'records' && newRecord && <span className="visually-hidden">, новый рекорд</span>}
         </NavLink>
       ))}

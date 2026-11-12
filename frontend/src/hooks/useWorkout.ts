@@ -1,40 +1,62 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ApiError, NO_RESPONSE } from '../api/client';
-import { workoutsApi, type SetInput, type Workout } from '../api/workouts';
+import { ApiError, NO_RESPONSE, getActingClient } from '../api/client';
+import { workoutsApi, type SetInput, type Workout, type WorkoutSet } from '../api/workouts';
+import { updatePendingSets, usePendingSetsStore, type PendingSet } from '../lib/pendingSets';
 import { withSetAdded, withSetDeleted, withSetUpdated } from '../lib/workout';
+
+export type { PendingSet } from '../lib/pendingSets';
 
 export const CURRENT_WORKOUT_KEY = ['workout', 'current'] as const;
 
-/**
- * Подход, который уже показан в списке, но сервер его ещё не подтвердил.
- * clientId — id, придуманный телефоном: с ним повтор запроса не создаст дубль (сервер узнает подход).
- */
-export interface PendingSet {
-  clientId: string;
-  workoutId: string;
-  workoutExerciseId: string;
-  input: SetInput;
-  /** saving — отправляем (в том числе повторно); failed — все попытки не удались, ждём «повторить» */
-  status: 'saving' | 'failed';
+export const ADD_SET_KEY = ['workout', 'addSet'] as const;
+
+/** Неподтверждённые подходы одной тренировки (очередь — lib/pendingSets) */
+export function usePendingSets(workoutId: string): PendingSet[] {
+  return usePendingSetsStore().filter((p) => p.workoutId === workoutId);
+}
+
+/** Сколько подходов не сохранилось в текущем дневнике (свой или клиента) — для точки на вкладке и строки на главной */
+export function useFailedSetsCount(): number {
+  const acting = getActingClient();
+  return usePendingSetsStore().filter((p) => p.status === 'failed' && p.asClient === acting).length;
 }
 
 /**
- * Неподтверждённые подходы живут в кэше TanStack Query, а не в useState страницы:
- * ушли на другую вкладку и вернулись — подходы на месте, запросы в фоне продолжаются.
+ * Запись подхода описана ОДИН раз, на весь QueryClient (setMutationDefaults), а не внутри страницы:
+ * её запускают и экран тренировки, и PendingSetsSync после перезапуска приложения. Колбэки здесь
+ * срабатывают, даже если экран тренировки уже закрыт.
+ *
+ * Новый подход — «оптимистично»: сразу в очереди и на экране («сохраняется…»), окно закрывается без ожидания.
+ * Запрос ждёт ответа 10 с; нет ответа — ещё 3 попытки (через 1, 2, 4 с) с тем же clientId.
+ * Нет сети вовсе — TanStack Query ставит запрос на паузу и отправит, когда сеть появится.
  */
-const PENDING_SETS_KEY = ['workout', 'pendingSets'] as const;
-
-export function usePendingSets(workoutId: string): PendingSet[] {
-  const queryClient = useQueryClient();
-  const query = useQuery({
-    queryKey: PENDING_SETS_KEY,
-    queryFn: () => queryClient.getQueryData<PendingSet[]>(PENDING_SETS_KEY) ?? [],
-    initialData: [],
-    staleTime: Infinity,
-    gcTime: Infinity,
+export function registerAddSetMutation(queryClient: QueryClient) {
+  queryClient.setMutationDefaults(ADD_SET_KEY, {
+    mutationFn: (p: PendingSet) =>
+      workoutsApi.addSet(p.workoutId, p.workoutExerciseId, p.input, p.clientId, p.asClient),
+    retry: (failureCount, error) => failureCount < 3 && isRetryable(error),
+    retryDelay: (attempt) => 1000 * 2 ** attempt,
+    onMutate: (p: PendingSet) =>
+      updatePendingSets((list) => [...list.filter((x) => x.clientId !== p.clientId), { ...p, status: 'saving' }]),
+    onError: (_error: unknown, p: PendingSet) =>
+      updatePendingSets((list) => list.map((x) => (x.clientId === p.clientId ? { ...x, status: 'failed' } : x))),
+    onSuccess: (saved: WorkoutSet, p: PendingSet) => {
+      // сначала — в тренировку на экране, потом — из очереди: подход ни на миг не пропадает
+      const current = queryClient.getQueryData<Workout | null>(CURRENT_WORKOUT_KEY);
+      if (current?.id === p.workoutId && getActingClient() === p.asClient) {
+        queryClient.setQueryData<Workout | null>(
+          CURRENT_WORKOUT_KEY,
+          withSetAdded(current, p.workoutExerciseId, saved),
+        );
+        // первый подход сам начинает тренировку на сервере — перечитаем, чтобы получить время начала
+        if (!current.startedAt) {
+          queryClient.invalidateQueries({ queryKey: CURRENT_WORKOUT_KEY });
+        }
+      }
+      updatePendingSets((list) => list.filter((x) => x.clientId !== p.clientId));
+    },
   });
-  return query.data.filter((p) => p.workoutId === workoutId);
 }
 
 /**
@@ -75,37 +97,8 @@ export function useWorkoutActions(workout: Workout) {
     queryClient.setQueryData<Workout | null>(CURRENT_WORKOUT_KEY, (old) => (old ? change(old) : old));
   const replace = (next: Workout) => queryClient.setQueryData(CURRENT_WORKOUT_KEY, next);
 
-  const setPending = (change: (list: PendingSet[]) => PendingSet[]) =>
-    queryClient.setQueryData<PendingSet[]>(PENDING_SETS_KEY, (old) => change(old ?? []));
-
-  /**
-   * Новый подход — «оптимистично»: сразу в списке с пометкой «сохраняется…», окно закрывается без ожидания.
-   * Запрос ждёт ответа 10 с; нет ответа — пробуем ещё 3 раза (через 1, 2, 4 с) с тем же clientId,
-   * поэтому даже если первый запрос всё-таки дошёл, второго подхода на сервере не будет.
-   * Нет сети вовсе — TanStack Query ставит запрос на паузу и отправит, когда сеть появится.
-   */
-  const addSet = useMutation({
-    mutationFn: ({ exerciseId, set, clientId }: { exerciseId: string; set: SetInput; clientId: string }) =>
-      workoutsApi.addSet(workout.id, exerciseId, set, clientId),
-    retry: (failureCount, error) => failureCount < 3 && isRetryable(error),
-    retryDelay: (attempt) => 1000 * 2 ** attempt,
-    onMutate: ({ exerciseId, set, clientId }) =>
-      setPending((list) => [
-        ...list.filter((p) => p.clientId !== clientId),
-        { clientId, workoutId: workout.id, workoutExerciseId: exerciseId, input: set, status: 'saving' },
-      ]),
-    onError: (_, { clientId }) =>
-      setPending((list) => list.map((p) => (p.clientId === clientId ? { ...p, status: 'failed' } : p))),
-    onSuccess: (saved, { exerciseId, clientId }) => {
-      // сначала — в тренировку, потом — из «неподтверждённых»: подход ни на миг не пропадает с экрана
-      update((w) => withSetAdded(w, exerciseId, saved));
-      setPending((list) => list.filter((p) => p.clientId !== clientId));
-      // первый подход сам начинает тренировку на сервере — перечитаем, чтобы получить время начала
-      if (!workout.startedAt) {
-        queryClient.invalidateQueries({ queryKey: CURRENT_WORKOUT_KEY });
-      }
-    },
-  });
+  // запись подхода: всё поведение — в registerAddSetMutation, здесь только «ручка» для вызова
+  const addSet = useMutation<WorkoutSet, Error, PendingSet>({ mutationKey: ADD_SET_KEY });
 
   const begin = useMutation({ mutationFn: () => workoutsApi.begin(workout.id), onSuccess: replace });
 
@@ -141,7 +134,7 @@ export function useWorkoutActions(workout: Workout) {
     navigate(path, { replace: true });
     queryClient.setQueryData(CURRENT_WORKOUT_KEY, null);
     // не сохранённые подходы этой тренировки больше не нужны (при завершении человек это подтвердил)
-    setPending((list) => list.filter((p) => p.workoutId !== workout.id));
+    updatePendingSets((list) => list.filter((p) => p.workoutId !== workout.id));
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     queryClient.invalidateQueries({ queryKey: ['history'] });
     queryClient.invalidateQueries({ queryKey: ['running'] });
@@ -154,13 +147,23 @@ export function useWorkoutActions(workout: Workout) {
   });
   const cancel = useMutation({ mutationFn: () => workoutsApi.remove(workout.id), onSuccess: () => finish('/') });
 
+  /** Новый подход: в очередь и на сервер. clientId — новый, повторы пойдут с ним же */
+  const saveNewSet = (workoutExerciseId: string, input: SetInput) =>
+    addSet.mutate({
+      clientId: newClientId(),
+      workoutId: workout.id,
+      workoutExerciseId,
+      input,
+      asClient: getActingClient(),
+      status: 'saving',
+    });
+
   /** «Не сохранён — повторить»: тот же подход, тот же clientId */
-  const retrySet = (pending: PendingSet) =>
-    addSet.mutate({ exerciseId: pending.workoutExerciseId, set: pending.input, clientId: pending.clientId });
+  const retrySet = (pending: PendingSet) => addSet.mutate(pending);
 
   return {
     begin,
-    addSet,
+    saveNewSet,
     retrySet,
     updateSet,
     deleteSet,

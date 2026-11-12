@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { RequireAuth } from './auth/RequireAuth';
 import { AppLayout } from './components/AppLayout';
+import { registerAddSetMutation } from './hooks/useWorkout';
 import { HomePage } from './pages/HomePage';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
@@ -32,6 +33,8 @@ import { ActingClientProvider } from './trainer/ActingClientProvider';
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
 });
+// запись подхода с повторами — одна на всё приложение (hooks/useWorkout.ts)
+registerAddSetMutation(queryClient);
 
 export function App() {
   return (

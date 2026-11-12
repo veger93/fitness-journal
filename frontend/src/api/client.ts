@@ -48,6 +48,11 @@ export function configureApiClient(next: ClientOptions) {
 let actingClientId: string | null = null;
 let onClientAccessLost: () => void = () => {};
 
+/** За кого сейчас работаем: подход в очереди запоминает это, чтобы после перезапуска уйти тому же человеку */
+export function getActingClient(): string | null {
+  return actingClientId;
+}
+
 export function setActingClient(clientId: string | null, onAccessLost: () => void = () => {}) {
   actingClientId = clientId;
   onClientAccessLost = onAccessLost;

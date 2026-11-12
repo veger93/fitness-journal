@@ -183,11 +183,12 @@ export const workoutsApi = {
    * clientId — id подхода, придуманный телефоном (UUID). Повтор с тем же clientId сервер не сохранит второй раз,
    * а вернёт уже сохранённый подход. Ждём 10 с: дальше useWorkoutActions повторит запрос сам.
    */
-  addSet: (workoutId: string, workoutExerciseId: string, set: SetInput, clientId: string) =>
+  addSet: (workoutId: string, workoutExerciseId: string, set: SetInput, clientId: string, asClient: string | null) =>
     api<WorkoutSet>(`${exercisePath(workoutId, workoutExerciseId)}/sets`, {
       method: 'POST',
       body: { ...set, clientId },
       timeoutMs: 10_000,
+      asClient,
     }),
   updateSet: (workoutId: string, workoutExerciseId: string, setId: string, set: SetInput) =>
     api<WorkoutSet>(`${exercisePath(workoutId, workoutExerciseId)}/sets/${setId}`, { method: 'PUT', body: set }),
