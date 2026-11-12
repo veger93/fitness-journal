@@ -43,9 +43,9 @@ public class AnalyticsNotifier {
         this.webUrl = webUrl;
     }
 
-    /** Рекорд привязан к тренировке и упражнению. */
+    /** Рекорд привязан к тренировке и упражнению. Только в ленту приложения — без письма (saveInApp). */
     public void personalRecord(PersonalRecordEvent event) {
-        notificationService.send(event.userId(), NotificationType.PERSONAL_RECORD,
+        notificationService.saveInApp(event.userId(), NotificationType.PERSONAL_RECORD,
                 "RECORD:" + event.workoutId() + ":" + event.exerciseId(),
                 greeting -> NotificationTemplates.personalRecord(greeting, event));
         toTrainer(event.userId(), NotificationType.PERSONAL_RECORD, "RECORD:" + event.workoutId() + ":" + event.exerciseId(),

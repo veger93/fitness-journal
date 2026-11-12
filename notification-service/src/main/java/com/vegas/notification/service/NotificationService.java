@@ -88,6 +88,24 @@ public class NotificationService {
     }
 
     /**
+     * Только в ленту приложения, без письма. Свои рекорды: о них и так говорят колокольчик и точка
+     * на вкладке «Рекорды», письмо на каждый рекорд — лишний поток писем (решили в ноябре 2026).
+     * Повтор события отсекается тем же ключом, что и у писем.
+     */
+    @Transactional
+    public Optional<Notification> saveInApp(UUID userId, NotificationType type, String dedupeKey,
+                                            Function<String, EmailMessage> template) {
+        if (notificationRepository.existsByUserIdAndDedupeKey(userId, dedupeKey)) {
+            return Optional.empty();
+        }
+        String greeting = recipientRepository.findById(userId).map(Recipient::greetingName).orElse("Привет");
+        Notification saved = notificationRepository.save(
+                Notification.inApp(userId, type, dedupeKey, template.apply(greeting), clock.instant()));
+        log.info("Notification {} for user {} (in app only)", dedupeKey, userId);
+        return Optional.of(saved);
+    }
+
+    /**
      * Тренеру — о событии у его клиента. Только в ленту приложения: клиентов десятки, письмо на каждое — спам.
      * Повтор события (Kafka доставляет "минимум один раз") отсекается тем же ключом, что и у обычных уведомлений.
      */

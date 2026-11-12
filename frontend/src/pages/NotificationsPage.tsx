@@ -48,14 +48,19 @@ export function NotificationsPage() {
 
   return (
     <div className={styles.page}>
-      <PageHeader title="Уведомления" subtitle="То же, что приходит на почту — собрано в одном месте." />
+      <PageHeader title="Уведомления" subtitle="Подсказки по тренировкам — в одном месте. Важное дублируем на почту." />
       {/* ПК: лента (2/3) | что сюда приходит (1/3). Телефон: пояснение — под лентой */}
       <PageColumns
         aside={
           <section className={styles.section}>
             <SectionLabel>Что сюда приходит</SectionLabel>
             <ListRowGroup>
-              <ListRow mark="★" tone="inverse" title="Рекорды" text="новый максимальный вес или сила" />
+              <ListRow
+                mark="★"
+                tone="inverse"
+                title="Рекорды"
+                text="новый максимальный вес или сила · только здесь, без письма"
+              />
               <ListRow mark="≈" title="Плато" text="3 недели и больше без нового рекорда" />
               <ListRow mark="!" tone="accent" title="Перегрузка" text="признаки накопленной усталости" />
               <ListRow mark="↗" title="Итоги месяца" text="было / стало по силе и объёму" />
