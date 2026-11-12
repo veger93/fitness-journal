@@ -138,6 +138,26 @@
   box-shadow: 0 0 0 2px var(--surface);
 }
 
+/* «!» — не сохранились подходы: крупнее точки и с восклицательным знаком, чтобы не спутать с «идёт тренировка» */
+.alert {
+  position: absolute;
+  top: -6px;
+  right: -9px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font: 700 var(--text-xs) / 1 var(--font-body);
+  box-shadow: 0 0 0 2px var(--surface-inverse);
+}
+
+.active .alert {
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
 /* режим клиента (тренер ведёт клиента): капсула и текст на ней — в цвет оранжевой полосы сверху */
 .client .capsule {
   background: var(--accent);

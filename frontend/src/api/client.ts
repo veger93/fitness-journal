@@ -48,6 +48,11 @@ export function configureApiClient(next: ClientOptions) {
 let actingClientId: string | null = null;
 let onClientAccessLost: () => void = () => {};
 
+/** За кого сейчас работаем: подход в очереди запоминает это, чтобы после перезапуска уйти тому же человеку */
+export function getActingClient(): string | null {
+  return actingClientId;
+}
+
 export function setActingClient(clientId: string | null, onAccessLost: () => void = () => {}) {
   actingClientId = clientId;
   onClientAccessLost = onAccessLost;
@@ -111,12 +116,26 @@ interface RequestOptions {
    * undefined — как выбрано в переключателе; null — точно за себя.
    */
   asClient?: string | null;
+  /** сколько ждать ответа, мс. Без ограничения запрос на плохой связи «висит» минутами */
+  timeoutMs?: number;
 }
 
-export async function api<T>(path: string, { method = 'GET', body, asClient }: RequestOptions = {}): Promise<T> {
+/**
+ * Ждём ответа не дольше 30 с — для всех запросов. Запись подхода ждёт меньше (10 с) и повторяется сама
+ * (useWorkoutActions): там важнее быстро попробовать ещё раз, чем долго ждать один ответ.
+ */
+export const DEFAULT_TIMEOUT_MS = 30_000;
+
+/** status 0 — ответа нет совсем: нет сети или сервер не ответил вовремя */
+export const NO_RESPONSE = 0;
+
+export async function api<T>(
+  path: string,
+  { method = 'GET', body, asClient, timeoutMs = DEFAULT_TIMEOUT_MS }: RequestOptions = {},
+): Promise<T> {
   const token = options.getToken();
   const clientId = isClientDataPath(path) ? (asClient === undefined ? actingClientId : asClient) : null;
-  let response = await send(path, method, body, token, clientId);
+  let response = await send(path, method, body, token, clientId, timeoutMs);
 
   // access-токен истёк (живёт 15 минут) — обновляем и повторяем запрос один раз.
   // Эндпоинты /api/auth/* не трогаем: 401 на логине — это "неверный пароль", а не истёкший токен.
@@ -124,7 +143,7 @@ export async function api<T>(path: string, { method = 'GET', body, asClient }: R
     const fresh = await refreshAccessToken();
     if (fresh) {
       options.onTokenRefreshed?.(fresh);
-      response = await send(path, method, body, fresh, clientId);
+      response = await send(path, method, body, fresh, clientId, timeoutMs);
     }
     if (!fresh || response.status === 401) {
       options.onUnauthorized();
@@ -148,6 +167,7 @@ async function send(
   body: unknown,
   token: string | null,
   clientId: string | null,
+  timeoutMs: number,
 ): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (body !== undefined) {
@@ -159,14 +179,24 @@ async function send(
   if (clientId) {
     headers[CLIENT_HEADER] = clientId;
   }
+  // AbortController — «кнопка отмены» для fetch: по таймеру обрываем запрос, который слишком долго ждёт ответа
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(path, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
+      signal: controller.signal,
     });
   } catch {
-    throw new ApiError(0, 'Нет связи с сервером. Проверьте, что gateway запущен.');
+    // и обрыв по таймеру, и «нет сети» — для нас одно: ответа нет, можно попробовать ещё раз
+    throw new ApiError(
+      NO_RESPONSE,
+      controller.signal.aborted ? 'Сервер не ответил вовремя — проверьте связь.' : 'Нет связи с сервером.',
+    );
+  } finally {
+    clearTimeout(timer);
   }
 }
 

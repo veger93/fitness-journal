@@ -244,8 +244,9 @@ export function summarizeSets(trackingType: TrackingType, sets: WorkoutSet[], as
 
 // ---------- обновление тренировки в кэше (иммутабельно: новые объекты вместо изменения старых) ----------
 
+/** Ответ мог прийти дважды (повтор после обрыва связи) — второй раз тот же подход не добавляем */
 export function withSetAdded(workout: Workout, workoutExerciseId: string, set: WorkoutSet): Workout {
-  return mapExercise(workout, workoutExerciseId, (sets) => [...sets, set]);
+  return mapExercise(workout, workoutExerciseId, (sets) => (sets.some((s) => s.id === set.id) ? sets : [...sets, set]));
 }
 
 export function withSetUpdated(workout: Workout, workoutExerciseId: string, set: WorkoutSet): Workout {

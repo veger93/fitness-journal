@@ -162,7 +162,7 @@ class WorkoutServiceTest {
         UUID workoutExerciseId = workout.getExercises().get(0).getId();
         when(workoutRepository.findWithExercisesByIdAndUserId(workoutId, me)).thenReturn(Optional.of(workout));
 
-        SetRequest onlyReps = new SetRequest(null, 10, null, null, null, null);
+        SetRequest onlyReps = new SetRequest(null, 10, null, null, null, null, null);
 
         assertThatThrownBy(() -> service.addSet(me, workoutId, workoutExerciseId, onlyReps))
                 .isInstanceOf(BadRequestException.class);
@@ -174,13 +174,44 @@ class WorkoutServiceTest {
         UUID workoutExerciseId = workout.getExercises().get(0).getId();
         when(workoutRepository.findWithExercisesByIdAndUserId(workoutId, me)).thenReturn(Optional.of(workout));
 
-        service.addSet(me, workoutId, workoutExerciseId, new SetRequest(new BigDecimal("80"), 8, null, null, null, false));
+        service.addSet(me, workoutId, workoutExerciseId, new SetRequest(new BigDecimal("80"), 8, null, null, null, false, null));
         var second = service.addSet(me, workoutId, workoutExerciseId,
-                new SetRequest(new BigDecimal("80"), 7, null, null, new BigDecimal("8.5"), null));
+                new SetRequest(new BigDecimal("80"), 7, null, null, new BigDecimal("8.5"), null, null));
 
         assertThat(second.number()).isEqualTo(2);
         assertThat(second.rpe()).isEqualByComparingTo("8.5");
         assertThat(second.warmup()).isFalse(); // warmup не прислали -> false
+    }
+
+    @Test
+    void addSet_sameClientIdTwice_returnsSavedSetInsteadOfDuplicate() {
+        // ответ на первый запрос потерялся в сети — телефон прислал тот же подход ещё раз
+        Workout workout = workoutWith(exercise("Тяга верхнего блока", TrackingType.WEIGHT_REPS));
+        UUID workoutExerciseId = workout.getExercises().get(0).getId();
+        when(workoutRepository.findWithExercisesByIdAndUserId(workoutId, me)).thenReturn(Optional.of(workout));
+        UUID clientId = UUID.randomUUID();
+        SetRequest request = new SetRequest(new BigDecimal("59"), 11, null, null, null, false, clientId);
+
+        var first = service.addSet(me, workoutId, workoutExerciseId, request);
+        var repeat = service.addSet(me, workoutId, workoutExerciseId, request);
+
+        assertThat(workout.getExercises().get(0).getSets()).hasSize(1);
+        assertThat(repeat.number()).isEqualTo(first.number()).isEqualTo(1);
+    }
+
+    @Test
+    void addSet_differentClientIds_areTwoSets() {
+        // два одинаковых по весу подхода подряд — это честные два подхода, а не повтор
+        Workout workout = workoutWith(exercise("Тяга верхнего блока", TrackingType.WEIGHT_REPS));
+        UUID workoutExerciseId = workout.getExercises().get(0).getId();
+        when(workoutRepository.findWithExercisesByIdAndUserId(workoutId, me)).thenReturn(Optional.of(workout));
+
+        service.addSet(me, workoutId, workoutExerciseId,
+                new SetRequest(new BigDecimal("59"), 11, null, null, null, false, UUID.randomUUID()));
+        var second = service.addSet(me, workoutId, workoutExerciseId,
+                new SetRequest(new BigDecimal("59"), 11, null, null, null, false, UUID.randomUUID()));
+
+        assertThat(second.number()).isEqualTo(2);
     }
 
     // ---------- complete ----------
@@ -191,7 +222,7 @@ class WorkoutServiceTest {
         ReflectionTestUtils.setField(workout, "id", workoutId);
         UUID workoutExerciseId = workout.getExercises().get(0).getId();
         when(workoutRepository.findWithExercisesByIdAndUserId(workoutId, me)).thenReturn(Optional.of(workout));
-        service.addSet(me, workoutId, workoutExerciseId, new SetRequest(new BigDecimal("80"), 8, null, null, null, false));
+        service.addSet(me, workoutId, workoutExerciseId, new SetRequest(new BigDecimal("80"), 8, null, null, null, false, null));
 
         WorkoutResponse response = service.complete(me, workoutId);
 

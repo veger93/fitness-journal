@@ -21,6 +21,7 @@ import org.hibernate.annotations.BatchSize;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /** Упражнение внутри конкретной тренировки + его подходы. */
@@ -63,8 +64,13 @@ public class WorkoutExercise {
     }
 
     public WorkoutSet addSet(SetValues values, Instant now) {
+        return addSet(values, null, now);
+    }
+
+    /** clientId — id подхода с телефона (может быть null): по нему повторный запрос находит уже сохранённый */
+    public WorkoutSet addSet(SetValues values, UUID clientId, Instant now) {
         workout.begin(now); // забыл нажать "Начать" — тренировка начинается с первого подхода
-        WorkoutSet set = new WorkoutSet(this, sets.size(), values, now);
+        WorkoutSet set = new WorkoutSet(this, sets.size(), values, clientId, now);
         sets.add(set);
         return set;
     }
@@ -75,6 +81,11 @@ public class WorkoutExercise {
         for (int i = 0; i < sets.size(); i++) {
             sets.get(i).setPosition(i);
         }
+    }
+
+    /** Подход, уже сохранённый с этим id телефона: запрос пришёл повторно (ответ на первый потерялся в сети) */
+    public Optional<WorkoutSet> findSetByClientId(UUID clientId) {
+        return sets.stream().filter(set -> clientId.equals(set.getClientId())).findFirst();
     }
 
     public WorkoutSet findSet(UUID setId) {

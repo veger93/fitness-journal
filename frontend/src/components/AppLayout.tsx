@@ -6,6 +6,7 @@ import { ClientBand } from './trainer/ClientBand';
 import { ClientReminder } from './trainer/ClientReminder';
 import { WhoSwitcher } from './trainer/WhoSwitcher';
 import { TabBar } from './TabBar';
+import { PendingSetsSync } from './workout/PendingSetsSync';
 import styles from './AppLayout.module.css';
 
 const NAV = [
@@ -57,6 +58,8 @@ export function AppLayout() {
         </main>
       </div>
       <TabBar />
+      {/* досылает подходы, не сохранившиеся до перезапуска приложения */}
+      <PendingSetsSync />
       <ClientReminder />
     </div>
   );

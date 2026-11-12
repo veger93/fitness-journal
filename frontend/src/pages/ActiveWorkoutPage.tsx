@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import type { SetInput, TrackingType, Workout, WorkoutSet } from '../api/workouts';
+import { useEffect, useState } from 'react';
+import type { SetInput, TrackingType, Workout, WorkoutExercise, WorkoutSet } from '../api/workouts';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Chip } from '../components/ui/Chip';
@@ -9,7 +9,7 @@ import { ExerciseCard } from '../components/workout/ExerciseCard';
 import { SaveTemplateDialog } from '../components/workout/SaveTemplateDialog';
 import { SetDialog } from '../components/workout/SetDialog';
 import { useNow } from '../hooks/useNow';
-import { useCurrentWorkout, useWorkoutActions } from '../hooks/useWorkout';
+import { useCurrentWorkout, usePendingSets, useWorkoutActions, type PendingSet } from '../hooks/useWorkout';
 import { describeSet, formatClock, runParts, toRequest } from '../lib/workout';
 import { setsLabel } from '../lib/exercise';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -55,18 +55,36 @@ type Modal =
 
 function ActiveWorkout({ workout }: { workout: Workout }) {
   const actions = useWorkoutActions(workout);
+  const pending = usePendingSets(workout.id);
+
   const now = useNow();
   const [selectedId, setSelectedId] = useState<string | null>(workout.exercises[0]?.id ?? null);
   const [modal, setModal] = useState<Modal>(null);
+  // нажали «Завершить», пока подходы ещё сохраняются: завершим сами, как только сервер их подтвердит
+  const [completeWhenSaved, setCompleteWhenSaved] = useState(false);
 
-  const exercise = workout.exercises.find((e) => e.id === selectedId) ?? workout.exercises[0] ?? null;
+  const saved = workout.exercises.find((e) => e.id === selectedId) ?? workout.exercises[0] ?? null;
+  // на экране подходы — сохранённые + ещё не подтверждённые сервером (те идут в конце, с пометкой)
+  const exercise = saved ? withPendingSets(saved, pending) : null;
+  const pendingById = new Map(pending.map((p) => [pendingSetId(p.clientId), p]));
+  const saving = pending.filter((p) => p.status === 'saving').length;
+  const failed = pending.filter((p) => p.status === 'failed').length;
   const elapsedSec = workout.startedAt ? (now - new Date(workout.startedAt).getTime()) / 1000 : 0;
-  const hasSets = workout.exercises.some((e) => e.sets.length > 0);
+  const hasSets = workout.exercises.some((e) => e.sets.length > 0) || pending.length > 0;
 
-  const setMutation = modal?.kind === 'set' && modal.editing ? actions.updateSet : actions.addSet;
+  useEffect(() => {
+    if (completeWhenSaved && saving === 0) {
+      setCompleteWhenSaved(false);
+      // какой-то подход так и не сохранился — не завершаем молча, окно покажет, сколько их
+      if (failed === 0) {
+        actions.complete.mutate();
+      }
+    }
+  }, [completeWhenSaved, saving, failed, actions.complete]);
+
   const closeModal = () => {
     setModal(null);
-    actions.addSet.reset();
+    setCompleteWhenSaved(false);
     actions.updateSet.reset();
     actions.deleteSet.reset();
   };
@@ -76,11 +94,12 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
       return;
     }
     const set = toRequest(exercise.trackingType, input);
-    const options = { onSuccess: closeModal };
     if (modal.editing) {
-      actions.updateSet.mutate({ exerciseId: exercise.id, setId: modal.editing.id, set }, options);
+      actions.updateSet.mutate({ exerciseId: exercise.id, setId: modal.editing.id, set }, { onSuccess: closeModal });
     } else {
-      actions.addSet.mutate({ exerciseId: exercise.id, set }, options);
+      // новый подход: окно закрываем сразу, подход уже в списке («сохраняется…»), запрос и повторы — в фоне
+      actions.saveNewSet(exercise.id, set);
+      closeModal();
     }
   };
 
@@ -99,7 +118,7 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
           <ListRow
             key={e.id}
             title={`${index + 1}. ${e.exerciseName}`}
-            text={e.sets.length > 0 ? setsLabel(e.sets.length) : 'ещё нет подходов'}
+            text={setsCountText(e.sets.length + pending.filter((p) => p.workoutExerciseId === e.id).length)}
             selected={e.id === exercise?.id}
             onClick={() => setSelectedId(e.id)}
           />
@@ -185,15 +204,25 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
             <>
               {exercise.sets.length > 0 && (
                 <ListRowGroup label={`Подходы: ${exercise.exerciseName}`}>
-                  {exercise.sets.map((set) => (
-                    <ListRow
-                      key={set.id}
-                      title={setLabel(exercise.trackingType, set.number, exercise.sets.length)}
-                      text={set.warmup ? 'разминка' : undefined}
-                      value={<SetValue trackingType={exercise.trackingType} set={set} assisted={exercise.assisted} />}
-                      onClick={() => setModal({ kind: 'set', editing: set })}
-                    />
-                  ))}
+                  {exercise.sets.map((set) => {
+                    const waiting = pendingById.get(set.id);
+                    return (
+                      <ListRow
+                        key={set.id}
+                        title={setLabel(exercise.trackingType, set.number, exercise.sets.length)}
+                        text={pendingText(waiting, set.warmup)}
+                        value={<SetValue trackingType={exercise.trackingType} set={set} assisted={exercise.assisted} />}
+                        // сохраняется — менять нельзя (у подхода ещё нет id на сервере); не сохранился — повторить
+                        onClick={
+                          waiting
+                            ? waiting.status === 'failed'
+                              ? () => actions.retrySet(waiting)
+                              : undefined
+                            : () => setModal({ kind: 'set', editing: set })
+                        }
+                      />
+                    );
+                  })}
                 </ListRowGroup>
               )}
 
@@ -230,8 +259,8 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
         <SetDialog
           exercise={exercise}
           editing={modal.editing}
-          saving={setMutation.isPending || actions.deleteSet.isPending}
-          error={setMutation.error?.message ?? actions.deleteSet.error?.message ?? null}
+          saving={actions.updateSet.isPending || actions.deleteSet.isPending}
+          error={actions.updateSet.error?.message ?? actions.deleteSet.error?.message ?? null}
           onSave={saveSet}
           onDelete={() =>
             modal.editing &&
@@ -264,10 +293,11 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
       {modal?.kind === 'complete' && (
         <ConfirmDialog
           title="Завершить тренировку?"
-          text={`Подходов: ${workout.exercises.reduce((n, e) => n + e.sets.filter((s) => !s.warmup).length, 0)}. После завершения тренировка попадёт в историю и статистику.`}
-          confirmLabel="Завершить"
-          busy={actions.complete.isPending}
-          onConfirm={() => actions.complete.mutate()}
+          text={completeText(workout, saving, failed)}
+          confirmLabel={completeWhenSaved ? 'Сохраняем подходы…' : 'Завершить'}
+          busy={actions.complete.isPending || completeWhenSaved}
+          // подходы ещё отправляются — не завершаем без них: ждём и завершаем сами (эффект выше)
+          onConfirm={() => (saving > 0 ? setCompleteWhenSaved(true) : actions.complete.mutate())}
           onClose={closeModal}
         />
       )}
@@ -313,4 +343,47 @@ function SetValue({ trackingType, set, assisted }: { trackingType: TrackingType;
       {sub && <span className={styles.muted}>{sub}</span>}
     </span>
   );
+}
+
+/** id «неподтверждённого» подхода на экране: у сервера его ещё нет, берём id с телефона */
+function pendingSetId(clientId: string): string {
+  return `pending-${clientId}`;
+}
+
+/** Упражнение для экрана: к сохранённым подходам добавляем неподтверждённые — номера идут дальше по порядку */
+function withPendingSets(exercise: WorkoutExercise, pending: PendingSet[]): WorkoutExercise {
+  const own = pending.filter((p) => p.workoutExerciseId === exercise.id);
+  if (own.length === 0) {
+    return exercise;
+  }
+  const extra: WorkoutSet[] = own.map((p, index) => ({
+    ...p.input,
+    id: pendingSetId(p.clientId),
+    number: exercise.sets.length + index + 1,
+  }));
+  return { ...exercise, sets: [...exercise.sets, ...extra] };
+}
+
+function pendingText(pending: PendingSet | undefined, warmup: boolean): string | undefined {
+  if (pending?.status === 'saving') {
+    return 'сохраняется…';
+  }
+  if (pending?.status === 'failed') {
+    return 'не сохранён — нажмите, чтобы повторить';
+  }
+  return warmup ? 'разминка' : undefined;
+}
+
+function completeText(workout: Workout, saving: number, failed: number): string {
+  const done = workout.exercises.reduce((n, e) => n + e.sets.filter((s) => !s.warmup).length, 0);
+  if (saving > 0) {
+    return `Ещё сохраняем подходов: ${saving}. Нажмите «Завершить» — завершим сами, как только сервер их получит.`;
+  }
+  const lost =
+    failed > 0 ? ` Не сохранились: ${failed} — они не попадут в тренировку (можно вернуться и повторить).` : '';
+  return `Подходов: ${done}.${lost} После завершения тренировка попадёт в историю и статистику.`;
+}
+
+function setsCountText(count: number): string {
+  return count > 0 ? setsLabel(count) : 'ещё нет подходов';
 }

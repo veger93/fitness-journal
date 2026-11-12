@@ -41,6 +41,8 @@ databaseChangeLog:
       file: db/changelog/changes/019-movement-patterns.sql
   - include:
       file: db/changelog/changes/020-assisted-gravitron.sql
+  - include:
+      file: db/changelog/changes/021-set-client-id.sql
   # общий файл из модуля common-trainer-access (лежит в его ресурсах, Liquibase найдёт в classpath)
   - include:
       file: db/changelog/common/trainer-links.sql

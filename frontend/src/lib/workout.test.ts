@@ -209,3 +209,24 @@ describe('обновление кэша', () => {
     ]);
   });
 });
+
+describe('подход пришёл дважды', () => {
+  it('withSetAdded не добавляет тот же подход второй раз', () => {
+    const set = {
+      id: 's1',
+      number: 1,
+      weightKg: 59,
+      reps: 11,
+      durationSec: null,
+      distanceM: null,
+      rpe: null,
+      warmup: false,
+    };
+    const workout = {
+      exercises: [{ id: 'e1', sets: [] }],
+    } as unknown as Parameters<typeof withSetAdded>[0];
+    const once = withSetAdded(workout, 'e1', set);
+    const twice = withSetAdded(once, 'e1', set);
+    expect(twice.exercises[0].sets).toHaveLength(1);
+  });
+});

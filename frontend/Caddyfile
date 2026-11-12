@@ -4,6 +4,13 @@
 {$DOMAIN:http://localhost} {
 	encode zstd gzip
 
+	# журнал запросов: адрес, статус и время ответа (duration, в секундах). Смотреть: docker logs vegas-web-1.
+	# Заголовки Authorization и Cookie Caddy сам скрывает (REDACTED) — токены в журнал не попадают.
+	log {
+		output stdout
+		format json
+	}
+
 	# всё API — в gateway; Swagger и actuator сервисов наружу не торчат
 	handle /api/* {
 		reverse_proxy gateway:8080

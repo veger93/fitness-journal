@@ -133,6 +133,13 @@ services:
     depends_on:
       - gateway
     mem_limit: 128m
+    # журнал запросов Caddy пишет на каждый запрос — ограничиваем, чтобы он не съел диск:
+    # 3 файла по 10 МБ, самый старый удаляется (хватает примерно на неделю-две истории)
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   postgres-data:
