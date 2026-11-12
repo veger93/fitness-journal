@@ -2,6 +2,7 @@ package com.vegas.notification.service;
 
 import com.vegas.common.event.MonthlyReportReadyEvent;
 import com.vegas.common.event.OverloadRiskEvent;
+import com.vegas.common.event.PersonalRecordEvent;
 import com.vegas.common.event.PlateauDetectedEvent;
 import com.vegas.notification.entity.EmailMessage;
 import com.vegas.notification.entity.NotificationType;
@@ -14,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +44,18 @@ class AnalyticsNotifierTest {
     void setUp() {
         // создаём руками: адрес фронта — обычная строка, Mockito её не подставит
         notifier = new AnalyticsNotifier(notificationService, trainerLinks, "http://localhost:5173");
+    }
+
+    @Test
+    void personalRecord_onlyInApp_noEmail() {
+        // о рекорде и так говорят колокольчик и точка на «Рекордах» — письмо было бы лишним
+        UUID workout = UUID.randomUUID();
+        notifier.personalRecord(new PersonalRecordEvent(USER, workout, EXERCISE, "Жим лёжа",
+                Instant.parse("2026-11-12T10:00:00Z"), new BigDecimal("92.5"), 5, List.of()));
+
+        verify(notificationService).saveInApp(eq(USER), eq(NotificationType.PERSONAL_RECORD),
+                eq("RECORD:" + workout + ":" + EXERCISE), any());
+        verify(notificationService, never()).send(any(), any(), any(), any());
     }
 
     @Test

@@ -75,6 +75,28 @@ class NotificationServiceTest {
     }
 
     @Test
+    void saveInApp_savesToFeedWithoutEmail() {
+        when(recipientRepository.findById(USER)).thenReturn(Optional.of(new Recipient(USER, "s@mail.ru", "Сергей")));
+        when(notificationRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.saveInApp(USER, NotificationType.PERSONAL_RECORD, KEY, greeting -> new EmailMessage("Рекорд", greeting + ", текст"));
+
+        verifyNoInteractions(mailSender);
+        Notification saved = savedNotification();
+        assertThat(saved.getStatus()).isEqualTo(NotificationStatus.IN_APP);
+        assertThat(saved.getBody()).isEqualTo("Сергей, текст");
+    }
+
+    @Test
+    void saveInApp_duplicate_isIgnored() {
+        when(notificationRepository.existsByUserIdAndDedupeKey(USER, KEY)).thenReturn(true);
+
+        service.saveInApp(USER, NotificationType.PERSONAL_RECORD, KEY, greeting -> new EmailMessage("Рекорд", "текст"));
+
+        verify(notificationRepository, never()).save(any());
+    }
+
+    @Test
     void duplicate_isIgnored() {
         when(notificationRepository.existsByUserIdAndDedupeKey(USER, KEY)).thenReturn(true);
 

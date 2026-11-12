@@ -77,6 +77,11 @@ public class Notification {
     }
 
     /** Тренеру о его клиенте — только в ленте приложения */
+    /** Только в ленту приложения, без письма (свои рекорды: колокольчика и точки на «Рекордах» хватает) */
+    public static Notification inApp(UUID userId, NotificationType type, String dedupeKey, EmailMessage message, Instant now) {
+        return create(userId, type, dedupeKey, message, NotificationStatus.IN_APP, null, now);
+    }
+
     public static Notification aboutClient(UUID trainerId, NotificationType type, String dedupeKey, EmailMessage message,
                                            UUID clientId, String clientName, Instant now) {
         Notification notification = create(trainerId, type, dedupeKey, message, NotificationStatus.IN_APP, null, now);
