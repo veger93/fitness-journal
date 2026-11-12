@@ -179,8 +179,16 @@ export const workoutsApi = {
   removeExercise: (workoutId: string, workoutExerciseId: string) =>
     api<Workout>(exercisePath(workoutId, workoutExerciseId), { method: 'DELETE' }),
 
-  addSet: (workoutId: string, workoutExerciseId: string, set: SetInput) =>
-    api<WorkoutSet>(`${exercisePath(workoutId, workoutExerciseId)}/sets`, { method: 'POST', body: set }),
+  /**
+   * clientId — id подхода, придуманный телефоном (UUID). Повтор с тем же clientId сервер не сохранит второй раз,
+   * а вернёт уже сохранённый подход. Ждём 10 с: дальше useWorkoutActions повторит запрос сам.
+   */
+  addSet: (workoutId: string, workoutExerciseId: string, set: SetInput, clientId: string) =>
+    api<WorkoutSet>(`${exercisePath(workoutId, workoutExerciseId)}/sets`, {
+      method: 'POST',
+      body: { ...set, clientId },
+      timeoutMs: 10_000,
+    }),
   updateSet: (workoutId: string, workoutExerciseId: string, setId: string, set: SetInput) =>
     api<WorkoutSet>(`${exercisePath(workoutId, workoutExerciseId)}/sets/${setId}`, { method: 'PUT', body: set }),
   deleteSet: (workoutId: string, workoutExerciseId: string, setId: string) =>

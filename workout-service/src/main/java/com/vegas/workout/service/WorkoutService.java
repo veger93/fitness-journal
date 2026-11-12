@@ -182,12 +182,22 @@ public class WorkoutService {
 
     // ---------- подходы ----------
 
+    /**
+     * Новый подход. Идемпотентно по clientId: телефон в зале мог не дождаться ответа и прислать тот же подход
+     * ещё раз — тогда возвращаем уже сохранённый, второй не создаём. Без clientId — как раньше.
+     */
     @Transactional
     public SetResponse addSet(UUID userId, UUID workoutId, UUID workoutExerciseId, SetRequest request) {
         WorkoutExercise workoutExercise = findOwn(userId, workoutId).findExercise(workoutExerciseId);
+        if (request.clientId() != null) {
+            Optional<WorkoutSet> saved = workoutExercise.findSetByClientId(request.clientId());
+            if (saved.isPresent()) {
+                return workoutMapper.toSetResponse(saved.get());
+            }
+        }
         SetValues values = toSetValues(workoutExercise.getExercise().getTrackingType(), request);
 
-        WorkoutSet set = workoutExercise.addSet(values, clock.instant());
+        WorkoutSet set = workoutExercise.addSet(values, request.clientId(), clock.instant());
         workoutRepository.flush();
         return workoutMapper.toSetResponse(set);
     }

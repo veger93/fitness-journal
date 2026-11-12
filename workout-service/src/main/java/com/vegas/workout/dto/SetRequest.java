@@ -7,11 +7,15 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * Подход (модалка "Добавление подхода").
  * Здесь проверяем только диапазоны. КАКИЕ поля обязательны, зависит от упражнения
  * (вес×повторы / время / дистанция) — это проверяет сервис.
+ *
+ * clientId — id подхода, который придумал телефон (UUID). Повторный запрос с тем же clientId не создаёт
+ * второй подход, а возвращает сохранённый (идемпотентность). Необязательный: старые клиенты его не шлют.
  */
 public record SetRequest(
 
@@ -37,6 +41,8 @@ public record SetRequest(
         @Digits(integer = 2, fraction = 1, message = "RPE: один знак после запятой")
         BigDecimal rpe,
 
-        Boolean warmup
+        Boolean warmup,
+
+        UUID clientId
 ) {
 }

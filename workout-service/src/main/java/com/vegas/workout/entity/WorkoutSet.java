@@ -52,12 +52,17 @@ public class WorkoutSet {
     @Column(nullable = false)
     private boolean warmup;
 
+    /** id подхода с телефона: по нему узнаём повторный запрос (миграция 021). null — старые подходы */
+    @Column(name = "client_id", updatable = false)
+    private UUID clientId;
+
     @Column(name = "completed_at", nullable = false)
     private Instant completedAt;
 
-    WorkoutSet(WorkoutExercise workoutExercise, int position, SetValues values, Instant now) {
+    WorkoutSet(WorkoutExercise workoutExercise, int position, SetValues values, UUID clientId, Instant now) {
         this.workoutExercise = workoutExercise;
         this.position = position;
+        this.clientId = clientId;
         this.completedAt = now;
         apply(values);
     }
