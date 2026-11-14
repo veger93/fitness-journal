@@ -43,4 +43,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, UUID>, JpaSp
 
     /** Для редактирования: такое имя есть у ДРУГОГО упражнения этого пользователя? */
     boolean existsByOwnerIdAndNameIgnoreCaseAndIdNot(UUID ownerId, String name, UUID id);
+
+    /** Весь системный каталог, кроме архива, — для генератора программы и окна замены (≈100 строк) */
+    List<Exercise> findAllByOwnerIdIsNullAndArchivedAtIsNull();
 }
