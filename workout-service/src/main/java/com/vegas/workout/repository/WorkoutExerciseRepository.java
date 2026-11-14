@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public interface WorkoutExerciseRepository extends JpaRepository<WorkoutExercise, UUID> {
@@ -29,4 +30,12 @@ public interface WorkoutExerciseRepository extends JpaRepository<WorkoutExercise
 
     /** Есть ли это упражнение хоть в одной тренировке (любого статуса). exercise.id — вложенное свойство. */
     boolean existsByExerciseId(UUID exerciseId);
+
+    /** Какие упражнения человек уже делал (в завершённых тренировках) — генератор и окно замены ставят их первыми */
+    @Query("""
+            select distinct we.exercise.id from WorkoutExercise we
+            join we.workout w
+            where w.userId = :userId and w.status = :status
+            """)
+    Set<UUID> findDoneExerciseIds(@Param("userId") UUID userId, @Param("status") WorkoutStatus status);
 }

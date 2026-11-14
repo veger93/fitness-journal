@@ -1,5 +1,7 @@
 package com.vegas.workout.entity;
 
+import com.vegas.common.exception.BadRequestException;
+import com.vegas.common.exception.BusinessException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -87,6 +89,22 @@ public class WorkoutTemplate {
         this.icon = icon;
         this.exercises.clear();
         this.exercises.addAll(exercises);
+    }
+
+    /**
+     * Замена упражнения на том же месте (замена в программе, П14): порядок в комплексе не меняется.
+     * Упражнения уже нет — комплекс поправили вручную; тогда заменять нечего.
+     */
+    public void replaceExercise(Exercise current, Exercise replacement) {
+        int index = exercises.indexOf(current);
+        if (index < 0) {
+            throw new BusinessException("Упражнения «" + current.getName() + "» уже нет в комплексе «" + name
+                    + "» — его поменяли вручную");
+        }
+        if (exercises.contains(replacement)) {
+            throw new BadRequestException("«" + replacement.getName() + "» уже есть в этом дне");
+        }
+        exercises.set(index, replacement);
     }
 
     /** Копия в "Мои комплексы" — например, готового комплекса, чтобы подправить под себя. */

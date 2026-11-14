@@ -54,7 +54,7 @@ class ProgramTest {
 
     @Test
     void start_isActive_andReviewIn6Weeks() {
-        Program program = Program.start(UUID.randomUUID(), answers(3, 60), NOW, TODAY);
+        Program program = Program.start(UUID.randomUUID(), answers(3, 60), List.of(), NOW, TODAY);
 
         assertThat(program.isActive()).isTrue();
         assertThat(program.getReviewAt()).isEqualTo(LocalDate.parse("2026-12-25"));
@@ -67,12 +67,20 @@ class ProgramTest {
         ProgramAnswers answers = new ProgramAnswers(ProgramGoal.STRENGTH, 4, 75, ProgramLocation.HOME_DUMBBELLS,
                 ExperienceLevel.ADVANCED, Set.of(BodyLimit.LOWER_BACK), PriorityGroup.BACK);
 
-        assertThat(Program.start(UUID.randomUUID(), answers, NOW, TODAY).answers()).isEqualTo(answers);
+        assertThat(Program.start(UUID.randomUUID(), answers, List.of(), NOW, TODAY).answers()).isEqualTo(answers);
+    }
+
+    @Test
+    void notes_storedAsLines() {
+        Program program = Program.start(UUID.randomUUID(), answers(3, 60), List.of("Первое", "Второе"), NOW, TODAY);
+
+        assertThat(program.notesList()).containsExactly("Первое", "Второе");
+        assertThat(Program.start(UUID.randomUUID(), answers(3, 60), List.of(), NOW, TODAY).notesList()).isEmpty();
     }
 
     @Test
     void archived_isNotActive_andNeverDueForReview() {
-        Program program = Program.start(UUID.randomUUID(), answers(3, 60), NOW, TODAY);
+        Program program = Program.start(UUID.randomUUID(), answers(3, 60), List.of(), NOW, TODAY);
         program.archive();
 
         assertThat(program.isActive()).isFalse();
@@ -142,7 +150,7 @@ class ProgramTest {
     // ---------- помощники ----------
 
     private ProgramSlot slot(Exercise exercise) {
-        Program program = Program.start(UUID.randomUUID(), answers(3, 60), NOW, TODAY);
+        Program program = Program.start(UUID.randomUUID(), answers(3, 60), List.of(), NOW, TODAY);
         WorkoutTemplate day = WorkoutTemplate.custom(program.getOwnerId(), "День A · всё тело", "violet", null,
                 List.of(exercise));
         return program.addSlot(day, 0, exercise, SetScheme.of(3, 8, 12, 120));

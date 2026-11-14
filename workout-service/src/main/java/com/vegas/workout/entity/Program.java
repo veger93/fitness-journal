@@ -91,6 +91,10 @@ public class Program {
     @Column(name = "review_at", nullable = false)
     private LocalDate reviewAt;
 
+    /** Пояснения генератора, через перевод строки (миграция 023): что заменили и почему */
+    @Column(nullable = false)
+    private String notes = "";
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -104,7 +108,7 @@ public class Program {
     private List<ProgramSlot> slots = new ArrayList<>();
 
     /** Новая активная программа. today — по часам пользователя: от него считаем дату пересмотра */
-    public static Program start(UUID ownerId, ProgramAnswers answers, Instant now, LocalDate today) {
+    public static Program start(UUID ownerId, ProgramAnswers answers, List<String> notes, Instant now, LocalDate today) {
         Program program = new Program();
         program.ownerId = ownerId;
         program.status = ProgramStatus.ACTIVE;
@@ -117,12 +121,17 @@ public class Program {
         program.limits.addAll(answers.limits());
         program.startedAt = now;
         program.reviewAt = today.plusWeeks(REVIEW_AFTER_WEEKS);
+        program.notes = String.join("\n", notes);
         return program;
     }
 
     /** Ответы анкеты обратно одним значением — для пересмотра («пройти заново» с подставленными ответами) */
     public ProgramAnswers answers() {
         return new ProgramAnswers(goal, daysPerWeek, sessionMinutes, location, experienceLevel, limits, priority);
+    }
+
+    public List<String> notesList() {
+        return notes.isBlank() ? List.of() : List.of(notes.split("\n"));
     }
 
     /** Место в программе: упражнение на позиции position в комплексе дня, со схемой подходов */

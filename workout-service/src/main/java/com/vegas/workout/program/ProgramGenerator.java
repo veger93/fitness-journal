@@ -176,9 +176,18 @@ public class ProgramGenerator {
         return rank < 0 ? Integer.MAX_VALUE : rank;
     }
 
+    /** «Всё тело × 3» — название сплита по числу дней (в базе не храним: однозначно следует из дней) */
+    public static String splitTitle(int daysPerWeek) {
+        return Split.forDays(daysPerWeek).title;
+    }
+
     // ---------- какие упражнения вообще годятся ----------
 
-    private static boolean usable(Exercise e, ProgramAnswers answers, Set<UUID> excluded) {
+    /**
+     * Годится ли упражнение этому человеку — те же правила, что при составлении программы.
+     * Нужно и окну замены: заменить можно только на то, что генератор и сам мог бы поставить.
+     */
+    public static boolean usable(Exercise e, ProgramAnswers answers, Set<UUID> excluded) {
         return !e.isCustom()                                  // свои упражнения — без семейства (пока)
                 && !e.isArchived()
                 && e.getMovementPattern() != null             // без семейства не заменить (П14)
