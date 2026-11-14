@@ -29,12 +29,16 @@ public class UserDataCleaner {
         int plan = jdbc.update("DELETE FROM weekly_plan_days WHERE user_id = ?", userId);
         int deloads = jdbc.update("DELETE FROM deload_periods WHERE user_id = ?", userId);
         int workouts = jdbc.update("DELETE FROM workouts WHERE user_id = ?", userId);
+        // программы — до комплексов (места программы ссылаются на комплексы дней); program_limits и
+        // program_slots удалятся сами (ON DELETE CASCADE от programs)
+        int programs = jdbc.update("DELETE FROM programs WHERE owner_id = ?", userId);
+        jdbc.update("DELETE FROM exercise_exclusions WHERE owner_id = ?", userId);
         int templates = jdbc.update("DELETE FROM workout_templates WHERE owner_id = ?", userId);
         // свои упражнения — после тренировок и комплексов, которые на них ссылаются
         int exercises = jdbc.update("DELETE FROM exercises WHERE owner_id = ?", userId);
         // копия связей: удалили клиента — его связь; удалили тренера — связи со всеми его клиентами
         jdbc.update("DELETE FROM trainer_links WHERE client_id = ? OR trainer_id = ?", userId, userId);
-        log.info("User {} data deleted: {} workouts, {} templates, {} exercises, {} plan days, {} deloads",
-                userId, workouts, templates, exercises, plan, deloads);
+        log.info("User {} data deleted: {} workouts, {} programs, {} templates, {} exercises, {} plan days, {} deloads",
+                userId, workouts, programs, templates, exercises, plan, deloads);
     }
 }
