@@ -162,6 +162,15 @@ public final class NotificationTemplates {
         return new EmailMessage("Давно не было тренировок", body + SIGNATURE);
     }
 
+    /** Только в ленту приложения: кнопка «Пройти анкету» под уведомлением ведёт в анкету (фронт: lib/notifications) */
+    public static EmailMessage programReview(String greeting, LocalDate reviewOn) {
+        String body = greeting + ", прошло 6 недель с начала программы (пересмотр — " + DATE.format(reviewOn) + ").\n\n"
+                + "Пройдите анкету ещё раз: ответы уже подставлены — поправьте то, что поменялось. "
+                + "Если прогресс был, новая программа даст чуть больше объёма.*\n\n"
+                + "* Через 4–6 недель тело привыкает к нагрузке — небольшая перемена помогает расти дальше.";
+        return new EmailMessage("Пора пересмотреть программу", body + SIGNATURE);
+    }
+
     private static void appendFootnotes(StringBuilder body, List<String> footnotes) {
         if (footnotes.isEmpty()) {
             return;

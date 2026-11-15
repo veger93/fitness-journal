@@ -3,7 +3,9 @@ package com.vegas.notification.scheduler;
 import com.vegas.notification.entity.NotificationSettings;
 import com.vegas.notification.entity.NotificationType;
 import com.vegas.notification.entity.ReminderMode;
+import com.vegas.notification.entity.ProgramReview;
 import com.vegas.notification.repository.NotificationSettingsRepository;
+import com.vegas.notification.repository.ProgramReviewRepository;
 import com.vegas.notification.service.NotificationService;
 import com.vegas.notification.service.WeeklyPlanSyncService;
 import com.vegas.notification.service.WorkoutActivityService;
@@ -16,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -44,13 +47,15 @@ class ReminderSchedulerTest {
     private NotificationService notificationService;
     @Mock
     private WeeklyPlanSyncService planService;
+    @Mock
+    private ProgramReviewRepository programReviewRepository;
 
     private ReminderScheduler scheduler;
 
     @BeforeEach
     void setUp() {
         scheduler = new ReminderScheduler(settingsRepository, activityService, planService, notificationService,
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                programReviewRepository, Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     @Test
@@ -63,6 +68,25 @@ class ReminderSchedulerTest {
 
         verify(notificationService).send(eq(settings.getUserId()), eq(NotificationType.WORKOUT_REMINDER),
                 eq("REMINDER:2026-10-19T19:00"), any());
+    }
+
+    @Test
+    void programReview_inAppOnce_perProgram_onlyWhenDayCame() {
+        UUID programId = UUID.randomUUID();
+        ProgramReview due = new ProgramReview(UUID.randomUUID(), programId, LocalDate.of(2026, 10, 19), NOW);
+        // по UTC пересмотр завтра — в Москве 22:00 уже вечер, а не «завтра»: рано
+        ProgramReview tomorrow = new ProgramReview(UUID.randomUUID(), UUID.randomUUID(),
+                LocalDate.of(2026, 10, 20), NOW);
+        when(programReviewRepository.findByReviewOnLessThanEqual(LocalDate.of(2026, 10, 20)))
+                .thenReturn(List.of(due, tomorrow));
+        when(settingsRepository.findById(any())).thenReturn(Optional.empty());
+
+        scheduler.sendProgramReviewReminders();
+
+        verify(notificationService).saveInApp(eq(due.getUserId()), eq(NotificationType.PROGRAM_REVIEW),
+                eq("PROGRAM_REVIEW:" + programId), any());
+        verify(notificationService, never()).saveInApp(eq(tomorrow.getUserId()), any(), any(), any());
+        verify(notificationService, never()).send(any(), any(), any(), any());
     }
 
     @Test

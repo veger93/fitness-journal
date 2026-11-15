@@ -1,6 +1,7 @@
 package com.vegas.workout.event;
 
 import com.vegas.common.event.EventTypes;
+import com.vegas.common.event.ProgramChangedEvent;
 import com.vegas.common.event.WeeklyPlanUpdatedEvent;
 import com.vegas.workout.entity.Workout;
 import com.vegas.outbox.OutboxWriter;
@@ -41,6 +42,12 @@ public class OutboxService {
     @Transactional(propagation = Propagation.MANDATORY)
     public void weeklyPlanUpdated(WeeklyPlanUpdatedEvent event) {
         save(event.userId(), EventTypes.WEEKLY_PLAN_UPDATED, event.userId(), event);
+    }
+
+    /** Программа: aggregateId = userId — у человека одна активная программа, событие описывает «его программу сейчас» */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void programChanged(ProgramChangedEvent event) {
+        save(event.userId(), EventTypes.PROGRAM_CHANGED, event.userId(), event);
     }
 
     /** Ключ сообщения = userId: все события одного пользователя попадут в одну партицию и придут по порядку. */
