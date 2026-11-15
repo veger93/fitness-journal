@@ -205,3 +205,21 @@
     transition: none;
   }
 }
+
+/* «⇄ заменить» справа в строке упражнения: круглая кнопка 44px — удобно попасть пальцем */
+.swapButton {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--chip);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.swapButton:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
