@@ -5,6 +5,7 @@ import { usersApi } from '../api/users';
 import { useAuth } from '../auth/AuthProvider';
 import { BodyWeightCard } from '../components/profile/BodyWeightCard';
 import { ProfileSummary } from '../components/profile/ProfileSummary';
+import { ProgramCard } from '../components/profile/ProgramCard';
 import { RemindersCard } from '../components/profile/RemindersCard';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -90,6 +91,8 @@ export function ProfilePage() {
         }
       >
         <EmailVerifyCard />
+
+        <ProgramCard />
 
         {profile.data ? (
           <ProfileSummary profile={profile.data} />

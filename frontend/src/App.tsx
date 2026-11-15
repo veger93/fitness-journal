@@ -19,6 +19,8 @@ import { RequireOnboarding } from './auth/RequireOnboarding';
 import { ExercisesPage } from './pages/ExercisesPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { PlanPage } from './pages/PlanPage';
+import { ProgramPage } from './pages/ProgramPage';
+import { ProgramQuizPage } from './pages/ProgramQuizPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { RecordsPage } from './pages/RecordsPage';
 import { RunningPage } from './pages/RunningPage';
@@ -67,6 +69,17 @@ export function App() {
                     </RequireAuth>
                   }
                 />
+                {/* анкета программы — без меню, как онбординг (docs/program.md) */}
+                <Route
+                  path="/program/new"
+                  element={
+                    <RequireAuth>
+                      <RequireOnboarding>
+                        <ProgramQuizPage />
+                      </RequireOnboarding>
+                    </RequireAuth>
+                  }
+                />
                 <Route
                   element={
                     // гость на "/" видит страницу о приложении, на остальных закрытых страницах — вход
@@ -86,6 +99,7 @@ export function App() {
                   <Route path="/records" element={<RecordsPage />} />
                   <Route path="/running" element={<RunningPage />} />
                   <Route path="/plan" element={<PlanPage />} />
+                  <Route path="/program" element={<ProgramPage />} />
                   <Route path="/history" element={<HistoryPage />} />
                   <Route path="/history/:workoutId" element={<WorkoutSummaryPage mode="view" />} />
                   <Route path="/profile" element={<ProfilePage />} />

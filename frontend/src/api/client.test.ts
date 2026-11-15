@@ -124,6 +124,7 @@ describe('режим тренера: заголовок X-Client-Id', () => {
 describe('isClientDataPath — какие запросы тренер делает "за клиента"', () => {
   it('тренировки и аналитика — за клиента', () => {
     expect(isClientDataPath('/api/workouts/current')).toBe(true);
+    expect(isClientDataPath('/api/programs/current')).toBe(true);
     expect(isClientDataPath('/api/analytics/dashboard')).toBe(true);
     expect(isClientDataPath('/api/exercises?query=жим')).toBe(true);
     expect(isClientDataPath('/api/records')).toBe(true);

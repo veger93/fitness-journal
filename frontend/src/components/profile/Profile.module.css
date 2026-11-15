@@ -176,3 +176,10 @@
 .planList > li + li {
   border-top: 1px solid var(--border);
 }
+
+/* «Программа тренировок»: подпись раздела + карточка-список */
+.programSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}

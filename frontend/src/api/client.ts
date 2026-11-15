@@ -70,6 +70,7 @@ const CLIENT_DATA_PATHS = [
   '/api/exercises',
   '/api/templates',
   '/api/plan',
+  '/api/programs',
   '/api/deloads',
   '/api/analytics',
   '/api/records',

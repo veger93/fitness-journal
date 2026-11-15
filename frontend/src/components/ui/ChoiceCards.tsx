@@ -13,17 +13,25 @@ interface ChoiceCardsProps<T extends string> {
   /** null — ещё ничего не выбрано (в онбординге не подставляем значение за пользователя) */
   value: T | null;
   onChange: (value: T) => void;
+  /** подпись только для экранных дикторов — когда вопрос уже задан заголовком экрана (анкета программы) */
+  hideLegend?: boolean;
 }
 
 /**
  * Выбор одного варианта карточками с пояснением (пол, уровень подготовки).
  * Внутри — настоящие radio: стрелки на клавиатуре и экранные дикторы работают без лишнего кода.
  */
-export function ChoiceCards<T extends string>({ legend, options, value, onChange }: ChoiceCardsProps<T>) {
+export function ChoiceCards<T extends string>({
+  legend,
+  options,
+  value,
+  onChange,
+  hideLegend = false,
+}: ChoiceCardsProps<T>) {
   const name = useId();
   return (
     <fieldset className={styles.group}>
-      <legend className={styles.legend}>{legend}</legend>
+      <legend className={hideLegend ? 'visually-hidden' : styles.legend}>{legend}</legend>
       {/* два варианта — всегда рядом; три и больше на телефоне встают списком (см. CSS) */}
       <div className={`${styles.cards} ${options.length > 2 ? styles.many : ''}`}>
         {options.map((option) => (
