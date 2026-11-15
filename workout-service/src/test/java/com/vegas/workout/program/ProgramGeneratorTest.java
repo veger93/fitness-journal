@@ -240,6 +240,17 @@ class ProgramGeneratorTest {
                 && Set.of("HINGE", "SQUAT", "HORIZONTAL_PULL", "VERTICAL_PUSH").contains(e.getMovementPattern()));
     }
 
+    /** Решение 14.11: при пояснице наклоны с весом убираем и дома (гантели) — остаются наклоны без веса */
+    @Test
+    void lowerBack_home_noWeightedHinge_onlyBodyweight() {
+        ProgramAnswers back = new ProgramAnswers(ProgramGoal.MUSCLE, 2, 60, ProgramLocation.HOME_DUMBBELLS,
+                ExperienceLevel.BEGINNER, Set.of(BodyLimit.LOWER_BACK), null);
+
+        List<Exercise> hinges = allExercises(generate(back)).stream()
+                .filter(e -> "HINGE".equals(e.getMovementPattern())).toList();
+        assertThat(hinges).isNotEmpty().allMatch(e -> e.getEquipment() == Equipment.BODYWEIGHT);
+    }
+
     @Test
     void knees_noLunges_noBarbellSquat_withNote() {
         ProgramAnswers knees = new ProgramAnswers(ProgramGoal.MUSCLE, 4, 75, ProgramLocation.GYM,

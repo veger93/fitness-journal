@@ -220,8 +220,11 @@ public class ProgramGenerator {
         for (BodyLimit limit : limits) {
             boolean blocked = switch (limit) {
                 case KNEES -> LUNGE.equals(family) || (SQUAT.equals(family) && barbell);
-                case LOWER_BACK -> barbell && (HINGE.equals(family) || SQUAT.equals(family)
-                        || HORIZONTAL_PULL.equals(family) || VERTICAL_PUSH.equals(family));
+                // поясница: никаких наклонов с весом (решение 14.11 — и с гантелями тоже); наклоны без веса
+                // (мост, супермен, гиперэкстензия) оставляем. Плюс штанга в приседе, тяге в наклоне и жиме стоя
+                case LOWER_BACK -> (HINGE.equals(family) && e.getEquipment() != Equipment.BODYWEIGHT)
+                        || (barbell && (SQUAT.equals(family) || HORIZONTAL_PULL.equals(family)
+                        || VERTICAL_PUSH.equals(family)));
                 // флага «брусья» в каталоге нет — узнаём по названию (каталог правится миграциями, docs/catalog.md)
                 case SHOULDERS -> (VERTICAL_PUSH.equals(family) && barbell)
                         || name.contains("брусьях") || name.contains("к подбородку");
