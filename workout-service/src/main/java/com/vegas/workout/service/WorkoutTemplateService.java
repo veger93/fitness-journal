@@ -10,6 +10,7 @@ import com.vegas.workout.entity.Exercise;
 import com.vegas.workout.entity.WorkoutTemplate;
 import com.vegas.workout.mapper.WorkoutTemplateMapper;
 import com.vegas.workout.repository.ExerciseRepository;
+import com.vegas.workout.repository.ProgramRepository;
 import com.vegas.workout.repository.WorkoutTemplateRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -30,10 +32,14 @@ public class WorkoutTemplateService {
     private final ExerciseRepository exerciseRepository;
     private final WorkoutTemplateMapper templateMapper;
     private final WeeklyPlanService weeklyPlanService;
+    private final ProgramRepository programRepository;
 
     @Transactional(readOnly = true)
     public List<WorkoutTemplateResponse> list(UUID userId) {
-        return templateMapper.toResponses(templateRepository.findAllVisibleTo(userId));
+        Set<UUID> programDays = programRepository.findActiveTemplateIds(userId);
+        return templateMapper.toResponses(templateRepository.findAllVisibleTo(userId)).stream()
+                .map(t -> WorkoutTemplateResponse.programDay(t, programDays.contains(t.id())))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -54,6 +60,7 @@ public class WorkoutTemplateService {
     @Transactional
     public WorkoutTemplateResponse update(UUID userId, UUID templateId, WorkoutTemplateRequest request) {
         WorkoutTemplate template = findOwn(userId, templateId);
+        ensureNotProgramDay(userId, templateId);
         String name = request.name().trim();
         ensureNameFree(userId, name, templateId);
         List<Exercise> exercises = resolveExercises(userId, request.exerciseIds());
@@ -69,6 +76,7 @@ public class WorkoutTemplateService {
     @Transactional
     public void delete(UUID userId, UUID templateId) {
         WorkoutTemplate template = findOwn(userId, templateId);
+        ensureNotProgramDay(userId, templateId);
         weeklyPlanService.templateDeleted(userId, templateId);
         templateRepository.delete(template);
     }
@@ -118,6 +126,18 @@ public class WorkoutTemplateService {
         return templateRepository.findWithExercisesById(templateId)
                 .filter(template -> template.isVisibleTo(userId))
                 .orElseThrow(() -> new NotFoundException("Комплекс не найден"));
+    }
+
+    /**
+     * День активной программы меняется только через программу (замена упражнения): иначе комплекс и места
+     * программы разъедутся, а удаление молча вырезало бы день из программы и плана. После отказа от программы
+     * (или новой анкеты) её комплексы становятся обычными.
+     */
+    private void ensureNotProgramDay(UUID userId, UUID templateId) {
+        if (programRepository.findActiveTemplateIds(userId).contains(templateId)) {
+            throw new BusinessException("Это день вашей программы — упражнения меняются в программе (⇄). "
+                    + "Удалить его можно, когда откажетесь от программы");
+        }
     }
 
     /** Свой комплекс: чужой -> 404 (как будто его нет), готовый -> 403 (виден, но менять нельзя). */

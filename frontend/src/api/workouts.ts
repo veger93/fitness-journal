@@ -78,6 +78,8 @@ export interface WorkoutTemplate {
   icon: string | null;
   custom: boolean;
   exercises: TemplateExercise[];
+  /** день активной программы: раздел «Программа», удалить и поменять — только через программу */
+  program: boolean;
 }
 
 export type MuscleGroup =

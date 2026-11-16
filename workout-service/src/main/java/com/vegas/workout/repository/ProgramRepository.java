@@ -4,8 +4,11 @@ import com.vegas.workout.entity.Program;
 import com.vegas.workout.entity.ProgramStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface ProgramRepository extends JpaRepository<Program, UUID> {
@@ -20,4 +23,11 @@ public interface ProgramRepository extends JpaRepository<Program, UUID> {
     default Optional<Program> findActive(UUID ownerId) {
         return findByOwnerIdAndStatus(ownerId, ProgramStatus.ACTIVE);
     }
+
+    /** Комплексы-дни активной программы: их нельзя удалить или поменять в обход программы */
+    @Query("""
+            select distinct s.template.id from ProgramSlot s
+            where s.program.ownerId = :ownerId and s.program.status = com.vegas.workout.entity.ProgramStatus.ACTIVE
+            """)
+    Set<UUID> findActiveTemplateIds(@Param("ownerId") UUID ownerId);
 }

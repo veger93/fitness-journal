@@ -93,6 +93,8 @@ export const programsApi = {
   /** замена — один раз на место; excludeOld — «больше не предлагать» прежнее упражнение */
   swap: (slotId: string, exerciseId: string, excludeOld: boolean) =>
     api<Program>(`/api/programs/current/slots/${slotId}/swap`, { method: 'POST', body: { exerciseId, excludeOld } }),
+  /** отказаться: программа в архив, её дни становятся обычными комплексами, план недели не трогаем */
+  abandon: () => api<void>('/api/programs/current', { method: 'DELETE' }),
   exclusions: () => api<ProgramExclusion[]>('/api/programs/exclusions'),
   removeExclusion: (exerciseId: string) => api<void>(`/api/programs/exclusions/${exerciseId}`, { method: 'DELETE' }),
 };

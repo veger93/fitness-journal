@@ -46,7 +46,8 @@ export function PlanPage() {
   const workouts = chosen.filter(Boolean).length;
   const frequency = [...bodyPartFrequency(chosen)];
   const hints = planHints(chosen);
-  const mine = templates.data.filter((t) => t.custom);
+  const programDays = templates.data.filter((t) => t.program);
+  const mine = templates.data.filter((t) => t.custom && !t.program);
   const ready = templates.data.filter((t) => !t.custom);
   const today = todayOf();
 
@@ -110,6 +111,15 @@ export function PlanPage() {
                 }}
               >
                 <option value="">Отдых</option>
+                {programDays.length > 0 && (
+                  <optgroup label="Программа">
+                    {programDays.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
                 {mine.length > 0 && (
                   <optgroup label="Мои комплексы">
                     {mine.map((t) => (

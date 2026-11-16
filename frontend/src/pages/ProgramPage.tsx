@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { programsApi, type Program, type ProgramDay, type ProgramSlot } from '../api/programs';
 import { SwapDialog } from '../components/program/SwapDialog';
 import { Badge } from '../components/ui/Badge';
-import { ButtonLink } from '../components/ui/Button';
+import { Button, ButtonLink } from '../components/ui/Button';
+import { ConfirmDialog } from '../components/workout/ConfirmDialog';
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ListRow, ListRowGroup } from '../components/ui/ListRow';
@@ -79,6 +80,18 @@ function ProgramView({
   const week = programWeek(program.startedAt);
   // окно замены — одно на страницу: какое место сейчас меняем
   const [swapping, setSwapping] = useState<ProgramSlot | null>(null);
+  const [abandoning, setAbandoning] = useState(false);
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const abandon = useMutation({
+    mutationFn: programsApi.abandon,
+    onSuccess: () => {
+      queryClient.setQueryData(['program'], null);
+      // дни программы стали обычными комплексами — разделы «Программа» / «Мои» пересоберутся
+      void queryClient.invalidateQueries({ queryKey: ['templates'] });
+      navigate('/profile', { replace: true });
+    },
+  });
 
   return (
     <div className={styles.page}>
@@ -165,6 +178,17 @@ function ProgramView({
 
       {swapping && <SwapDialog slot={swapping} onClose={() => setSwapping(null)} />}
 
+      {abandoning && (
+        <ConfirmDialog
+          title="Отказаться от программы?"
+          text="Её дни останутся в «Мои комплексы» обычными комплексами — их можно будет менять и удалять. План недели не изменится. Новую программу можно собрать в профиле."
+          confirmLabel={abandon.isError ? 'Попробовать ещё раз' : 'Отказаться'}
+          busy={abandon.isPending}
+          onConfirm={() => abandon.mutate()}
+          onClose={() => setAbandoning(false)}
+        />
+      )}
+
       {/* кнопки — в самом конце: на телефоне колонка «Почему так» встаёт выше них */}
       {created ? (
         <div className={styles.actions}>
@@ -182,6 +206,10 @@ function ProgramView({
             <ButtonLink to="/program/new" variant="secondary" fullWidth>
               Пройти анкету заново
             </ButtonLink>
+            {/* редкое действие — тихой кнопкой внизу */}
+            <Button variant="surface" fullWidth onClick={() => setAbandoning(true)}>
+              Отказаться от программы
+            </Button>
           </div>
         )
       )}
