@@ -31,6 +31,22 @@ export interface WorkoutExercise {
   previousSets: WorkoutSet[]; // как было в прошлый раз
   /** активная разгрузка: подсказка подхода берёт вес и повторы отсюда */
   deload: Deload | null;
+  /** тренировка по дню программы: цель подходов и подсказка веса (П10). Свободная тренировка — null */
+  target: ExerciseTarget | null;
+}
+
+/** Цель упражнения из программы (workout-service: ExerciseTargetResponse) */
+export interface ExerciseTarget {
+  sets: number;
+  repsMin: number;
+  repsMax: number;
+  restSec: number;
+  /** INCREASE — прибавить (2 раза подряд верхняя граница), KEEP — прежний вес, NEW — подобрать самому */
+  suggestion: 'INCREASE' | 'KEEP' | 'NEW';
+  suggestedWeightKg: number | null;
+  /** рабочий вес прошлого раза — для пояснения */
+  baseWeightKg: number | null;
+  lastReps: number[];
 }
 
 /** Режим разгрузки по упражнению (workout-service: DeloadResponse) */

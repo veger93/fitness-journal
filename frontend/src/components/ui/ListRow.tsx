@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './ListRow.module.css';
 
-export type ListRowTone = 'accent' | 'plain' | 'inverse';
+export type ListRowTone = 'accent' | 'plain' | 'inverse' | 'success';
 
 interface ListRowProps {
   title: ReactNode;

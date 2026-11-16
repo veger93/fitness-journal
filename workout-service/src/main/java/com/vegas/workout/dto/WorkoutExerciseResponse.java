@@ -21,6 +21,7 @@ public record WorkoutExerciseResponse(
         boolean assisted,           // вес — противовес (гравитрон): в форме "Противовес, кг", меньше = тяжелее
         List<SetResponse> sets,
         List<SetResponse> previousSets,
-        DeloadResponse deload        // активная разгрузка по упражнению — подсказка подхода берёт вес и схему отсюда; иначе null
+        DeloadResponse deload,       // активная разгрузка по упражнению — подсказка подхода берёт вес и схему отсюда; иначе null
+        ExerciseTargetResponse target // тренировка по дню программы: цель подходов и подсказка веса; иначе null
 ) {
 }

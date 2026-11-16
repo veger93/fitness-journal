@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { workoutsApi } from '../api/workouts';
 import { CURRENT_WORKOUT_KEY } from '../hooks/useWorkout';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { exercisePath } from '../lib/exercise';
+import { PlanDoneToast } from '../components/workout/PlanDoneToast';
 import { SaveTemplateDialog } from '../components/workout/SaveTemplateDialog';
 import { Card } from '../components/ui/Card';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -31,6 +32,8 @@ const dayTitle = new Intl.DateTimeFormat('ru-RU', { weekday: 'long', day: 'numer
  */
 export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 'view' }) {
   const { workoutId = '' } = useParams();
+  // план дня программы выполнен целиком — пришло из «Завершить» (state перехода, в адресе его нет)
+  const planDone = (useLocation().state as { planDone?: { done: number; total: number } } | null)?.planDone;
   const [saving, setSaving] = useState(false);
   const workout = useQuery({ queryKey: ['workout', workoutId], queryFn: () => workoutsApi.get(workoutId) });
   const phone = useMediaQuery('(max-width: 640px)');
@@ -78,6 +81,7 @@ export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 
 
   return (
     <div className={styles.wide}>
+      {mode === 'finished' && planDone && <PlanDoneToast done={planDone.done} total={planDone.total} />}
       <PageHeader
         back={mode === 'view' ? { to: '/history', label: 'История' } : undefined}
         title={title}

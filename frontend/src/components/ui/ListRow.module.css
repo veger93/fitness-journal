@@ -62,6 +62,12 @@ button.row:disabled {
   color: var(--text-on-inverse);
 }
 
+/* ✓ подход сделан (контроль подходов в тренировке по программе) */
+.success {
+  background: var(--success);
+  color: #fff;
+}
+
 .body {
   display: flex;
   flex-direction: column;

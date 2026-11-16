@@ -1,0 +1,79 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+}
+
+.track {
+  fill: none;
+  stroke: var(--chip);
+  stroke-width: 8;
+}
+
+.fill {
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.ringText {
+  font: 700 13px var(--font-display);
+  fill: currentColor;
+}
+
+.muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+}
+
+.row + .row {
+  border-top: 1px solid var(--border);
+}
+
+.mark {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--chip);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+}
+
+.note {
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}

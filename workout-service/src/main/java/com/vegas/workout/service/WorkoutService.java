@@ -51,6 +51,7 @@ public class WorkoutService {
     private final OutboxService outboxService;
     private final Clock clock;
     private final DeloadService deloadService;
+    private final ProgramTargetService programTargetService;
 
     // ---------- тренировка ----------
 
@@ -231,7 +232,7 @@ public class WorkoutService {
             return workoutMapper.toResponse(workout);
         }
         return workoutMapper.toResponse(workout, findPreviousSets(workout),
-                deloadService.activeByExercise(workout.getUserId()));
+                deloadService.activeByExercise(workout.getUserId()), programTargetService.targets(workout));
     }
 
     /**

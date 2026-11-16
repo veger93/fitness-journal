@@ -68,12 +68,39 @@ describe('suggestNextSet', () => {
     });
   });
 
-  it('первый подход — самый тяжёлый рабочий подход прошлого раза (а не первый по счёту)', () => {
+  it('первый подход — рабочий вес прошлого раза (а не первый по счёту)', () => {
     // в прошлый раз: 20 × 10, 30 × 10, 40 × 10, 40 × 8 — сегодня начинаем с 40 (повторы — последнего такого)
     expect(suggestNextSet([], [set(1, 20, 10), set(2, 30, 10), set(3, 40, 10), set(4, 40, 8)])).toMatchObject({
       weightKg: 40,
       reps: 8,
     });
+  });
+
+  it('рабочий вес — тот, на котором больше всего подходов: одна проба тяжелее не сбивает', () => {
+    // 4 подхода по 60 и одна проба на 65 — начинаем с 60
+    expect(
+      suggestNextSet([], [set(1, 60, 10), set(2, 60, 10), set(3, 65, 6), set(4, 60, 9), set(5, 60, 9)]),
+    ).toMatchObject({ weightKg: 60, reps: 9 });
+  });
+
+  it('программа: «пора прибавить» — прибавленный вес и нижняя граница повторов', () => {
+    const target = {
+      sets: 3,
+      repsMin: 8,
+      repsMax: 12,
+      restSec: 120,
+      suggestion: 'INCREASE' as const,
+      suggestedWeightKg: 62.5,
+      baseWeightKg: 60,
+      lastReps: [12, 12, 12],
+    };
+    expect(suggestNextSet([], [set(1, 60, 12)], 'WEIGHT_REPS', 'BARBELL', null, target)).toMatchObject({
+      weightKg: 62.5,
+      reps: 8,
+    });
+    // разгрузка важнее программы
+    const deload = { exerciseId: 'x', workingWeightKg: 50, sets: 2, reps: 8, startedAt: '', endsAt: '' };
+    expect(suggestNextSet([], [], 'WEIGHT_REPS', 'BARBELL', deload, target).weightKg).toBe(50);
   });
 
   it('разминку прошлого раза не считаем, даже если она тяжелее по ошибке', () => {
@@ -191,6 +218,7 @@ describe('обновление кэша', () => {
         sets: [set(1, 80, 8), set(2, 80, 8)],
         previousSets: [],
         deload: null,
+        target: null,
       },
     ],
   };
