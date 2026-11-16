@@ -97,3 +97,8 @@ export function musclesText(muscles: ExerciseMuscle[], role: ExerciseMuscle['rol
 export function exerciseImageUrl(imageKey: string, phase: 1 | 2): string {
   return `/exercises/${imageKey}-${phase}.svg`;
 }
+
+/** Куда ведёт упражнение: бег — на страницу «Бег» (там своя аналитика), остальные — в карточку упражнения */
+export function exercisePath(e: { trackingType: TrackingType; exerciseId: string }): string {
+  return e.trackingType === 'DISTANCE' ? '/running' : `/exercises/${e.exerciseId}`;
+}

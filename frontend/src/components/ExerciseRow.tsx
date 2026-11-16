@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { exercisePath } from '../lib/exercise';
 import type { ExerciseStatus, ExerciseSummary } from '../api/analytics';
 import { formatExerciseResult, formatShortDate } from '../lib/format';
 import { formatDistance } from '../lib/workout';
@@ -33,8 +34,7 @@ export function ExerciseRow({ exercise }: { exercise: ExerciseSummary }) {
       <span className={styles.badge}>{badge && <Badge variant={badge.variant}>{badge.label}</Badge>}</span>
     </>
   );
-  // бег ведёт на страницу "Бег" (там своя аналитика), остальные — на страницу упражнения
-  const to = exercise.trackingType === 'DISTANCE' ? '/running' : `/exercises/${exercise.exerciseId}`;
+  const to = exercisePath(exercise);
   return (
     <Link to={to} className={`${styles.row} ${styles.link}`}>
       {content}
