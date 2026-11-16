@@ -14,6 +14,7 @@ import com.vegas.workout.entity.TrackingType;
 import com.vegas.workout.entity.WorkoutTemplate;
 import com.vegas.workout.mapper.WorkoutTemplateMapper;
 import com.vegas.workout.repository.ExerciseRepository;
+import com.vegas.workout.repository.ProgramRepository;
 import com.vegas.workout.repository.WorkoutTemplateRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Set;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,6 +46,8 @@ class WorkoutTemplateServiceTest {
     private ExerciseRepository exerciseRepository;
     @Mock
     private WeeklyPlanService weeklyPlanService;
+    @Mock
+    private ProgramRepository programRepository;
 
     private final WorkoutTemplateMapper templateMapper = Mappers.getMapper(WorkoutTemplateMapper.class);
 
@@ -59,7 +63,8 @@ class WorkoutTemplateServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new WorkoutTemplateService(templateRepository, exerciseRepository, templateMapper, weeklyPlanService);
+        service = new WorkoutTemplateService(templateRepository, exerciseRepository, templateMapper, weeklyPlanService,
+                programRepository);
         squat = systemExercise("Приседания со штангой");
         bench = systemExercise("Жим лёжа");
         foreignCustom = exercise(someoneElse, "Чужое упражнение");
@@ -127,6 +132,32 @@ class WorkoutTemplateServiceTest {
                 .isInstanceOf(NotFoundException.class);
 
         verify(templateRepository, never()).delete(any());
+    }
+
+    @Test
+    void delete_programDay_isRefused_untilProgramIsGone() {
+        WorkoutTemplate day = WorkoutTemplate.custom(me, "День A · всё тело", "orange", null, List.of(squat));
+        when(templateRepository.findWithExercisesById(templateId)).thenReturn(Optional.of(day));
+        when(programRepository.findActiveTemplateIds(me)).thenReturn(Set.of(templateId));
+
+        assertThatThrownBy(() -> service.delete(me, templateId)).isInstanceOf(BusinessException.class);
+        assertThatThrownBy(() -> service.update(me, templateId, request("Ноги", squat.getId())))
+                .isInstanceOf(BusinessException.class);
+        verify(templateRepository, never()).delete(any());
+        verify(weeklyPlanService, never()).templateDeleted(any(), any());
+    }
+
+    @Test
+    void list_marksProgramDays() {
+        WorkoutTemplate day = WorkoutTemplate.custom(me, "День A", "orange", null, List.of(squat));
+        WorkoutTemplate other = WorkoutTemplate.custom(me, "Мой", "blue", null, List.of(bench));
+        UUID dayId = UUID.randomUUID();
+        ReflectionTestUtils.setField(day, "id", dayId);
+        ReflectionTestUtils.setField(other, "id", UUID.randomUUID());
+        when(templateRepository.findAllVisibleTo(me)).thenReturn(List.of(day, other));
+        when(programRepository.findActiveTemplateIds(me)).thenReturn(Set.of(dayId));
+
+        assertThat(service.list(me)).extracting(WorkoutTemplateResponse::program).containsExactly(true, false);
     }
 
     // ---------- copy ----------

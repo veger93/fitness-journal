@@ -13,6 +13,14 @@ public record WorkoutTemplateResponse(
         String color,
         String icon,
         boolean custom,
-        List<TemplateExerciseResponse> exercises
+        List<TemplateExerciseResponse> exercises,
+        boolean program
 ) {
+    /**
+     * program = день активной программы (раздел «Программа»; удалить и поменять — только через программу).
+     * static, а не метод экземпляра: MapStruct принял бы withX/одноаргументный метод за «свойство» и ругался
+     */
+    public static WorkoutTemplateResponse programDay(WorkoutTemplateResponse t, boolean program) {
+        return new WorkoutTemplateResponse(t.id(), t.name(), t.color(), t.icon(), t.custom(), t.exercises(), program);
+    }
 }

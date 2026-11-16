@@ -9,6 +9,7 @@ const template = (name: string, parts: BodyPart[]): WorkoutTemplate => ({
   color: 'blue',
   icon: null,
   custom: true,
+  program: false,
   exercises: parts.map((bodyPart, i) => ({
     id: `${name}${i}`,
     name: `${name}${i}`,

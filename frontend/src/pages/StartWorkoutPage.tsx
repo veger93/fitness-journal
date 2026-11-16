@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { workoutsApi, type WorkoutTemplate } from '../api/workouts';
@@ -58,7 +58,9 @@ export function StartWorkoutPage() {
     return <Navigate to="/workout/active" replace />;
   }
 
-  const mine = templates.data?.filter((t) => t.custom) ?? [];
+  // дни программы — своим разделом и без ✕: удаление вырезало бы день из программы и плана
+  const programDays = templates.data?.filter((t) => t.program) ?? [];
+  const mine = templates.data?.filter((t) => t.custom && !t.program) ?? [];
   const ready = templates.data?.filter((t) => !t.custom) ?? [];
 
   return (
@@ -97,6 +99,15 @@ export function StartWorkoutPage() {
       </div>
       {start.isError && <p className={styles.muted}>{start.error.message}</p>}
 
+      {programDays.length > 0 && (
+        <TemplateGroup
+          title="Программа"
+          action={<Link to="/program">Вся программа →</Link>}
+          templates={programDays}
+          disabled={start.isPending}
+          onPick={(id) => start.mutate({ templateId: id })}
+        />
+      )}
       {mine.length > 0 && (
         <TemplateGroup
           onDelete={setDeleting}
@@ -136,12 +147,15 @@ export function StartWorkoutPage() {
 
 function TemplateGroup({
   title,
+  action,
   templates,
   disabled,
   onPick,
   onDelete,
 }: {
   title: string;
+  /** ссылка справа от подписи раздела («Вся программа →») */
+  action?: ReactNode;
   templates: WorkoutTemplate[];
   disabled: boolean;
   onPick: (id: string) => void;
@@ -150,7 +164,7 @@ function TemplateGroup({
 }) {
   return (
     <section className={styles.group}>
-      <SectionLabel>{title}</SectionLabel>
+      <SectionLabel action={action}>{title}</SectionLabel>
       <div className={styles.templates}>
         {templates.map((template) => (
           // две отдельные кнопки рядом, а не кнопка в кнопке: вложенные <button> в HTML запрещены
