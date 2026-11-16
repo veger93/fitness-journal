@@ -11,6 +11,8 @@ import java.util.UUID;
  * Уже делал — в окне строка «уже делали: 32 кг × 10, 3 нед. назад» (числа форматирует фронт).
  *
  * @param lastWeightKg лучший рабочий подход последней тренировки с этим упражнением; null — не делал или без веса
+ * @param usedInDay    упражнение уже стоит в другом дне программы («Верх B») — заменить можно, но будет повтор;
+ *                     null — в программе его нет. В этом же дне повтора быть не может: такие в варианты не попадают
  */
 public record ProgramAlternativeResponse(
         UUID exerciseId,
@@ -20,6 +22,7 @@ public record ProgramAlternativeResponse(
         boolean familiar,
         BigDecimal lastWeightKg,
         Integer lastReps,
-        Instant lastPerformedAt
+        Instant lastPerformedAt,
+        String usedInDay
 ) {
 }

@@ -70,6 +70,8 @@ export interface ProgramAlternative {
   lastWeightKg: number | null;
   lastReps: number | null;
   lastPerformedAt: string | null;
+  /** уже стоит в другом дне программы («Верх B»): заменить можно, но упражнение повторится. null — его в программе нет */
+  usedInDay: string | null;
 }
 
 /** «Больше не предлагать» */
