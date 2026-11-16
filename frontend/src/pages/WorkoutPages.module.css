@@ -293,6 +293,20 @@
   font-size: var(--text-lg);
 }
 
+.cardTitleLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.cardTitleLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.cardTitleLink span {
+  color: var(--text-muted);
+}
+
 .setList {
   list-style: none;
   margin: 0;

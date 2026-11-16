@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { ProgressPoint } from '../api/analytics';
-import { bestDuration, exerciseImageUrl, historyRows, musclesText, setsLabel, strengthCaption } from './exercise';
+import {
+  bestDuration,
+  exerciseImageUrl,
+  historyRows,
+  musclesText,
+  setsLabel,
+  strengthCaption,
+  exercisePath,
+} from './exercise';
 
 const point = (date: string, extra: Partial<ProgressPoint> = {}): ProgressPoint => ({
   date,
@@ -96,5 +104,13 @@ describe('strengthCaption', () => {
     expect(strengthCaption({ strengthStale: true, strengthMaintainedBy: 'Жим гантелей лёжа' })).toBe(
       'поддерживается: жим гантелей лёжа',
     );
+  });
+});
+
+describe('exercisePath — куда ведёт упражнение', () => {
+  it('силовое — в карточку упражнения, бег — на страницу «Бег»', () => {
+    expect(exercisePath({ trackingType: 'WEIGHT_REPS', exerciseId: 'abc' })).toBe('/exercises/abc');
+    expect(exercisePath({ trackingType: 'TIME', exerciseId: 'plank' })).toBe('/exercises/plank');
+    expect(exercisePath({ trackingType: 'DISTANCE', exerciseId: 'run' })).toBe('/running');
   });
 });

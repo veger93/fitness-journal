@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { workoutsApi } from '../api/workouts';
 import { CURRENT_WORKOUT_KEY } from '../hooks/useWorkout';
 import { Button, ButtonLink } from '../components/ui/Button';
+import { exercisePath } from '../lib/exercise';
 import { SaveTemplateDialog } from '../components/workout/SaveTemplateDialog';
 import { Card } from '../components/ui/Card';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -110,7 +111,12 @@ export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 
         <div className={styles.summaryGrid}>
           {done.map((exercise) => (
             <Card key={exercise.id} as="article">
-              <h3 className={styles.cardTitle}>{exercise.exerciseName}</h3>
+              <h3 className={styles.cardTitle}>
+                {/* в карточку упражнения: график, рекорды, вся история по нему */}
+                <Link to={exercisePath(exercise)} className={styles.cardTitleLink}>
+                  {exercise.exerciseName} <span aria-hidden="true">›</span>
+                </Link>
+              </h3>
               <ol className={styles.setList}>
                 {exercise.sets.map((set) => (
                   <li key={set.id} className={styles.summaryExercise}>
