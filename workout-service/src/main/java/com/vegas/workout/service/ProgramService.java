@@ -2,6 +2,7 @@ package com.vegas.workout.service;
 
 import com.vegas.common.exception.BadRequestException;
 import com.vegas.common.exception.BusinessException;
+import com.vegas.common.event.ProgramChangedEvent;
 import com.vegas.common.exception.NotFoundException;
 import com.vegas.workout.dto.ExclusionResponse;
 import com.vegas.workout.dto.ProgramAlternativeResponse;
@@ -19,6 +20,7 @@ import com.vegas.workout.entity.WorkoutExercise;
 import com.vegas.workout.entity.WorkoutSet;
 import com.vegas.workout.entity.WorkoutStatus;
 import com.vegas.workout.entity.WorkoutTemplate;
+import com.vegas.workout.event.OutboxService;
 import com.vegas.workout.mapper.ProgramMapper;
 import com.vegas.workout.program.GeneratedProgram;
 import com.vegas.workout.program.ProgramGenerator;
@@ -67,6 +69,7 @@ public class ProgramService {
     private final WeeklyPlanService weeklyPlanService;
     private final ProgramGenerator generator;
     private final ProgramMapper mapper;
+    private final OutboxService outboxService;
     private final Clock clock;
 
     /**
@@ -104,6 +107,9 @@ public class ProgramService {
             }
         }
         programRepository.save(program);
+        // notification-service напомнит о пересмотре; в той же транзакции — программа и событие сохраняются вместе
+        outboxService.programChanged(ProgramChangedEvent.started(userId, program.getId(), program.getReviewAt(),
+                clock.instant()));
 
         weeklyPlanService.replace(userId, new WeeklyPlanRequest(generated.schedule().entrySet().stream()
                 .map(entry -> new WeeklyPlanRequest.Day(entry.getKey(), templates.get(entry.getValue()).getId()))
@@ -120,6 +126,7 @@ public class ProgramService {
     @Transactional
     public void abandon(UUID userId) {
         findActive(userId).archive();
+        outboxService.programChanged(ProgramChangedEvent.none(userId, clock.instant()));
     }
 
     // ---------- замена упражнения (П14) ----------

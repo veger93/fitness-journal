@@ -3,9 +3,11 @@ package com.vegas.notification.event;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vegas.common.event.EventTypes;
+import com.vegas.common.event.ProgramChangedEvent;
 import com.vegas.common.event.WeeklyPlanUpdatedEvent;
 import com.vegas.common.event.WorkoutCompletedEvent;
 import com.vegas.common.event.WorkoutDeletedEvent;
+import com.vegas.notification.service.ProgramReviewSyncService;
 import com.vegas.notification.service.WeeklyPlanSyncService;
 import com.vegas.notification.service.WorkoutActivityService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class WorkoutEventsListener {
 
     private final WorkoutActivityService activityService;
     private final WeeklyPlanSyncService planService;
+    private final ProgramReviewSyncService programReviewService;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "${app.kafka.topics.workout-events}")
@@ -37,6 +40,8 @@ public class WorkoutEventsListener {
             activityService.deleted(objectMapper.readValue(record.value(), WorkoutDeletedEvent.class));
         } else if (EventTypes.WEEKLY_PLAN_UPDATED.equals(eventType)) {
             planService.apply(objectMapper.readValue(record.value(), WeeklyPlanUpdatedEvent.class));
+        } else if (EventTypes.PROGRAM_CHANGED.equals(eventType)) {
+            programReviewService.apply(objectMapper.readValue(record.value(), ProgramChangedEvent.class));
         } else {
             log.debug("Workout event type {} is not handled by notifications", eventType);
         }

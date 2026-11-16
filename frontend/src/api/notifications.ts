@@ -3,7 +3,13 @@ import type { DayOfWeek } from './workouts';
 
 /** Типы повторяют DTO notification-service. */
 export type NotificationType =
-  'PERSONAL_RECORD' | 'PLATEAU' | 'OVERLOAD_RISK' | 'MONTHLY_REPORT' | 'WORKOUT_REMINDER' | 'INACTIVITY';
+  | 'PERSONAL_RECORD'
+  | 'PLATEAU'
+  | 'OVERLOAD_RISK'
+  | 'MONTHLY_REPORT'
+  | 'WORKOUT_REMINDER'
+  | 'INACTIVITY'
+  | 'PROGRAM_REVIEW';
 
 export interface AppNotification {
   id: string;

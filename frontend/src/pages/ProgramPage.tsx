@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { programsApi, type Program, type ProgramDay } from '../api/programs';
+import { programsApi, type Program, type ProgramDay, type ProgramSlot } from '../api/programs';
+import { SwapDialog } from '../components/program/SwapDialog';
 import { Badge } from '../components/ui/Badge';
 import { ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -75,6 +77,8 @@ function ProgramView({
   const top = headline(program);
   const rest = restDaysText(program.days);
   const week = programWeek(program.startedAt);
+  // окно замены — одно на страницу: какое место сейчас меняем
+  const [swapping, setSwapping] = useState<ProgramSlot | null>(null);
 
   return (
     <div className={styles.page}>
@@ -151,12 +155,15 @@ function ProgramView({
           </SectionLabel>
           <div className={styles.days}>
             {program.days.map((day, i) => (
-              <DayCard key={day.templateId} day={day} open={i === 0} />
+              <DayCard key={day.templateId} day={day} open={i === 0} onSwap={setSwapping} />
             ))}
           </div>
           {rest && <p className={styles.muted}>{rest} — отдых. Дни можно переставить в плане недели.</p>}
+          <p className={styles.muted}>⇄ — заменить на упражнение на ту же работу мышц. Каждое место — один раз.</p>
         </section>
       </PageColumns>
+
+      {swapping && <SwapDialog slot={swapping} onClose={() => setSwapping(null)} />}
 
       {/* кнопки — в самом конце: на телефоне колонка «Почему так» встаёт выше них */}
       {created ? (
@@ -183,7 +190,7 @@ function ProgramView({
 }
 
 /** День программы: свёрнут — дни недели, название и первые упражнения; развёрнут — все места со схемой */
-function DayCard({ day, open }: { day: ProgramDay; open: boolean }) {
+function DayCard({ day, open, onSwap }: { day: ProgramDay; open: boolean; onSwap: (slot: ProgramSlot) => void }) {
   const when = weekDaysText(day.weekDays);
   return (
     <details className={styles.day} open={open}>
@@ -214,7 +221,32 @@ function DayCard({ day, open }: { day: ProgramDay; open: boolean }) {
                 ? `${slotScheme(slot)} · вместо: ${slot.originalExerciseName.toLowerCase()}`
                 : slotScheme(slot)
             }
-            value={slot.swapped ? <Badge>заменено</Badge> : undefined}
+            value={
+              slot.swapped ? (
+                <Badge>заменено</Badge>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.swapButton}
+                  aria-label={`Заменить: ${slot.exerciseName}`}
+                  onClick={() => onSwap(slot)}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" />
+                  </svg>
+                </button>
+              )
+            }
           />
         ))}
       </ListRowGroup>

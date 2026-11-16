@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { programsApi } from '../../api/programs';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { programsApi, type ProgramExclusion } from '../../api/programs';
 import { formatShortDate } from '../../lib/format';
 import { GOALS, programWeek } from '../../lib/program';
 import { ListRow, ListRowGroup } from '../ui/ListRow';
@@ -12,6 +12,16 @@ import styles from './Profile.module.css';
  */
 export function ProgramCard() {
   const program = useQuery({ queryKey: ['program'], queryFn: programsApi.current });
+  const exclusions = useQuery({ queryKey: ['program', 'exclusions'], queryFn: programsApi.exclusions });
+  const queryClient = useQueryClient();
+  const restore = useMutation({
+    mutationFn: programsApi.removeExclusion,
+    // убираем строку сразу по ответу, без повторного запроса списка
+    onSuccess: (_, exerciseId) =>
+      queryClient.setQueryData(['program', 'exclusions'], (list: ProgramExclusion[] | undefined) =>
+        list?.filter((e) => e.exerciseId !== exerciseId),
+      ),
+  });
 
   return (
     <section className={styles.programSection} aria-labelledby="program-title">
@@ -47,6 +57,32 @@ export function ProgramCard() {
           />
         </ListRowGroup>
       )}
+
+      {/* «больше не предлагать» — живёт отдельно от программы: действует и на следующую анкету */}
+      {exclusions.data && exclusions.data.length > 0 && (
+        <ListRowGroup label="Не предлагать">
+          {exclusions.data.map((e) => (
+            <ListRow
+              key={e.exerciseId}
+              mark="–"
+              title="Не предлагать"
+              text={e.exerciseName.toLowerCase()}
+              value={
+                <button
+                  type="button"
+                  className={styles.linkButton}
+                  disabled={restore.isPending}
+                  onClick={() => restore.mutate(e.exerciseId)}
+                  aria-label={`Вернуть в подбор: ${e.exerciseName}`}
+                >
+                  Вернуть
+                </button>
+              }
+            />
+          ))}
+        </ListRowGroup>
+      )}
+      {restore.isError && <p className={styles.error}>{restore.error.message}</p>}
     </section>
   );
 }

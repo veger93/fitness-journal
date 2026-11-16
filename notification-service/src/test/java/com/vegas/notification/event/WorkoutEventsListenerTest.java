@@ -3,9 +3,11 @@ package com.vegas.notification.event;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.vegas.common.event.EventTypes;
+import com.vegas.common.event.ProgramChangedEvent;
 import com.vegas.common.event.WorkoutCompletedEvent;
 import com.vegas.common.event.WeeklyPlanUpdatedEvent;
 import com.vegas.common.event.WorkoutDeletedEvent;
+import com.vegas.notification.service.ProgramReviewSyncService;
 import com.vegas.notification.service.WeeklyPlanSyncService;
 import com.vegas.notification.service.WorkoutActivityService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -17,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,13 +33,15 @@ class WorkoutEventsListenerTest {
     private WorkoutActivityService activityService;
     @Mock
     private WeeklyPlanSyncService planService;
+    @Mock
+    private ProgramReviewSyncService programReviewService;
 
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     private WorkoutEventsListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new WorkoutEventsListener(activityService, planService, objectMapper);
+        listener = new WorkoutEventsListener(activityService, planService, programReviewService, objectMapper);
     }
 
     @Test
@@ -47,6 +52,19 @@ class WorkoutEventsListenerTest {
         listener.onWorkoutEvent(record(EventTypes.WORKOUT_COMPLETED, objectMapper.writeValueAsString(event)));
 
         verify(activityService).completed(event);
+    }
+
+    @Test
+    void programChanged_isApplied_withNullsForNoProgram() throws Exception {
+        ProgramChangedEvent started = ProgramChangedEvent.started(UUID.randomUUID(), UUID.randomUUID(),
+                LocalDate.of(2026, 12, 26), Instant.parse("2026-11-14T10:00:00Z"));
+        ProgramChangedEvent none = ProgramChangedEvent.none(UUID.randomUUID(), Instant.parse("2026-11-15T10:00:00Z"));
+
+        listener.onWorkoutEvent(record(EventTypes.PROGRAM_CHANGED, objectMapper.writeValueAsString(started)));
+        listener.onWorkoutEvent(record(EventTypes.PROGRAM_CHANGED, objectMapper.writeValueAsString(none)));
+
+        verify(programReviewService).apply(started);
+        verify(programReviewService).apply(none);
     }
 
     @Test

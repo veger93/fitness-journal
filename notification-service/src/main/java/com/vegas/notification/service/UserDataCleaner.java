@@ -27,6 +27,7 @@ public class UserDataCleaner {
         // дни плана удалятся сами (ON DELETE CASCADE от weekly_plans)
         jdbc.update("DELETE FROM weekly_plans WHERE user_id = ?", userId);
         jdbc.update("DELETE FROM workout_activity WHERE user_id = ?", userId);
+        jdbc.update("DELETE FROM program_reviews WHERE user_id = ?", userId);
         jdbc.update("DELETE FROM recipients WHERE user_id = ?", userId);
         log.info("User {} notifications deleted: {}", userId, notifications);
     }

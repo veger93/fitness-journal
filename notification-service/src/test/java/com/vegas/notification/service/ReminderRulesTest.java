@@ -10,6 +10,7 @@ import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -138,5 +139,23 @@ class ReminderRulesTest {
 
     private static Instant at(String iso) {
         return Instant.parse(iso);
+    }
+
+    @Test
+    void programReview_fromReviewDay_onlyDaytime_inUserZone() {
+        LocalDate review = LocalDate.of(2026, 12, 26);
+        ZoneId moscow = ZoneId.of("Europe/Moscow");
+        // 25 дек 23:00 UTC = 26 дек 02:00 в Москве — день настал, но ночь: ждём утра
+        assertThat(ReminderRules.programReviewDue(review, moscow,
+                Instant.parse("2026-12-25T23:00:00Z"))).isFalse();
+        // 26 дек 07:00 UTC = 10:00 в Москве
+        assertThat(ReminderRules.programReviewDue(review, moscow,
+                Instant.parse("2026-12-26T07:00:00Z"))).isTrue();
+        // день прошёл, а сервис лежал — напоминаем позже
+        assertThat(ReminderRules.programReviewDue(review, moscow,
+                Instant.parse("2026-12-28T09:00:00Z"))).isTrue();
+        // за день до пересмотра — рано
+        assertThat(ReminderRules.programReviewDue(review, moscow,
+                Instant.parse("2026-12-25T09:00:00Z"))).isFalse();
     }
 }

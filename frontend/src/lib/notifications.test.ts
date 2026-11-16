@@ -40,6 +40,13 @@ describe('toFeedItem', () => {
   it('перегрузка и плато ведут к упражнениям', () => {
     expect(toFeedItem(notification('OVERLOAD_RISK', 'текст')).link?.to).toBe('/exercises');
   });
+
+  it('пересмотр программы ведёт в анкету', () => {
+    expect(toFeedItem(notification('PROGRAM_REVIEW', 'текст')).link).toEqual({
+      to: '/program/new',
+      label: 'Пройти анкету',
+    });
+  });
 });
 
 describe('badgeText', () => {

@@ -8,6 +8,7 @@ export const NOTIFICATION_LABELS: Record<NotificationType, string> = {
   MONTHLY_REPORT: 'Итоги месяца',
   WORKOUT_REMINDER: 'Напоминание',
   INACTIVITY: 'Давно не было тренировок',
+  PROGRAM_REVIEW: 'Пересмотр программы',
 };
 
 const SIGNATURE = /\n+—\nVegas, дневник тренировок\s*$/;
@@ -43,6 +44,9 @@ export function toFeedItem(notification: AppNotification): FeedItem {
     link = { to: `/reports/${report[1]}`, label: 'Открыть отчёт' };
   } else if (notification.type === 'OVERLOAD_RISK' || notification.type === 'PLATEAU') {
     link = { to: '/exercises', label: 'К упражнениям' };
+  } else if (notification.type === 'PROGRAM_REVIEW') {
+    // ответы прошлой программы анкета подставит сама
+    link = { to: '/program/new', label: 'Пройти анкету' };
   }
   // после вырезанных строк могли остаться лишние пустые строки — оставляем не больше одной подряд
   return { text: text.replace(/\n{3,}/g, '\n\n').trim(), link, client: null };

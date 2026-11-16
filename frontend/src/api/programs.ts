@@ -58,6 +58,26 @@ export interface Program extends ProgramAnswers {
   days: ProgramDay[];
 }
 
+/** Вариант для окна «Заменить» (ProgramAlternativeResponse) */
+export interface ProgramAlternative {
+  exerciseId: string;
+  name: string;
+  equipment: Equipment;
+  imageKey: string | null;
+  /** уже делали — такие идут первыми */
+  familiar: boolean;
+  /** лучший рабочий подход последней тренировки с этим упражнением */
+  lastWeightKg: number | null;
+  lastReps: number | null;
+  lastPerformedAt: string | null;
+}
+
+/** «Больше не предлагать» */
+export interface ProgramExclusion {
+  exerciseId: string;
+  exerciseName: string;
+}
+
 export const programsApi = {
   /**
    * null — программы нет (сервер отвечает 204, тело пустое → undefined).
@@ -66,4 +86,11 @@ export const programsApi = {
   current: () => api<Program | undefined>('/api/programs/current').then((p) => p ?? null),
   /** собрать по анкете: прежняя уходит в архив, план недели заменяется днями программы */
   create: (answers: ProgramAnswers) => api<Program>('/api/programs', { method: 'POST', body: answers }),
+  /** чем заменить упражнение на этом месте: то же семейство, подходит по месту и ограничениям */
+  alternatives: (slotId: string) => api<ProgramAlternative[]>(`/api/programs/current/slots/${slotId}/alternatives`),
+  /** замена — один раз на место; excludeOld — «больше не предлагать» прежнее упражнение */
+  swap: (slotId: string, exerciseId: string, excludeOld: boolean) =>
+    api<Program>(`/api/programs/current/slots/${slotId}/swap`, { method: 'POST', body: { exerciseId, excludeOld } }),
+  exclusions: () => api<ProgramExclusion[]>('/api/programs/exclusions'),
+  removeExclusion: (exerciseId: string) => api<void>(`/api/programs/exclusions/${exerciseId}`, { method: 'DELETE' }),
 };

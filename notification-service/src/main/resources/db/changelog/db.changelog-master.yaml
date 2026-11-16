@@ -15,6 +15,8 @@ databaseChangeLog:
       file: db/changelog/changes/006-weekly-plan-reminders.sql
   - include:
       file: db/changelog/changes/007-trainer-notifications.sql
+  - include:
+      file: db/changelog/changes/008-program-reviews.sql
   # общий файл из модуля common-trainer-access (лежит в его ресурсах, Liquibase найдёт в classpath)
   - include:
       file: db/changelog/common/trainer-links.sql

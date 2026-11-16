@@ -102,4 +102,14 @@ public final class ReminderRules {
         long days = ChronoUnit.DAYS.between(lastWorkoutAt.get().atZone(zone).toLocalDate(), now.atZone(zone).toLocalDate());
         return days >= settings.getInactivityDays() ? Optional.of(days) : Optional.empty();
     }
+
+    /**
+     * «Пора пересмотреть программу»: в день пересмотра (или позже — сервис мог быть выключен), днём по времени
+     * пользователя. Один раз на программу — это обеспечивает ключ дублей PROGRAM_REVIEW:<programId>.
+     */
+    public static boolean programReviewDue(LocalDate reviewOn, ZoneId zone, Instant now) {
+        var local = now.atZone(zone);
+        LocalTime time = local.toLocalTime();
+        return !local.toLocalDate().isBefore(reviewOn) && !time.isBefore(DAY_START) && time.isBefore(DAY_END);
+    }
 }

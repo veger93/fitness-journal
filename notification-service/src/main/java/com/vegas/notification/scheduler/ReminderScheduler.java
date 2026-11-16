@@ -3,7 +3,9 @@ package com.vegas.notification.scheduler;
 import com.vegas.notification.entity.NotificationSettings;
 import com.vegas.notification.entity.NotificationType;
 import com.vegas.notification.entity.WeeklyPlan;
+import com.vegas.notification.entity.ProgramReview;
 import com.vegas.notification.repository.NotificationSettingsRepository;
+import com.vegas.notification.repository.ProgramReviewRepository;
 import com.vegas.notification.service.NotificationService;
 import com.vegas.notification.service.NotificationTemplates;
 import com.vegas.notification.service.ReminderRules;
@@ -20,6 +22,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.Set;
 
@@ -46,6 +49,7 @@ public class ReminderScheduler {
     private final WorkoutActivityService activityService;
     private final WeeklyPlanSyncService planService;
     private final NotificationService notificationService;
+    private final ProgramReviewRepository programReviewRepository;
     private final Clock clock;
 
     @Scheduled(cron = "${app.reminders.schedule-cron}", zone = "UTC")
@@ -77,6 +81,31 @@ public class ReminderScheduler {
                                 greeting -> NotificationTemplates.inactivity(greeting, days,
                                         last.get().atZone(ZoneId.of(settings.getTimeZone())).toLocalDate())));
             });
+        }
+    }
+
+    /**
+     * «Пора пересмотреть программу» — в ленту приложения, без письма (раз в 6 недель, не срочно).
+     * Пояс — из настроек напоминаний; настроек нет — UTC (как у новых настроек по умолчанию).
+     * Берём с запасом «до завтра»: в поясах восточнее UTC завтрашний по UTC день уже наступил.
+     */
+    @Scheduled(cron = "${app.reminders.review-cron}", zone = "UTC")
+    public void sendProgramReviewReminders() {
+        Instant now = clock.instant();
+        LocalDate tomorrowUtc = LocalDate.ofInstant(now, ZoneOffset.UTC).plusDays(1);
+        for (ProgramReview review : programReviewRepository.findByReviewOnLessThanEqual(tomorrowUtc)) {
+            try {
+                ZoneId zone = settingsRepository.findById(review.getUserId())
+                        .map(s -> ZoneId.of(s.getTimeZone()))
+                        .orElse(ZoneOffset.UTC);
+                if (ReminderRules.programReviewDue(review.getReviewOn(), zone, now)) {
+                    notificationService.saveInApp(review.getUserId(), NotificationType.PROGRAM_REVIEW,
+                            "PROGRAM_REVIEW:" + review.getProgramId(),
+                            greeting -> NotificationTemplates.programReview(greeting, review.getReviewOn()));
+                }
+            } catch (RuntimeException e) {
+                log.error("Program review reminder for user {} failed", review.getUserId(), e);
+            }
         }
     }
 

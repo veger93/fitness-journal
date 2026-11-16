@@ -2,6 +2,7 @@ package com.vegas.workout.service;
 
 import com.vegas.common.exception.BadRequestException;
 import com.vegas.common.exception.BusinessException;
+import com.vegas.common.event.ProgramChangedEvent;
 import com.vegas.common.model.BodyPart;
 import com.vegas.workout.dto.ProgramAlternativeResponse;
 import com.vegas.workout.dto.ProgramRequest;
@@ -22,6 +23,7 @@ import com.vegas.workout.entity.SetScheme;
 import com.vegas.workout.entity.TrackingType;
 import com.vegas.workout.entity.WorkoutStatus;
 import com.vegas.workout.entity.WorkoutTemplate;
+import com.vegas.workout.event.OutboxService;
 import com.vegas.workout.mapper.ProgramMapper;
 import com.vegas.workout.program.GeneratedProgram;
 import com.vegas.workout.program.ProgramGenerator;
@@ -83,6 +85,7 @@ class ProgramServiceTest {
     @Mock private WeeklyPlanDayRepository planRepository;
     @Mock private WeeklyPlanService weeklyPlanService;
     @Mock private ProgramGenerator generator;
+    @Mock private OutboxService outboxService;
 
     private ProgramService service;
     private final UUID me = UUID.randomUUID();
@@ -97,7 +100,7 @@ class ProgramServiceTest {
     void setUp() {
         service = new ProgramService(programRepository, exerciseRepository, exclusionRepository,
                 workoutExerciseRepository, templateRepository, planRepository, weeklyPlanService, generator,
-                new ProgramMapper(), Clock.fixed(NOW, ZoneOffset.UTC));
+                new ProgramMapper(), outboxService, Clock.fixed(NOW, ZoneOffset.UTC));
 
         benchPress = exercise("Жим штанги лёжа", Equipment.BARBELL, "HORIZONTAL_PUSH");
         dumbbellPress = exercise("Жим гантелей лёжа", Equipment.DUMBBELL, "HORIZONTAL_PUSH");
@@ -108,7 +111,12 @@ class ProgramServiceTest {
         when(exclusionRepository.findExerciseIdsByOwnerId(me)).thenReturn(Set.of());
         when(workoutExerciseRepository.findDoneExerciseIds(me, WorkoutStatus.COMPLETED)).thenReturn(Set.of());
         when(planRepository.findByUserId(me)).thenReturn(List.of());
-        // save комплекса: как база — выдаём id
+        // save программы и комплекса: как база — выдаём id
+        when(programRepository.save(any())).thenAnswer(inv -> {
+            Program p = inv.getArgument(0);
+            ReflectionTestUtils.setField(p, "id", UUID.randomUUID());
+            return p;
+        });
         when(templateRepository.save(any())).thenAnswer(inv -> {
             WorkoutTemplate t = inv.getArgument(0);
             ReflectionTestUtils.setField(t, "id", UUID.randomUUID());
@@ -152,6 +160,25 @@ class ProgramServiceTest {
         assertThat(plan.getValue().days()).extracting(WeeklyPlanRequest.Day::dayOfWeek)
                 .containsExactlyInAnyOrder(DayOfWeek.MONDAY, DayOfWeek.THURSDAY);
         assertThat(response.notes()).containsExactly("Заметка");
+
+        // напоминание о пересмотре: через 6 недель после старта
+        ArgumentCaptor<ProgramChangedEvent> event = ArgumentCaptor.forClass(ProgramChangedEvent.class);
+        verify(outboxService).programChanged(event.capture());
+        assertThat(event.getValue().reviewAt()).isEqualTo(LocalDate.of(2026, 12, 26));
+        assertThat(event.getValue().hasProgram()).isTrue();
+    }
+
+    @Test
+    void abandon_archives_andTellsNoProgram() {
+        Program program = program(dayWith(benchPress));
+        when(programRepository.findActive(me)).thenReturn(Optional.of(program));
+
+        service.abandon(me);
+
+        assertThat(program.getStatus()).isEqualTo(ProgramStatus.ARCHIVED);
+        ArgumentCaptor<ProgramChangedEvent> event = ArgumentCaptor.forClass(ProgramChangedEvent.class);
+        verify(outboxService).programChanged(event.capture());
+        assertThat(event.getValue().hasProgram()).isFalse();
     }
 
     @Test
