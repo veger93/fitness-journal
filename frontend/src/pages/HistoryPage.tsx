@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
+import { exercisePath } from '../lib/exercise';
 import { analyticsApi } from '../api/analytics';
 import { workoutsApi, type Workout } from '../api/workouts';
 import { Badge } from '../components/ui/Badge';
@@ -155,20 +156,23 @@ function JournalDay({
       </header>
       <ul className={styles.dayExercises}>
         {exercises.map((exercise) => (
-          <li
-            key={exercise.id}
-            className={`${styles.dayExercise} ${exercise.exerciseId === highlight ? styles.dayExerciseActive : ''}`}
-          >
-            <span className={styles.dayExerciseName}>
-              {exercise.exerciseName}
-              {recordExercises?.has(exercise.exerciseId) && (
-                <span className={styles.recordMark} title="рекорд">
-                  {' '}
-                  ★<span className="visually-hidden"> рекорд</span>
-                </span>
-              )}
-            </span>
-            <span>{summarizeSets(exercise.trackingType, exercise.sets, exercise.assisted)}</span>
+          <li key={exercise.id}>
+            {/* вся строка — ссылка в карточку упражнения (график, рекорды, история); бег — на страницу «Бег» */}
+            <Link
+              to={exercisePath(exercise)}
+              className={`${styles.dayExercise} ${exercise.exerciseId === highlight ? styles.dayExerciseActive : ''}`}
+            >
+              <span className={styles.dayExerciseName}>
+                {exercise.exerciseName}
+                {recordExercises?.has(exercise.exerciseId) && (
+                  <span className={styles.recordMark} title="рекорд">
+                    {' '}
+                    ★<span className="visually-hidden"> рекорд</span>
+                  </span>
+                )}
+              </span>
+              <span>{summarizeSets(exercise.trackingType, exercise.sets, exercise.assisted)}</span>
+            </Link>
           </li>
         ))}
       </ul>
