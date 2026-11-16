@@ -214,6 +214,23 @@ class ProgramServiceTest {
     }
 
     @Test
+    void alternatives_alreadyInOtherDay_markedAndLast() {
+        Program program = program(dayWith(benchPress, squat));
+        WorkoutTemplate dayB = WorkoutTemplate.custom(me, "День B", "blue", null, new ArrayList<>(List.of(dumbbellPress)));
+        ReflectionTestUtils.setField(dayB, "id", UUID.randomUUID());
+        ReflectionTestUtils.setField(program.addSlot(dayB, 0, dumbbellPress, SetScheme.of(3, 8, 12, 120)),
+                "id", UUID.randomUUID());
+        when(programRepository.findActive(me)).thenReturn(Optional.of(program));
+
+        List<ProgramAlternativeResponse> result = service.alternatives(me, slotOf(program, benchPress).getId());
+
+        // гантели уже во «Дне B» — вариант остаётся (заменить можно), но с пометкой и в конце списка
+        assertThat(result).extracting(ProgramAlternativeResponse::name)
+                .containsExactly("Жим в тренажёре", "Жим гантелей лёжа");
+        assertThat(result).extracting(ProgramAlternativeResponse::usedInDay).containsExactly(null, "День B");
+    }
+
+    @Test
     void swap_replacesInSlotAndInTemplate_samePosition_andExcludesOld() {
         Program program = program(dayWith(benchPress, squat));
         when(programRepository.findActive(me)).thenReturn(Optional.of(program));

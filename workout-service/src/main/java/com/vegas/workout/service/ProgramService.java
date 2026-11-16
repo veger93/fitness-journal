@@ -140,9 +140,17 @@ public class ProgramService {
         Program program = findActive(userId);
         ProgramSlot slot = notSwappedYet(program.findSlot(slotId));
         Set<UUID> done = workoutExerciseRepository.findDoneExerciseIds(userId, WorkoutStatus.COMPLETED);
+        // в каком ДРУГОМ дне программы уже стоит упражнение (внутри своего дня повторов нет — см. candidates)
+        Map<UUID, String> usedInDay = new HashMap<>();
+        program.getSlots().stream()
+                .filter(s -> !s.getTemplate().equals(slot.getTemplate()))
+                .forEach(s -> usedInDay.putIfAbsent(s.getExercise().getId(), s.getTemplate().getName()));
+        // порядок: сначала то, чего в программе нет (разнообразие, П8), внутри — знакомые первыми, потом по имени
         return candidates(userId, program, slot).stream()
-                .sorted(Comparator.comparing((Exercise e) -> !done.contains(e.getId())).thenComparing(Exercise::getName))
-                .map(e -> toAlternative(userId, e, done.contains(e.getId())))
+                .sorted(Comparator.comparing((Exercise e) -> usedInDay.containsKey(e.getId()))
+                        .thenComparing(e -> !done.contains(e.getId()))
+                        .thenComparing(Exercise::getName))
+                .map(e -> toAlternative(userId, e, done.contains(e.getId()), usedInDay.get(e.getId())))
                 .toList();
     }
 
@@ -210,7 +218,7 @@ public class ProgramService {
     }
 
     /** Последний результат: лучший рабочий подход последней тренировки с этим упражнением */
-    private ProgramAlternativeResponse toAlternative(UUID userId, Exercise exercise, boolean familiar) {
+    private ProgramAlternativeResponse toAlternative(UUID userId, Exercise exercise, boolean familiar, String usedInDay) {
         Optional<WorkoutExercise> last = familiar
                 ? workoutExerciseRepository.findRecent(userId, exercise.getId(), WorkoutStatus.COMPLETED, Limit.of(1))
                         .stream().findFirst()
@@ -225,7 +233,8 @@ public class ProgramService {
                 exercise.getImageKey(), familiar,
                 best.map(WorkoutSet::getWeightKg).orElse(null),
                 best.map(WorkoutSet::getReps).orElse(null),
-                last.map(we -> we.getWorkout().getCompletedAt()).orElse(null));
+                last.map(we -> we.getWorkout().getCompletedAt()).orElse(null),
+                usedInDay);
     }
 
     /** «День A · всё тело» уже есть (прошлая программа) — «День A · всё тело (2)»: имена комплексов уникальны */

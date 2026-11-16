@@ -11,14 +11,15 @@ const alt = (patch: Partial<ProgramAlternative>): ProgramAlternative => ({
   lastWeightKg: null,
   lastReps: null,
   lastPerformedAt: null,
+  usedInDay: null,
   ...patch,
 });
 
 const plain = (s: string) => s.replace(/ | /g, ' ');
 
 describe('окно замены — вторая строка варианта', () => {
-  it('незнакомое — с советом начать с лёгкого веса', () => {
-    expect(alternativeText(alt({}))).toBe('ещё не делали — начните с лёгкого веса');
+  it('незнакомое — коротко (совет про лёгкий вес — один раз над списком)', () => {
+    expect(alternativeText(alt({}))).toBe('ещё не делали');
   });
 
   it('знакомое — лучший подход и дата', () => {
@@ -29,6 +30,10 @@ describe('окно замены — вторая строка варианта',
         ),
       ),
     ).toBe('уже делали: 32 кг × 10, 21 окт.');
+  });
+
+  it('уже есть в другом дне — предупреждаем', () => {
+    expect(alternativeText(alt({ usedInDay: 'Верх B' }))).toBe('ещё не делали · уже есть в «Верх B»');
   });
 
   it('без веса (подтягивания) — только повторы', () => {
