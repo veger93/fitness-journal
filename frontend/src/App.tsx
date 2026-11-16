@@ -26,6 +26,7 @@ import { RecordsPage } from './pages/RecordsPage';
 import { RunningPage } from './pages/RunningPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { StartWorkoutPage } from './pages/StartWorkoutPage';
+import { TemplatePage } from './pages/TemplatePage';
 import { WorkoutSummaryPage } from './pages/WorkoutSummaryPage';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { ActingClientProvider } from './trainer/ActingClientProvider';
@@ -92,6 +93,7 @@ export function App() {
                 >
                   <Route path="/" element={<HomePage />} />
                   <Route path="/workout" element={<StartWorkoutPage />} />
+                  <Route path="/templates/:templateId" element={<TemplatePage />} />
                   <Route path="/workout/active" element={<ActiveWorkoutPage />} />
                   <Route path="/workout/:workoutId/summary" element={<WorkoutSummaryPage />} />
                   <Route path="/exercises" element={<ExercisesPage />} />

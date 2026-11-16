@@ -1,5 +1,13 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import type { SetInput, TrackingType, Workout, WorkoutExercise, WorkoutSet } from '../api/workouts';
+import {
+  workoutsApi,
+  type SetInput,
+  type TrackingType,
+  type Workout,
+  type WorkoutExercise,
+  type WorkoutSet,
+} from '../api/workouts';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Chip } from '../components/ui/Chip';
@@ -12,6 +20,7 @@ import { useNow } from '../hooks/useNow';
 import { useCurrentWorkout, usePendingSets, useWorkoutActions, type PendingSet } from '../hooks/useWorkout';
 import { describeSet, formatClock, runParts, toRequest } from '../lib/workout';
 import { setsLabel } from '../lib/exercise';
+import { canUpdateTemplate, templateChanges } from '../lib/templates';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { PageHeader } from '../components/ui/PageHeader';
 import { SectionLabel } from '../components/ui/SectionLabel';
@@ -55,6 +64,29 @@ type Modal =
 
 function ActiveWorkout({ workout }: { workout: Workout }) {
   const actions = useWorkoutActions(workout);
+  const queryClient = useQueryClient();
+  // тренировка по своему комплексу, а упражнения добавили или убрали — при завершении предложим обновить комплекс
+  const templates = useQuery({ queryKey: ['templates'], queryFn: workoutsApi.templates });
+  const template = templates.data?.find((t) => t.id === workout.templateId);
+  const changes = template
+    ? templateChanges(
+        template.exercises.map((e) => e.id),
+        workout.exercises.map((e) => e.exerciseId),
+      )
+    : null;
+  // «добавить: Подтягивания; убрать: Тяга штанги» — словами, а не значками +/−
+  const addedNames = changes
+    ? workout.exercises.filter((e) => changes.added.includes(e.exerciseId)).map((e) => e.exerciseName)
+    : [];
+  const removedNames = changes
+    ? (template?.exercises ?? []).filter((e) => changes.removed.includes(e.id)).map((e) => e.name)
+    : [];
+  const changedNames = [
+    addedNames.length > 0 && `добавить: ${addedNames.join(', ')}`,
+    removedNames.length > 0 && `убрать: ${removedNames.join(', ')}`,
+  ].filter(Boolean);
+  const offerTemplateUpdate = canUpdateTemplate(template) && changedNames.length > 0;
+  const [updateTemplate, setUpdateTemplate] = useState(false);
   const pending = usePendingSets(workout.id);
 
   const now = useNow();
@@ -166,8 +198,10 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
         />
       ) : (
         // подготовка: выбираем упражнения заранее, время не идёт
+        // название комплекса — заголовком (раньше было только «Подготовка», и было непонятно, что за тренировка)
         <PageHeader
-          title="Подготовка"
+          eyebrow={workout.name ? 'Подготовка' : undefined}
+          title={workout.name || 'Подготовка'}
           subtitle="Время пойдёт, когда нажмёте «Начать» или запишете первый подход"
           action={
             <Button onClick={() => actions.begin.mutate()} disabled={actions.begin.isPending}>
@@ -297,9 +331,35 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
           confirmLabel={completeWhenSaved ? 'Сохраняем подходы…' : 'Завершить'}
           busy={actions.complete.isPending || completeWhenSaved}
           // подходы ещё отправляются — не завершаем без них: ждём и завершаем сами (эффект выше)
-          onConfirm={() => (saving > 0 ? setCompleteWhenSaved(true) : actions.complete.mutate())}
+          onConfirm={() => {
+            const finishNow = () => (saving > 0 ? setCompleteWhenSaved(true) : actions.complete.mutate());
+            if (!(offerTemplateUpdate && updateTemplate && template)) {
+              finishNow();
+              return;
+            }
+            // сначала комплекс, потом завершение. Не вышло обновить комплекс — тренировку всё равно завершаем:
+            // она важнее, а комплекс можно поправить потом на его экране
+            workoutsApi
+              .updateTemplate(template.id, {
+                name: template.name,
+                color: template.color ?? 'blue',
+                exerciseIds: workout.exercises.map((e) => e.exerciseId),
+              })
+              .then(() => queryClient.invalidateQueries({ queryKey: ['templates'] }))
+              .catch(() => undefined)
+              .finally(finishNow);
+          }}
           onClose={closeModal}
-        />
+        >
+          {offerTemplateUpdate && template && (
+            <label className={styles.updateTemplate}>
+              <input type="checkbox" checked={updateTemplate} onChange={(e) => setUpdateTemplate(e.target.checked)} />
+              <span>
+                Обновить комплекс «{template.name}»<span className={styles.muted}> ({changedNames.join('; ')})</span>
+              </span>
+            </label>
+          )}
+        </ConfirmDialog>
       )}
 
       {modal?.kind === 'cancel' && (
