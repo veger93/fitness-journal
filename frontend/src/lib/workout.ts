@@ -1,4 +1,4 @@
-import type { Deload, Equipment, SetInput, TrackingType, Workout, WorkoutSet } from '../api/workouts';
+import type { Deload, Equipment, ExerciseTarget, SetInput, TrackingType, Workout, WorkoutSet } from '../api/workouts';
 
 /**
  * Логика экрана тренировки без React: что подставить в новый подход, как показать подход,
@@ -59,9 +59,11 @@ export function fitWeight(weightKg: number | null, equipment: Equipment): number
  * Что подставить в форму нового подхода (чтобы не набирать каждый раз):
  * 0) идёт разгрузка — её вес и повторы, а не "как в прошлый раз" (иначе подсказка тянула бы обратно к тяжёлому);
  * 1) последний подход этого упражнения сегодня — продолжаем с того веса, на котором остановились;
- * 2) первый подход сегодня — самый тяжёлый рабочий подход прошлой тренировки: человек помнит
- *    "в прошлый раз жал 40", а не "начинал с 20" (разминку не считаем);
- * 3) упражнение впервые — стартовые значения по снаряжению.
+ * 2) первый подход сегодня, тренировка по программе — вес из подсказки прогрессии (П10): при «пора прибавить» —
+ *    прибавленный вес и нижняя граница повторов;
+ * 3) первый подход сегодня — рабочий вес прошлой тренировки (с которым сделано больше всего подходов): человек
+ *    помнит "в прошлый раз жал 40", а не "начинал с 20"; одна проба на 65 среди четырёх по 60 — рабочий 60;
+ * 4) упражнение впервые — стартовые значения по снаряжению.
  */
 export function suggestNextSet(
   sets: WorkoutSet[],
@@ -69,6 +71,7 @@ export function suggestNextSet(
   trackingType: TrackingType = 'WEIGHT_REPS',
   equipment: Equipment = 'BARBELL',
   deload: Deload | null = null,
+  target: ExerciseTarget | null = null,
 ): SetInput {
   const defaults =
     trackingType === 'DISTANCE' ? DEFAULT_RUN : { ...DEFAULT_SET, weightKg: FIRST_TIME_WEIGHT[equipment] };
@@ -79,7 +82,16 @@ export function suggestNextSet(
       reps: deload.reps,
     };
   }
-  const source = sets.at(-1) ?? heaviestSet(previousSets);
+  if (sets.length === 0 && target?.suggestedWeightKg != null && trackingType === 'WEIGHT_REPS') {
+    const base = workingSet(previousSets);
+    return {
+      ...defaults,
+      weightKg: fitWeight(target.suggestedWeightKg, equipment),
+      // прибавили вес — начинаем с нижней границы; тот же вес — повторы прошлого раза (или нижняя граница)
+      reps: target.suggestion === 'INCREASE' ? target.repsMin : (base?.reps ?? target.repsMin),
+    };
+  }
+  const source = sets.at(-1) ?? workingSet(previousSets);
   if (!source) {
     return { ...defaults };
   }
@@ -94,16 +106,22 @@ export function suggestNextSet(
 }
 
 /**
- * Самый тяжёлый рабочий подход (разминочные не считаем, если есть рабочие).
- * При равном весе — последний из них: его повторы ближе к тому, что человек может сейчас.
- * Без веса (планка, бег) — просто последний подход.
+ * Рабочий подход прошлого раза: вес, с которым сделано больше всего рабочих подходов (разминку не считаем,
+ * если есть рабочие); при равенстве — больший («лесенка» 20, 30, 40 — рабочий 40). Повторы — последнего из них.
+ * Тот же выбор веса, что у прогрессии на сервере (program/Progression). Без веса (планка, бег) — последний подход.
  */
-export function heaviestSet(sets: WorkoutSet[]): WorkoutSet | undefined {
+export function workingSet(sets: WorkoutSet[]): WorkoutSet | undefined {
   const working = sets.some((s) => !s.warmup) ? sets.filter((s) => !s.warmup) : sets;
-  return working.reduce<WorkoutSet | undefined>(
-    (best, s) => (best === undefined || (s.weightKg ?? 0) >= (best.weightKg ?? 0) ? s : best),
-    undefined,
-  );
+  const counts = new Map<number, number>();
+  working.forEach((s) => counts.set(s.weightKg ?? 0, (counts.get(s.weightKg ?? 0) ?? 0) + 1));
+  let best: number | undefined;
+  counts.forEach((count, weight) => {
+    const bestCount = best === undefined ? -1 : (counts.get(best) ?? 0);
+    if (count > bestCount || (count === bestCount && weight > (best ?? -Infinity))) {
+      best = weight;
+    }
+  });
+  return working.filter((s) => (s.weightKg ?? 0) === best).at(-1);
 }
 
 /** В запрос отправляем только поля, нужные этому виду упражнения. */

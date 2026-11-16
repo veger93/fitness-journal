@@ -1,6 +1,7 @@
 package com.vegas.workout.mapper;
 
 import com.vegas.workout.dto.DeloadResponse;
+import com.vegas.workout.dto.ExerciseTargetResponse;
 import com.vegas.workout.dto.SetResponse;
 import com.vegas.workout.dto.WorkoutExerciseResponse;
 import com.vegas.workout.dto.WorkoutResponse;
@@ -23,20 +24,21 @@ public class WorkoutMapper {
 
     /** Для завершённых тренировок: подсказки (прошлые подходы, разгрузка) не нужны. */
     public WorkoutResponse toResponse(Workout workout) {
-        return toResponse(workout, Map.of(), Map.of());
+        return toResponse(workout, Map.of(), Map.of(), Map.of());
     }
 
     /**
      * @param previousSets exerciseId -> подходы этого упражнения в прошлой тренировке
      * @param deloads      exerciseId -> активная разгрузка
+     * @param targets      exerciseId -> цель из программы (тренировка по дню программы)
      */
     public WorkoutResponse toResponse(Workout workout, Map<UUID, List<WorkoutSet>> previousSets,
-                                      Map<UUID, DeloadResponse> deloads) {
+                                      Map<UUID, DeloadResponse> deloads, Map<UUID, ExerciseTargetResponse> targets) {
         List<WorkoutExerciseResponse> exercises = workout.getExercises().stream()
                 .map(workoutExercise -> {
                     UUID exerciseId = workoutExercise.getExercise().getId();
                     return toExerciseResponse(workoutExercise, previousSets.getOrDefault(exerciseId, List.of()),
-                            deloads.get(exerciseId));
+                            deloads.get(exerciseId), targets.get(exerciseId));
                 })
                 .toList();
 
@@ -69,7 +71,7 @@ public class WorkoutMapper {
     }
 
     private WorkoutExerciseResponse toExerciseResponse(WorkoutExercise workoutExercise, List<WorkoutSet> previous,
-                                                       DeloadResponse deload) {
+                                                       DeloadResponse deload, ExerciseTargetResponse target) {
         Exercise exercise = workoutExercise.getExercise();
         return new WorkoutExerciseResponse(
                 workoutExercise.getId(),
@@ -80,7 +82,8 @@ public class WorkoutMapper {
                 exercise.isAssisted(),
                 toSetResponses(workoutExercise.getSets()),
                 toSetResponses(previous),
-                deload
+                deload,
+                target
         );
     }
 

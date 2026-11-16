@@ -19,8 +19,19 @@ import { SetDialog } from '../components/workout/SetDialog';
 import { useNow } from '../hooks/useNow';
 import { useCurrentWorkout, usePendingSets, useWorkoutActions, type PendingSet } from '../hooks/useWorkout';
 import { describeSet, formatClock, runParts, toRequest } from '../lib/workout';
+import { formatKg } from '../lib/format';
 import { setsLabel } from '../lib/exercise';
 import { canUpdateTemplate, templateChanges } from '../lib/templates';
+import {
+  NEW_EXERCISE_HINT,
+  doneSets,
+  isExerciseDone,
+  planProgress,
+  planText,
+  plannedSets,
+  weightHint,
+} from '../lib/setControl';
+import { FinishPlanDialog } from '../components/workout/FinishPlanDialog';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { PageHeader } from '../components/ui/PageHeader';
 import { SectionLabel } from '../components/ui/SectionLabel';
@@ -103,15 +114,22 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
   const failed = pending.filter((p) => p.status === 'failed').length;
   const elapsedSec = workout.startedAt ? (now - new Date(workout.startedAt).getTime()) / 1000 : 0;
   const hasSets = workout.exercises.some((e) => e.sets.length > 0) || pending.length > 0;
+  // контроль подходов (тренировка по дню программы): счёт — вместе с подходами, которые ещё сохраняются
+  const withPending = workout.exercises.map((e) => withPendingSets(e, pending));
+  const plan = planProgress(withPending);
+  const planDone = plan && plan.remaining.length === 0 ? { done: plan.done, total: plan.total } : undefined;
+  const completeWorkout = () => actions.complete.mutate({ planDone });
 
   useEffect(() => {
     if (completeWhenSaved && saving === 0) {
       setCompleteWhenSaved(false);
       // какой-то подход так и не сохранился — не завершаем молча, окно покажет, сколько их
       if (failed === 0) {
-        actions.complete.mutate();
+        completeWorkout();
       }
     }
+    // completeWorkout пересоздаётся на каждый рендер, но читает те же данные — достаточно этих зависимостей
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completeWhenSaved, saving, failed, actions.complete]);
 
   const closeModal = () => {
@@ -150,7 +168,7 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
           <ListRow
             key={e.id}
             title={`${index + 1}. ${e.exerciseName}`}
-            text={setsCountText(e.sets.length + pending.filter((p) => p.workoutExerciseId === e.id).length)}
+            text={exerciseProgressText(withPending[index])}
             selected={e.id === exercise?.id}
             onClick={() => setSelectedId(e.id)}
           />
@@ -211,16 +229,62 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
         />
       )}
 
+      {plan && (
+        <div className={styles.planProgress}>
+          <div className={styles.planProgressText}>
+            <b>
+              Подходы {plan.done} из {plan.total}
+            </b>
+            <span className={styles.muted}>
+              {plan.exercisesDone} из {plan.exercisesTotal} упражнений готово
+            </span>
+          </div>
+          <div
+            className={styles.planBar}
+            role="progressbar"
+            aria-label="Подходы по плану дня"
+            aria-valuemin={0}
+            aria-valuemax={plan.total}
+            aria-valuenow={plan.done}
+          >
+            <span style={{ width: `${Math.round((plan.done / plan.total) * 100)}%` }} />
+          </div>
+        </div>
+      )}
+
       <div className={styles.workoutGrid}>
         <div className={styles.workoutMain}>
           {/* текущее упражнение: картинка, название и "Как выполнять" — вся карточка нажимается */}
           {exercise && <ExerciseCard key={exercise.id} exercise={exercise} />}
 
+          {exercise && planText(exercise) && (
+            <div className={`${styles.planCard} ${isExerciseDone(exercise) ? styles.planCardDone : ''}`}>
+              <div className={styles.planCardHead}>
+                <span>{planText(exercise)}</span>
+                {isExerciseDone(exercise) && <span className={styles.doneBadge}>✓ Выполнено</span>}
+              </div>
+              {weightHint(exercise) && !isExerciseDone(exercise) && exercise.sets.length === 0 && (
+                <p className={styles.planHint}>{weightHint(exercise)!.text}</p>
+              )}
+            </div>
+          )}
+
           {!desktop && (
             <div className={styles.chips} role="group" aria-label="Упражнения тренировки">
               {workout.exercises.map((e, index) => (
-                <Chip key={e.id} selected={e.id === exercise?.id} onClick={() => setSelectedId(e.id)}>
+                <Chip
+                  key={e.id}
+                  selected={e.id === exercise?.id}
+                  className={isExerciseDone(withPending[index]) ? styles.chipDone : undefined}
+                  onClick={() => setSelectedId(e.id)}
+                >
+                  {isExerciseDone(withPending[index]) && (
+                    <span>
+                      ✓ <span className="visually-hidden">выполнено: </span>
+                    </span>
+                  )}
                   {index + 1}. {e.exerciseName}
+                  {chipCounter(withPending[index])}
                 </Chip>
               ))}
               <Chip onClick={() => setModal({ kind: 'addExercise' })}>+ упражнение</Chip>
@@ -236,13 +300,16 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
 
           {exercise && (
             <>
-              {exercise.sets.length > 0 && (
+              {(exercise.sets.length > 0 || plannedSets(exercise) !== null) && (
                 <ListRowGroup label={`Подходы: ${exercise.exerciseName}`}>
                   {exercise.sets.map((set) => {
                     const waiting = pendingById.get(set.id);
                     return (
                       <ListRow
                         key={set.id}
+                        // по программе: рабочий подход — зелёная галочка, как в макете S1
+                        mark={plannedSets(exercise) !== null && !set.warmup ? '✓' : undefined}
+                        tone="success"
                         title={setLabel(exercise.trackingType, set.number, exercise.sets.length)}
                         text={pendingText(waiting, set.warmup)}
                         value={<SetValue trackingType={exercise.trackingType} set={set} assisted={exercise.assisted} />}
@@ -257,6 +324,22 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
                       />
                     );
                   })}
+                  {/* заготовки оставшихся подходов по плану: нажали — открылось окно подхода с подставленными числами */}
+                  {ghostSets(exercise).map((ghost) => (
+                    <button
+                      key={ghost.number}
+                      type="button"
+                      className={styles.ghostSet}
+                      onClick={() => setModal({ kind: 'set', editing: null })}
+                    >
+                      <span className={styles.ghostCircle} aria-hidden="true" />
+                      <span className={styles.ghostText}>
+                        Подход {ghost.number}
+                        {ghost.first && <span className={styles.muted}> — нажмите, чтобы записать</span>}
+                      </span>
+                      <span className={styles.ghostValue}>{ghost.value}</span>
+                    </button>
+                  ))}
                 </ListRowGroup>
               )}
 
@@ -265,6 +348,12 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
                 пальцем и не уезжает вниз, когда подходов много. Подсказка "прошлый раз" — над кнопкой.
               */}
               <div className={styles.dock} data-dock>
+                {!previousSame &&
+                  !exercise.target &&
+                  !exercise.deload &&
+                  exercise.trackingType === 'WEIGHT_REPS' &&
+                  exercise.previousSets.length === 0 &&
+                  exercise.sets.length === 0 && <p className={styles.dockHint}>{NEW_EXERCISE_HINT}</p>}
                 {previousSame && (
                   <p className={styles.dockHint}>
                     {exercise.trackingType === 'DISTANCE' ? 'Прошлый раз' : 'Прошлый раз на этом подходе'}:{' '}
@@ -324,7 +413,20 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
         <SaveTemplateDialog exerciseIds={workout.exercises.map((e) => e.exerciseId)} onClose={closeModal} />
       )}
 
-      {modal?.kind === 'complete' && (
+      {modal?.kind === 'complete' && plan && plan.remaining.length > 0 && (
+        <FinishPlanDialog
+          progress={plan}
+          busy={actions.complete.isPending || completeWhenSaved}
+          onContinue={() => {
+            setSelectedId(plan.remaining[0].id);
+            closeModal();
+          }}
+          onFinish={() => (saving > 0 ? setCompleteWhenSaved(true) : completeWorkout())}
+          onClose={closeModal}
+        />
+      )}
+
+      {modal?.kind === 'complete' && !(plan && plan.remaining.length > 0) && (
         <ConfirmDialog
           title="Завершить тренировку?"
           text={completeText(workout, saving, failed)}
@@ -332,7 +434,7 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
           busy={actions.complete.isPending || completeWhenSaved}
           // подходы ещё отправляются — не завершаем без них: ждём и завершаем сами (эффект выше)
           onConfirm={() => {
-            const finishNow = () => (saving > 0 ? setCompleteWhenSaved(true) : actions.complete.mutate());
+            const finishNow = () => (saving > 0 ? setCompleteWhenSaved(true) : completeWorkout());
             if (!(offerTemplateUpdate && updateTemplate && template)) {
               finishNow();
               return;
@@ -446,4 +548,48 @@ function completeText(workout: Workout, saving: number, failed: number): string 
 
 function setsCountText(count: number): string {
   return count > 0 ? setsLabel(count) : 'ещё нет подходов';
+}
+
+/** Счётчик на чипе упражнения: « · 2/3» (по программе, пока не выполнено) */
+function chipCounter(e: WorkoutExercise): string {
+  const planned = plannedSets(e);
+  if (planned === null || isExerciseDone(e)) {
+    return '';
+  }
+  return ` · ${doneSets(e)}/${planned}`;
+}
+
+/** Вторая строка в списке упражнений (ПК): по программе — «2 из 3 подходов» / «выполнено ✓» */
+function exerciseProgressText(e: WorkoutExercise): string {
+  const planned = plannedSets(e);
+  if (planned === null) {
+    return setsCountText(e.sets.length);
+  }
+  return isExerciseDone(e) ? 'выполнено ✓' : `${doneSets(e)} из ${planned} подходов`;
+}
+
+/**
+ * Заготовки оставшихся подходов: «Подход 3 · 60 кг × 8–12». Вес — как подставит окно подхода:
+ * разгрузка → её вес; сегодня уже были подходы → последний вес; иначе — подсказка программы.
+ */
+function ghostSets(e: WorkoutExercise): { number: number; value: string; first: boolean }[] {
+  const planned = plannedSets(e);
+  if (planned === null) {
+    return [];
+  }
+  const done = doneSets(e);
+  const weight = e.deload?.workingWeightKg ?? e.sets.at(-1)?.weightKg ?? e.target?.suggestedWeightKg ?? null;
+  const reps = e.deload
+    ? `${e.deload.reps}`
+    : e.target
+      ? e.target.repsMin === e.target.repsMax
+        ? `${e.target.repsMin}`
+        : `${e.target.repsMin}–${e.target.repsMax}`
+      : '';
+  const value = weight != null && weight > 0 ? `${formatKg(weight)} × ${reps}` : `${reps} повт.`;
+  return Array.from({ length: Math.max(0, planned - done) }, (_, i) => ({
+    number: e.sets.length + i + 1,
+    value,
+    first: i === 0,
+  }));
 }

@@ -444,3 +444,149 @@
   margin: 0;
   accent-color: var(--surface-inverse);
 }
+
+/* ---------- контроль подходов (тренировка по дню программы, макет S1) ---------- */
+
+.planProgress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.planProgressText {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.planBar {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--chip);
+  overflow: hidden;
+}
+
+.planBar span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--success);
+  transition: width 0.3s ease;
+}
+
+/*
+  выполненное упражнение в полосе чипов — мягко-зелёное с тёмным текстом; выбранное и выполненное — зелёное
+  с белым. Через .chips: так селектор сильнее, чем .selected у самого Chip (иначе белый текст на светло-зелёном)
+*/
+.chips > .chipDone {
+  border-color: var(--success);
+  background: var(--success-soft);
+  color: var(--text);
+}
+
+.chips > .chipDone[aria-pressed='true'] {
+  background: var(--success);
+  color: #fff;
+}
+
+.planCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid transparent;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  font-size: var(--text-sm);
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.planCardDone {
+  border-color: var(--success);
+  background: var(--success-soft);
+}
+
+.planCardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.doneBadge {
+  flex: none;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--success);
+  color: #fff;
+  font-weight: 600;
+  font-size: var(--text-xs);
+}
+
+.planHint {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-inner);
+  background: var(--chip);
+  line-height: 1.4;
+}
+
+/* заготовка подхода: пунктир — «ещё не сделано», вся строка — кнопка */
+.ghostSet {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 52px;
+  margin: var(--space-1) 0;
+  padding: 0 var(--space-3);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-inner);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ghostSet:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+}
+
+.ghostSet:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.ghostCircle {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-pill);
+  box-sizing: border-box;
+}
+
+.ghostText {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+.ghostValue {
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planBar span,
+  .planCard {
+    transition: none;
+  }
+}

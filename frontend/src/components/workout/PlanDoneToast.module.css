@@ -1,0 +1,70 @@
+/* плашка сверху по центру; выплывает сверху и уходит обратно */
+.toast {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 50;
+  width: min(420px, calc(100% - 32px));
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--success);
+  color: #fff;
+  box-shadow: 0 8px 24px rgb(22 163 74 / 0.35);
+  transform: translateX(-50%);
+  animation: enter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+.hidden {
+  opacity: 0;
+  transform: translate(-50%, -24px);
+  pointer-events: none;
+}
+
+.icon {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  background: rgb(255 255 255 / 0.2);
+  display: grid;
+  place-items: center;
+  animation: pop 0.45s 0.15s both cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--text-sm);
+}
+
+.text b {
+  font-size: var(--text-md);
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -24px);
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .icon {
+    animation: none;
+    transition: opacity 0.2s;
+  }
+}

@@ -73,6 +73,8 @@
   --input-border: #d1d5db;
   --danger-text: #b91c1c;
   --success-text: #15803d; /* спокойное «всё в порядке» */
+  --success: #16a34a; /* заливка «выполнено» (галочка подхода, плашка «план дня выполнен»), текст на ней белый */
+  --success-soft: #dcfce7; /* мягкая подсветка выполненного упражнения */
   --focus: #2563eb;
 }
 
@@ -98,5 +100,7 @@
   --input-border: #374151;
   --danger-text: #fca5a5;
   --success-text: #4ade80;
+  --success: #16a34a;
+  --success-soft: #14532d;
   --focus: #93c5fd;
 }

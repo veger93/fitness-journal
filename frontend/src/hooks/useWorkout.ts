@@ -130,8 +130,8 @@ export function useWorkoutActions(workout: Workout) {
    * а колбэки mutate() у исчезнувшего компонента TanStack Query уже не вызывает.
    * Поэтому переход здесь, в onSuccess самой мутации — он срабатывает всегда.
    */
-  const finish = (path: string) => {
-    navigate(path, { replace: true });
+  const finish = (path: string, state?: unknown) => {
+    navigate(path, { replace: true, state });
     queryClient.setQueryData(CURRENT_WORKOUT_KEY, null);
     // не сохранённые подходы этой тренировки больше не нужны (при завершении человек это подтвердил)
     updatePendingSets((list) => list.filter((p) => p.workoutId !== workout.id));
@@ -142,8 +142,10 @@ export function useWorkoutActions(workout: Workout) {
   };
 
   const complete = useMutation({
-    mutationFn: () => workoutsApi.complete(workout.id),
-    onSuccess: (done) => finish(`/workout/${done.id}/summary`),
+    // planDone — план дня программы выполнен: экран итогов покажет зелёную плашку (передаём через state перехода)
+    mutationFn: (_options?: { planDone?: { done: number; total: number } }) => workoutsApi.complete(workout.id),
+    onSuccess: (done, options) =>
+      finish(`/workout/${done.id}/summary`, options?.planDone ? { planDone: options.planDone } : undefined),
   });
   const cancel = useMutation({ mutationFn: () => workoutsApi.remove(workout.id), onSuccess: () => finish('/') });
 

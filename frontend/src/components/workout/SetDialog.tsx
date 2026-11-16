@@ -43,7 +43,14 @@ export function SetDialog({ exercise, editing, saving, error, onSave, onDelete, 
   const [values, setValues] = useState<SetInput>(
     () =>
       editing ??
-      suggestNextSet(exercise.sets, exercise.previousSets, exercise.trackingType, exercise.equipment, exercise.deload),
+      suggestNextSet(
+        exercise.sets,
+        exercise.previousSets,
+        exercise.trackingType,
+        exercise.equipment,
+        exercise.deload,
+        exercise.target,
+      ),
   );
   const change = (patch: Partial<SetInput>) => setValues((v) => ({ ...v, ...patch }));
   const [showInfo, setShowInfo] = useState(false);
