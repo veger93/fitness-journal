@@ -132,6 +132,38 @@
   place-items: center;
 }
 
+/* ✎ «открыть комплекс» — рядом с крестиком (у своих) или на его месте (у готовых и дней программы) */
+.templateEdit {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  display: grid;
+  place-items: center;
+}
+
+.withDelete .templateEdit {
+  right: 40px;
+}
+
+.templateEdit:hover,
+.templateDelete:hover {
+  color: var(--text);
+  background: var(--chip);
+}
+
+/* значки справа сверху: под них не залезает только название, «3 упражнения» ниже — на всю ширину */
+.templateWrap .templateName {
+  padding-right: 28px;
+}
+
+.templateWrap.withDelete .templateName {
+  padding-right: 64px;
+}
+
 .template {
   min-height: 92px;
   padding: var(--space-3) var(--space-4);
@@ -391,4 +423,24 @@
     border-radius: var(--radius-pill);
     background: color-mix(in srgb, var(--bg) 88%, transparent);
   }
+}
+
+/* «Обновить комплекс» в окне завершения: вся строка — цель для пальца */
+.updateTemplate {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.updateTemplate input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--surface-inverse);
 }

@@ -29,6 +29,8 @@ interface AddExerciseDialogProps {
   adding: boolean;
   onAdd: (exerciseId: string) => void;
   onClose: () => void;
+  /** куда добавляем: в тренировку (по умолчанию) или в комплекс — от этого только подписи */
+  target?: 'workout' | 'template';
 }
 
 /**
@@ -39,7 +41,9 @@ interface AddExerciseDialogProps {
  * Каталог грузим один раз целиком и фильтруем в браузере (lib/catalog.ts): упражнений десятки,
  * а переключение плиток и чипов так мгновенное.
  */
-export function AddExerciseDialog({ existingIds, adding, onAdd, onClose }: AddExerciseDialogProps) {
+export function AddExerciseDialog({ existingIds, adding, onAdd, onClose, target = 'workout' }: AddExerciseDialogProps) {
+  const where = target === 'template' ? 'в комплекс' : 'в тренировку';
+  const alreadyText = target === 'template' ? 'уже в комплексе' : 'уже в тренировке';
   const [search, setSearch] = useState('');
   const [bodyPart, setBodyPart] = useState<BodyPart | null>(null);
   const [equipment, setEquipment] = useState<Equipment | null>(null);
@@ -66,12 +70,12 @@ export function AddExerciseDialog({ existingIds, adding, onAdd, onClose }: AddEx
   }
 
   if (info) {
-    const already = existingIds.includes(info.id);
+    const alreadyAdded = existingIds.includes(info.id);
     return (
       <Dialog open onClose={onClose} onBack={() => setInfo(null)} title={info.name}>
         <ExerciseInfo exercise={info} />
-        <Button fullWidth disabled={adding || already} onClick={() => onAdd(info.id)}>
-          {already ? 'Уже в тренировке' : 'Добавить в тренировку'}
+        <Button fullWidth disabled={adding || alreadyAdded} onClick={() => onAdd(info.id)}>
+          {alreadyAdded ? `${alreadyText[0].toUpperCase()}${alreadyText.slice(1)}` : `Добавить ${where}`}
         </Button>
         {info.custom && <DeleteExerciseButton exercise={info} onDeleted={() => setInfo(null)} />}
       </Dialog>
@@ -94,6 +98,7 @@ export function AddExerciseDialog({ existingIds, adding, onAdd, onClose }: AddEx
       key={exercise.id}
       exercise={exercise}
       already={existingIds.includes(exercise.id)}
+      alreadyText={alreadyText}
       adding={adding}
       onAdd={onAdd}
       onInfo={setInfo}
@@ -231,12 +236,14 @@ function Categories({
 function CatalogRow({
   exercise,
   already,
+  alreadyText,
   adding,
   onAdd,
   onInfo,
 }: {
   exercise: CatalogExercise;
   already: boolean;
+  alreadyText: string;
   adding: boolean;
   onAdd: (exerciseId: string) => void;
   onInfo: (exercise: CatalogExercise) => void;
@@ -255,9 +262,7 @@ function CatalogRow({
             {exercise.name}
             {exercise.custom && <span className={styles.muted}> · своё</span>}
           </span>
-          <span className={styles.muted}>
-            {already ? 'уже в тренировке' : musclesText(exercise.muscles, 'PRIMARY')}
-          </span>
+          <span className={styles.muted}>{already ? alreadyText : musclesText(exercise.muscles, 'PRIMARY')}</span>
         </span>
       </button>
       <button

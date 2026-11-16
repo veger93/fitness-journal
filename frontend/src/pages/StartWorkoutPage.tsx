@@ -9,6 +9,7 @@ import { SectionLabel } from '../components/ui/SectionLabel';
 import { ConfirmDialog } from '../components/workout/ConfirmDialog';
 import { CURRENT_WORKOUT_KEY, useCurrentWorkout } from '../hooks/useWorkout';
 import { completedToday, todayOf } from '../lib/plan';
+import { templateColor } from '../lib/templates';
 import styles from './WorkoutPages.module.css';
 
 /**
@@ -178,6 +179,26 @@ function TemplateGroup({
               <span className={styles.templateName}>{template.name}</span>
               <span className={styles.muted}>{exercisesLabel(template.exercises.length)}</span>
             </button>
+            {/* ✎ — открыть комплекс: посмотреть, поменять упражнения, порядок, название */}
+            <Link
+              to={`/templates/${template.id}`}
+              className={styles.templateEdit}
+              aria-label={`Открыть комплекс ${template.name}`}
+            >
+              <svg
+                aria-hidden="true"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" />
+              </svg>
+            </Link>
             {onDelete && (
               <button
                 type="button"
@@ -204,27 +225,6 @@ function TemplateGroup({
       </div>
     </section>
   );
-}
-
-/** Цвета меток комплексов — читаются и на светлой, и на тёмной карточке */
-const TEMPLATE_COLORS: Record<string, string> = {
-  violet: '#7c3aed',
-  green: '#16a34a',
-  blue: '#2563eb',
-  orange: '#ea580c',
-};
-const PALETTE = Object.values(TEMPLATE_COLORS);
-
-/** Свой цвет у комплекса (у готовых он есть); нет — стабильный цвет по id, чтобы метка не "прыгала" */
-function templateColor(template: WorkoutTemplate): string {
-  if (template.color && TEMPLATE_COLORS[template.color]) {
-    return TEMPLATE_COLORS[template.color];
-  }
-  let hash = 0;
-  for (const char of template.id) {
-    hash = (hash * 31 + char.charCodeAt(0)) | 0;
-  }
-  return PALETTE[Math.abs(hash) % PALETTE.length];
 }
 
 /** 1 упражнение, 2 упражнения, 5 упражнений — склонение по-русски */

@@ -201,6 +201,11 @@ export const workoutsApi = {
   /** Свой комплекс. color — ключ из палитры бэкенда (orange, blue, green, violet). */
   createTemplate: (name: string, exerciseIds: string[], color = 'blue') =>
     api<WorkoutTemplate>('/api/templates', { method: 'POST', body: { name, color, icon: null, exerciseIds } }),
+  /** PUT = полная замена: имя, цвет и упражнения в нужном порядке */
+  updateTemplate: (id: string, body: { name: string; color: string; exerciseIds: string[] }) =>
+    api<WorkoutTemplate>(`/api/templates/${id}`, { method: 'PUT', body: { ...body, icon: null } }),
+  /** готовый комплекс → копия в «Мои», чтобы менять под себя */
+  copyTemplate: (id: string) => api<WorkoutTemplate>(`/api/templates/${id}/copy`, { method: 'POST' }),
   plan: () => api<WeeklyPlan>('/api/plan'),
   savePlan: (days: { dayOfWeek: DayOfWeek; templateId: string | null }[]) =>
     api<WeeklyPlan>('/api/plan', { method: 'PUT', body: { days } }),
