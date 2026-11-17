@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Vegas — дневник тренировок</title>
     <!-- описание сайта в выдаче поисковиков и в превью ссылок в мессенджерах -->
-    <meta name="description" content="Дневник тренировок с аналитикой: графики силы, рекорды, подсказки, когда добавить вес, и детектор плато. Бесплатно, без рекламы." />
+    <meta
+      name="description"
+      content="Дневник тренировок с аналитикой: графики силы, рекорды, подсказки, когда добавить вес, и детектор плато. Бесплатно, без рекламы."
+    />
     <!--
       Превью ссылки в Telegram, WhatsApp, VK и др. (протокол Open Graph): заголовок, описание и картинка 1200×630.
       Адреса — полные, с доменом: мессенджер скачивает картинку сам, относительный путь он не поймёт.
@@ -15,7 +18,10 @@
     <meta property="og:locale" content="ru_RU" />
     <meta property="og:url" content="https://vegas-fit.ru/" />
     <meta property="og:title" content="Vegas — дневник тренировок" />
-    <meta property="og:description" content="Графики силы, рекорды и подсказки, когда добавить вес. Бесплатно, без рекламы." />
+    <meta
+      property="og:description"
+      content="Графики силы, рекорды и подсказки, когда добавить вес. Бесплатно, без рекламы."
+    />
     <meta property="og:image" content="https://vegas-fit.ru/og.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -31,18 +37,33 @@
     <meta name="theme-color" content="#eef1f5" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
     <script>
-      // Тему ставим ДО загрузки React: иначе тёмная тема на мгновение мигнёт светлой.
+      // Тему и стиль ставим ДО загрузки React: иначе страница на мгновение мигнёт не тем оформлением.
       // Логика та же, что в src/theme/theme.ts (здесь копия — React ещё не загружен).
       (function () {
         var choice = 'system';
-        try { choice = localStorage.getItem('vegas.theme') || 'system'; } catch (e) {}
-        var dark = choice === 'dark' ||
-          (choice === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var skin = 'classic';
+        try {
+          choice = localStorage.getItem('vegas.theme') || 'system';
+        } catch (e) {}
+        try {
+          skin = localStorage.getItem('vegas.skin') || 'classic';
+        } catch (e) {}
+        // стиль «Тетрадь» пока только светлый (src/theme/skin.ts, forcesLight)
+        var notebook = skin === 'notebook';
+        var dark =
+          !notebook &&
+          (choice === 'dark' || (choice === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches));
         document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-        // цвет полосы браузера — как THEME_COLOR в src/theme/theme.ts
-        document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#0b0f17' : '#eef1f5');
+        document.documentElement.dataset.skin = notebook ? 'notebook' : 'classic';
+        // цвет полосы браузера — как THEME_COLOR в src/theme/theme.ts и themeColor в src/theme/skin.ts
+        document
+          .querySelector('meta[name="theme-color"]')
+          .setAttribute('content', dark ? '#0b0f17' : notebook ? '#fbfaf5' : '#eef1f5');
       })();
     </script>
   </head>

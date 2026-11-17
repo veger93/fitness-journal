@@ -31,7 +31,7 @@ export function ListRow({ title, text, mark, tone = 'plain', value, to, onClick,
   const body = (
     <>
       {mark && (
-        <span className={`${styles.mark} ${styles[tone]}`} aria-hidden="true">
+        <span className={`ui-mark ${styles.mark} ${styles[tone]}`} aria-hidden="true">
           {mark}
         </span>
       )}
@@ -74,7 +74,7 @@ export function ListRow({ title, text, mark, tone = 'plain', value, to, onClick,
 /** Карточка-список для ListRow: строки через разделитель */
 export function ListRowGroup({ children, label }: { children: ReactNode; label?: string }) {
   return (
-    <div className={styles.group} role={label ? 'group' : undefined} aria-label={label}>
+    <div className={`ui-list ${styles.group}`} role={label ? 'group' : undefined} aria-label={label}>
       {children}
     </div>
   );

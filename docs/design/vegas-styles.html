@@ -1,0 +1,709 @@
+<title>Vegas: три стиля</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Golos+Text:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;800&display=swap">
+<style>
+/* Раскладка: шапка с выбором стиля → одна горизонтальная лента из всех экранов приложения (телефоны в ряд). */
+:root{
+  --bg:#eef0f4; --fg:#131722; --muted:#566076; --line:#d3d8e2; --panel:#ffffff; --pick:#131722; --pick-fg:#ffffff; --bezel:#131722; --focus:#2443ff;
+  --ui:'Golos Text',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --head:'Manrope','Golos Text',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#0c0e14; --fg:#eceff6; --muted:#9aa3b8; --line:#2a3040; --panel:#161a24; --pick:#eceff6; --pick-fg:#0c0e14; --bezel:#2a3040; --focus:#8ea2ff; color-scheme:dark } }
+:root[data-theme="dark"]{ --bg:#0c0e14; --fg:#eceff6; --muted:#9aa3b8; --line:#2a3040; --panel:#161a24; --pick:#eceff6; --pick-fg:#0c0e14; --bezel:#2a3040; --focus:#8ea2ff; color-scheme:dark }
+
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--ui);padding-block:28px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.top h1{margin:0;font:800 clamp(28px,5vw,44px)/1.05 var(--head);letter-spacing:-.02em;text-wrap:balance}
+.top p{margin:0;max-width:65ch;color:var(--muted)}
+.picker{border:0;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:10px}
+.picker legend{padding:0;margin-bottom:8px;font-weight:600}
+.pick{position:relative;display:block}
+.pick input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.pick span{display:flex;flex-direction:column;gap:2px;height:100%;box-sizing:border-box;padding:12px 16px;border-radius:14px;border:2px solid var(--line);background:var(--panel)}
+.pick b{font:700 17px var(--head)}
+.pick small{color:var(--muted);font-size:13px}
+.pick input:checked + span{border-color:var(--pick);background:var(--pick);color:var(--pick-fg)}
+.pick input:checked + span small{color:inherit;opacity:.8}
+.pick input:focus-visible + span{outline:2px solid var(--focus);outline-offset:2px}
+.about{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:10px}
+.about div{background:var(--panel);border-radius:14px;padding:12px 16px;min-width:0}
+.about h2{margin:0 0 4px;font:600 12px var(--ui);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.about p{font-size:14px;color:var(--fg)}
+.tools{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.replay{height:44px;padding:0 18px;border-radius:999px;border:2px solid var(--fg);background:transparent;color:var(--fg);font:600 14px var(--ui);cursor:pointer}
+.replay:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.tools span{font-size:13px;color:var(--muted)}
+
+/* лента экранов: прокручивается сама, страница вбок не едет */
+.rail{margin:22px calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:8px max(16px,env(safe-area-inset-left,0px)) 20px;display:flex;gap:22px;overflow-x:auto;scroll-snap-type:x proximity}
+.shot{margin:0;flex:none;display:flex;flex-direction:column;gap:8px;scroll-snap-align:start}
+.shot figcaption{display:flex;flex-direction:column;font-size:13px;color:var(--muted)}
+.shot figcaption b{color:var(--fg);font:600 14px var(--ui)}
+
+/* ---------- три стиля: токены экрана ---------- */
+.stage[data-style="a"]{ /* Стекло: светлый воздух, матовые карточки, цветные блики */
+  --p-bg:#eaeef6; --p-surface:rgb(255 255 255 / .66); --p-surface2:rgb(16 19 42 / .07); --p-solid:#f6f8fc; --p-text:#10132a; --p-muted:#555c78; --p-line:rgb(255 255 255 / .9); --p-rule:rgb(16 19 42 / .1);
+  --p-accent:#3350f5; --p-on-accent:#ffffff; --p-btn:#10132a; --p-on-btn:#ffffff; --p-hot:#d81f6a; --p-on-hot:#ffffff; --p-good:#0b7a52; --p-on-good:#ffffff; --p-good-soft:rgb(11 122 82 / .13);
+  --p-warn-soft:#fff0d2; --p-warn-text:#5b3d00; --p-hero:rgb(16 19 42 / .92); --p-hero-text:#ffffff; --p-hero-track:rgb(255 255 255 / .2); --p-hero-ring:#7ef0c7;
+  --p-r:24px; --p-rs:14px; --p-bw:1px; --p-font:'Manrope','Golos Text',system-ui,sans-serif; --p-display:'Manrope','Golos Text',system-ui,sans-serif; --p-case:none; --p-ls:-.02em;
+  --h1:26px; --h2:17px; --numsz:26px; --dw:800;
+  --p-tab:rgb(255 255 255 / .72); --p-tab-fg:#555c78; --p-tab-on:#10132a; --p-tab-on-fg:#ffffff }
+.stage[data-style="b"]{ /* Метро: чёрный и жёлтый, как у Metrofitness; объёмные кнопки, серии и уровни */
+  --p-bg:#0a0a0a; --p-surface:#1a1a1a; --p-surface2:#2b2b2b; --p-solid:#0a0a0a; --p-text:#f7f7f7; --p-muted:#a3a3a3; --p-line:#303030; --p-rule:#303030;
+  --p-accent:#fff200; --p-on-accent:#0c151a; --p-btn:#fff200; --p-on-btn:#0c151a; --p-hot:#fff200; --p-on-hot:#0c151a; --p-good:#3ddc84; --p-on-good:#06281a; --p-good-soft:#12301f;
+  --p-warn-soft:#332d00; --p-warn-text:#fff7a0; --p-hero:#fff200; --p-hero-text:#0c151a; --p-hero-track:rgb(12 21 26 / .16); --p-hero-ring:#0c151a;
+  --p-r:18px; --p-rs:12px; --p-bw:1px; --p-font:'Onest','Golos Text',system-ui,sans-serif; --p-display:'Unbounded','Onest',system-ui,sans-serif; --p-case:uppercase; --p-ls:0;
+  --h1:19px; --h2:13.5px; --numsz:21px; --dw:800;
+  --p-tab:#1a1a1a; --p-tab-fg:#a3a3a3; --p-tab-on:#fff200; --p-tab-on-fg:#0c151a }
+.stage[data-style="c"]{ /* Тетрадь: бумага в клетку, синяя ручка, маркер и стикеры */
+  --p-bg:#fbfaf5; --p-surface:#fffef9; --p-surface2:#e6ebf7; --p-solid:#fbfaf5; --p-text:#1b2a6b; --p-muted:#4d568a; --p-line:#1b2a6b; --p-rule:rgb(27 42 107 / .22);
+  --p-accent:#ffe14d; --p-on-accent:#1b2a6b; --p-btn:#1b2a6b; --p-on-btn:#ffffff; --p-hot:#d7263d; --p-on-hot:#ffffff; --p-good:#1c7c3c; --p-on-good:#ffffff; --p-good-soft:#d9f2dd;
+  --p-warn-soft:#ffe9d6; --p-warn-text:#6b2a00; --p-hero:#ffe97a; --p-hero-text:#1b2a6b; --p-hero-track:rgb(27 42 107 / .16); --p-hero-ring:#d7263d;
+  --p-r:16px; --p-rs:10px; --p-bw:2px; --p-font:'Golos Text',system-ui,sans-serif; --p-display:'Caveat','Golos Text',cursive; --p-case:none; --p-ls:0;
+  --h1:36px; --h2:25px; --numsz:34px; --dw:700;
+  --p-tab:#fffef9; --p-tab-fg:#4d568a; --p-tab-on:#ffe14d; --p-tab-on-fg:#1b2a6b }
+
+/* ---------- экран-телефон и его детали ---------- */
+.phone{position:relative;width:320px;height:690px;border-radius:40px;border:8px solid var(--bezel);overflow:hidden;background:var(--p-bg);color:var(--p-text);font:500 14px/1.4 var(--p-font);box-sizing:content-box;isolation:isolate}
+.scr{position:relative;height:100%;box-sizing:border-box;padding:20px 16px 78px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.scr.no-tab{padding-bottom:18px}
+.phone p{margin:0}
+.eyebrow{font-size:12.5px;color:var(--p-muted)}
+.h1{font:var(--dw) var(--h1)/1.08 var(--p-display);text-transform:var(--p-case);letter-spacing:var(--p-ls);text-wrap:balance}
+.h2{font:var(--dw) var(--h2)/1.2 var(--p-display);text-transform:var(--p-case);letter-spacing:var(--p-ls)}
+.lbl{font:700 11.5px/1 var(--p-font);letter-spacing:.07em;text-transform:uppercase;color:var(--p-muted);margin-top:2px}
+.muted{color:var(--p-muted);font-size:13px}
+.num{font:var(--dw) var(--numsz)/1 var(--p-display);font-variant-numeric:tabular-nums;white-space:nowrap}
+.num.xl{font-size:calc(var(--numsz) * 1.35)}
+.sp{flex:1;min-width:0}
+.hstack{display:flex;align-items:center;gap:12px}
+.between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card{background:var(--p-surface);border-radius:var(--p-r);padding:12px 14px;display:flex;flex-direction:column;gap:6px;border:var(--p-bw) solid var(--p-line)}
+.hero{background:var(--p-hero);color:var(--p-hero-text);border-radius:var(--p-r);padding:14px;display:flex;flex-direction:column;gap:10px;border:var(--p-bw) solid var(--p-line)}
+.hero .muted,.hero .eyebrow{color:inherit;opacity:.78}
+.btn{height:48px;border-radius:999px;background:var(--p-btn);color:var(--p-on-btn);font:800 14.5px var(--p-font);display:flex;align-items:center;justify-content:center;gap:6px;padding:0 18px;flex:none}
+.btn.ghost{background:transparent;color:var(--p-text);box-shadow:inset 0 0 0 2px var(--p-text)}
+.btn.sm{height:36px;font-size:13px;padding:0 14px}
+.btn.danger{background:#d92d20;color:#fff}
+.link{font-weight:700;text-decoration:underline;text-underline-offset:3px;font-size:13px}
+.chips{display:flex;gap:6px;overflow:hidden}
+.chips.wrap{flex-wrap:wrap}
+.chip{flex:none;height:34px;padding:0 12px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;font-weight:700;font-size:12.5px;background:var(--p-surface2)}
+.chip.on{background:var(--p-btn);color:var(--p-on-btn)}
+.chip.done{background:var(--p-good-soft);box-shadow:inset 0 0 0 2px var(--p-good)}
+.row{display:flex;align-items:center;gap:10px;min-height:44px;padding:3px 0}
+.row + .row{border-top:1px solid var(--p-rule)}
+.row b{font-weight:700}
+.mark{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-size:12.5px;background:var(--p-surface2)}
+.mark.ok{background:var(--p-good);color:var(--p-on-good)}
+.mark.hot{background:var(--p-hot);color:var(--p-on-hot)}
+.ibs{display:flex;gap:4px;flex:none}
+.ib{width:28px;height:28px;border-radius:999px;display:grid;place-items:center;background:var(--p-surface2);font-size:12px;font-weight:800;flex:none}
+.badge{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:999px;font:800 11px var(--p-font);letter-spacing:.02em;background:var(--p-surface2);white-space:nowrap;flex:none}
+.badge.hot{background:var(--p-hot);color:var(--p-on-hot)}
+.badge.ok{background:var(--p-good);color:var(--p-on-good)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tiles.t3{grid-template-columns:repeat(3,1fr)}
+.tile{background:var(--p-surface);border:var(--p-bw) solid var(--p-line);border-radius:var(--p-r);padding:11px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tile.inv{background:var(--p-btn);color:var(--p-on-btn)}
+.tile{position:relative}
+.tile .ibs{position:absolute;right:8px;bottom:8px}
+.tile small{font-size:11.5px;color:inherit;opacity:.75}
+.bar{height:8px;border-radius:999px;background:var(--p-surface2);overflow:hidden}
+.bar > i{display:block;height:100%;width:var(--w,50%);border-radius:inherit;background:var(--p-good)}
+.hero .bar{background:var(--p-hero-track)} .hero .bar > i{background:currentColor}
+.field{height:46px;border-radius:var(--p-rs);border:var(--p-bw) solid var(--p-rule);background:var(--p-surface);display:flex;align-items:center;padding:0 14px;color:var(--p-muted);font-size:13.5px}
+.field.filled{color:var(--p-text);font-weight:600}
+.seg{display:flex;padding:3px;border-radius:999px;background:var(--p-surface2)}
+.seg span{flex:1;height:32px;display:grid;place-items:center;border-radius:999px;font-weight:700;font-size:12.5px;color:var(--p-muted)}
+.seg .on{background:var(--p-btn);color:var(--p-on-btn)}
+.stepper{display:flex;align-items:center;justify-content:space-between;background:var(--p-surface2);border-radius:var(--p-r);padding:8px 12px}
+.stepper i{width:38px;height:38px;border-radius:999px;background:var(--p-solid);display:grid;place-items:center;font-style:normal;font-weight:800;font-size:18px;border:var(--p-bw) solid var(--p-rule)}
+.stepper div{display:flex;flex-direction:column;align-items:center;gap:2px}
+.gset{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 10px;border:2px dashed var(--p-muted);border-radius:var(--p-rs);color:var(--p-muted);font-size:13px;margin-top:4px}
+.gset u{width:20px;height:20px;border-radius:999px;border:2px solid var(--p-muted);box-sizing:border-box;flex:none}
+.gset b{color:var(--p-text)}
+.check{display:flex;align-items:center;gap:8px;font-size:13px}
+.check u{width:20px;height:20px;border-radius:6px;border:2px solid var(--p-muted);box-sizing:border-box;flex:none}
+.check u.on{background:var(--p-btn);border-color:var(--p-btn)}
+.radio{width:20px;height:20px;border-radius:999px;border:2px solid var(--p-muted);box-sizing:border-box;flex:none}
+.radio.on{border:6px solid var(--p-accent)}
+.thumb{flex:none;width:42px;height:34px;border-radius:9px;background:var(--p-surface2);display:grid;place-items:center;color:var(--p-muted)}
+.note{border-radius:var(--p-rs);padding:9px 12px;background:var(--p-surface2);font-size:13px}
+.note.warn{background:var(--p-warn-soft);color:var(--p-warn-text)}
+.note.good{background:var(--p-good-soft)}
+.ico{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dock{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.tabbar{position:absolute;left:12px;right:12px;bottom:12px;height:56px;border-radius:999px;background:var(--p-tab);color:var(--p-tab-fg);display:flex;align-items:center;justify-content:space-around;padding:0 6px;border:var(--p-bw) solid var(--p-line);z-index:1}
+.tabbar span{height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:999px;font-weight:800;font-size:12.5px}
+.tabbar .on{background:var(--p-tab-on);color:var(--p-tab-on-fg);padding:0 14px}
+.dim{position:absolute;inset:0;background:rgb(5 8 16 / .55);display:flex;align-items:flex-end;z-index:2}
+.dim.center{align-items:center;padding:0 16px}
+.dim.up{align-items:flex-start;padding:64px 16px 0}
+.sheet{width:100%;box-sizing:border-box;background:var(--p-solid);border-radius:28px 28px 0 0;padding:18px 16px 20px;display:flex;flex-direction:column;gap:12px;border-top:var(--p-bw) solid var(--p-line)}
+.dim.center .sheet,.dim.up .sheet{border-radius:var(--p-r);border:var(--p-bw) solid var(--p-line)}
+.toast{position:absolute;top:14px;left:14px;right:14px;z-index:3;display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:var(--p-good);color:var(--p-on-good);font-size:13px}
+.toast b{display:block;font-size:14px}
+.ring{position:relative;flex:none;display:grid;place-items:center}
+.ring svg{display:block;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:7}
+.ring .bg{stroke:var(--ring-bg,var(--p-surface2))}
+.ring .fg{stroke:var(--ring-fg,var(--p-accent));stroke-linecap:round;stroke-dasharray:var(--c);stroke-dashoffset:var(--off)}
+.ring span{position:absolute;font:800 14px var(--p-font)}
+.hero .ring{--ring-bg:var(--p-hero-track);--ring-fg:var(--p-hero-ring)}
+.spark{display:block;width:100%;height:56px}
+.spark polyline{fill:none;stroke:var(--p-chart,var(--p-accent));stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.spark polygon{fill:var(--p-chart,var(--p-accent));opacity:.14}
+.qr{align-self:center;width:132px;height:132px;border-radius:12px;background:
+  conic-gradient(var(--p-text) 25%,transparent 0 50%,var(--p-text) 0 75%,transparent 0) 0 0/22px 22px,
+  conic-gradient(transparent 25%,var(--p-text) 0 50%,transparent 0) 7px 4px/33px 44px,#fff;border:8px solid #fff}
+.only-a,.only-b,.only-c{display:none}
+.stage[data-style="a"] .only-a,.stage[data-style="b"] .only-b,.stage[data-style="c"] .only-c{display:flex}
+
+/* ---------- характер стилей ---------- */
+/* A · Стекло: цветные блики за матовыми карточками */
+.stage[data-style="a"] .phone::before{content:"";position:absolute;inset:-20%;z-index:-1;background:
+  radial-gradient(circle at 18% 12%,#9fc4ff 0,transparent 34%),radial-gradient(circle at 88% 30%,#ffc4e3 0,transparent 32%),radial-gradient(circle at 30% 82%,#a6efd3 0,transparent 36%),radial-gradient(circle at 92% 92%,#c9c2ff 0,transparent 30%);
+  filter:blur(18px);animation:drift 16s ease-in-out infinite alternate}
+.stage[data-style="a"] .card,.stage[data-style="a"] .tile:not(.inv),.stage[data-style="a"] .tabbar,.stage[data-style="a"] .field{-webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);box-shadow:0 10px 28px rgb(16 19 42 / .08)}
+.stage[data-style="a"] .hero{border-color:rgb(255 255 255 / .18);box-shadow:0 16px 36px rgb(16 19 42 / .28)}
+.stage[data-style="a"] .spark{--p-chart:#3350f5}
+/* B · Метро: жёлтое — только главное; кнопки с нижней гранью */
+.stage[data-style="b"] .btn:not(.ghost):not(.danger){box-shadow:0 5px 0 #b3a900}
+.stage[data-style="b"] .btn.ghost{color:#fff200;box-shadow:inset 0 0 0 2px #fff200}
+.stage[data-style="b"] .hero{border:0}
+.stage[data-style="b"] .radio.on{border-color:#fff200}
+.stage[data-style="b"] .link{color:#fff200}
+.stage[data-style="b"] .num{letter-spacing:-.02em}
+.stage[data-style="b"] .h1,.stage[data-style="b"] .h2{line-height:1.25}
+/* C · Тетрадь: клетка, неровные рамки, маркер под заголовками, стикеры */
+.stage[data-style="c"] .phone{background-image:linear-gradient(rgb(27 42 107 / .1) 1px,transparent 1px),linear-gradient(90deg,rgb(27 42 107 / .1) 1px,transparent 1px);background-size:20px 20px}
+.stage[data-style="c"] .card,.stage[data-style="c"] .tile,.stage[data-style="c"] .field,.stage[data-style="c"] .tabbar{border-radius:255px 14px 225px 14px / 14px 225px 14px 255px}
+.stage[data-style="c"] .btn{border-radius:225px 18px 255px 18px / 18px 255px 18px 225px}
+.stage[data-style="c"] .h1{background:linear-gradient(transparent 58%,#ffe14d 58%,#ffe14d 92%,transparent 92%) no-repeat 0 0/100% 100%;align-self:flex-start;padding-right:6px}
+.stage[data-style="c"] .hero{border:0;border-radius:4px;box-shadow:2px 6px 14px rgb(27 42 107 / .22);transform:rotate(-1.2deg)}
+.stage[data-style="c"] .hero::before{content:"";align-self:center;width:74px;height:18px;margin:-22px 0 2px;background:rgb(215 38 61 / .28);transform:rotate(2deg)}
+.stage[data-style="c"] .badge{transform:rotate(-2deg);border-radius:4px}
+.stage[data-style="c"] .mark{border-radius:50% 45% 52% 48%;background:none;border:2px solid var(--p-line)}
+.stage[data-style="c"] .mark.ok{border-color:var(--p-good);color:var(--p-good)}
+.stage[data-style="c"] .mark.hot{border-color:var(--p-hot);color:var(--p-hot)}
+.stage[data-style="c"] .tile.inv{background:#ffe14d;color:#1b2a6b}
+.stage[data-style="c"] .spark{--p-chart:#d7263d}
+.stage[data-style="c"] .ring{--ring-fg:#d7263d}
+.stage[data-style="c"] .ring span,.stage[data-style="c"] .mark{font-family:var(--p-display);font-size:19px}
+
+/* ---------- движение ---------- */
+@keyframes rise{from{opacity:0;transform:translateY(16px) scale(.98)}}
+@keyframes pop{0%{opacity:0;transform:scale(.84)}60%{transform:scale(1.03)}}
+@keyframes sketch{from{opacity:0;transform:translateY(8px) rotate(-1.5deg)}}
+@keyframes ringIn{from{stroke-dashoffset:var(--c)}}
+@keyframes grow{from{width:0}}
+@keyframes draw{from{stroke-dashoffset:1}}
+@keyframes toastIn{0%{opacity:0;transform:translateY(-44px)}14%,100%{opacity:1;transform:none}}
+@keyframes sheetIn{from{transform:translateY(60%);opacity:0}}
+@keyframes drift{to{transform:translate(6%,-5%) rotate(8deg) scale(1.08)}}
+@keyframes wiggle{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(8deg) scale(1.14)}}
+@keyframes fall{0%{transform:translateY(-20px) rotate(0);opacity:0}15%{opacity:1}100%{transform:translateY(260px) rotate(540deg);opacity:0}}
+@keyframes marker{from{background-size:0 100%}}
+@keyframes stick{0%{transform:translateY(-26px) rotate(-9deg) scale(1.08);opacity:0}70%{transform:rotate(.6deg);opacity:1}100%{transform:rotate(-1.2deg)}}
+.stage[data-style="a"] .play .scr > *{animation:rise .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 55ms)}
+.stage[data-style="b"] .play .scr > *{animation:pop .5s cubic-bezier(.34,1.56,.64,1) both;animation-delay:calc(var(--i,0) * 50ms)}
+.stage[data-style="c"] .play .scr > *{animation:sketch .45s ease-out both;animation-delay:calc(var(--i,0) * 60ms)}
+.stage[data-style="c"] .play .scr > .h1,.stage[data-style="c"] .play .h1{animation:marker .7s .35s ease-out both}
+.stage[data-style="c"] .play .scr > .hero{animation:stick .55s .3s cubic-bezier(.2,.8,.2,1) both}
+.play .ring .fg{animation:ringIn 1.1s .25s cubic-bezier(.2,.8,.2,1) both}
+.play .bar > i{animation:grow .9s .3s cubic-bezier(.2,.8,.2,1) both}
+.play .spark polyline{stroke-dasharray:1;animation:draw 1.2s .3s ease-out both}
+.play .toast{animation:toastIn 3s both}
+.play .sheet{animation:sheetIn .45s cubic-bezier(.2,.8,.2,1) both}
+.stage[data-style="b"] .flame{animation:wiggle 1.4s ease-in-out infinite;transform-origin:50% 90%}
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}
+.confetti i{position:absolute;top:150px;width:8px;height:12px;border-radius:2px;opacity:0}
+.stage[data-style="b"] .play .confetti i{animation:fall 1.8s ease-in both;animation-delay:calc(var(--d) * 1ms)}
+@media (prefers-reduced-motion: reduce){ .stage *,.stage *::before{animation:none !important} }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7M5 10v10h14V10"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4zM10 21h4"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/></symbol>
+  <symbol id="i-cup" viewBox="0 0 24 24"><path d="M7 4h10v5a5 5 0 01-10 0zM7 6H4a3 3 0 003 3M17 6h3a3 3 0 01-3 3M12 14v4M8 20h8"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 4 5 5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/></symbol>
+</svg>
+
+<header class="top">
+  <h1>Vegas: три стиля</h1>
+  <p>Все экраны, окна и уведомления приложения в одну ленту — 39 штук. Переключите стиль: лента перерисуется целиком, с анимациями этого стиля. Листайте вбок.</p>
+  <fieldset class="picker">
+    <legend>Стиль</legend>
+    <label class="pick"><input type="radio" name="style" id="style-a" value="a" checked><span><b>A · Стекло</b><small>светлый воздух, матовые карточки, цветные блики</small></span></label>
+    <label class="pick"><input type="radio" name="style" id="style-b" value="b"><span><b>B · Метро</b><small>чёрный и жёлтый, как у Metrofitness</small></span></label>
+    <label class="pick"><input type="radio" name="style" id="style-c" value="c"><span><b>C · Тетрадь</b><small>дневник от руки: клетка, ручка, маркер, стикеры</small></span></label>
+  </fieldset>
+  <div class="about" id="about" aria-live="polite"></div>
+  <div class="tools">
+    <button type="button" class="replay" id="replay">Повторить анимации</button>
+    <span>Новое в макетах, чего в приложении ещё нет: серия недель, кольцо недели, «+кг за месяц» на итогах, мягкое «с возвращением», уровень (только в «Метро»), таймер отдыха (показан в «Стекле»).</span>
+  </div>
+</header>
+
+<main class="stage" id="stage" data-style="a">
+<div class="rail" id="rail" tabindex="0" aria-label="Экраны приложения">
+
+<figure class="shot"><figcaption><b>01 · Лендинг</b>для гостя</figcaption><div class="phone"><div class="scr no-tab">
+  <div class="between"><span class="h2">VEGAS</span><span class="link">Войти</span></div>
+  <div class="h1" style="margin-top:14px">Дневник, который видит ваш прогресс</div>
+  <p class="muted">Записывайте подходы за пару касаний. Vegas покажет рекорды, плато и когда пора прибавить вес.</p>
+  <div class="card"><div class="between"><b>Жим лёжа</b><span class="badge ok">+12,5 кг</span></div><span class="spk" data-pts="60,62,62,65,65,67,70,72.5"></span><span class="muted">8 недель · расчётный максимум</span></div>
+  <div class="tiles"><div class="tile"><span class="num">3 мин</span><small>на запись тренировки</small></div><div class="tile"><span class="num">6 нед.</span><small>программа под вас</small></div></div>
+  <div class="dock"><span class="btn">Начать бесплатно</span><span class="btn ghost">Посмотреть демо</span><p class="muted" style="text-align:center">Демо без регистрации — 10 секунд</p></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>02 · Регистрация и вход</b>для гостя</figcaption><div class="phone"><div class="scr no-tab">
+  <span class="h2">VEGAS</span>
+  <div class="h1" style="margin-top:10px">Создать аккаунт</div>
+  <p class="muted">Минута — и можно записывать первую тренировку.</p>
+  <span class="lbl">Как к вам обращаться</span><div class="field filled">Сергей</div>
+  <span class="lbl">Email</span><div class="field filled">sergey@example.ru</div>
+  <span class="lbl">Пароль</span><div class="field">не короче 8 символов</div>
+  <div class="note warn">Такой email уже зарегистрирован. Войти или восстановить пароль?</div>
+  <div class="dock"><span class="btn">Зарегистрироваться</span><p class="muted" style="text-align:center">Уже есть аккаунт? <span class="link">Войти</span></p></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>03 · О себе</b>онбординг</figcaption><div class="phone"><div class="scr no-tab">
+  <div class="h1">Расскажите о себе</div>
+  <p class="muted">Нужно для подсказок по весам. Потом можно поменять.</p>
+  <span class="lbl">Пол</span><div class="seg"><span class="on">Мужской</span><span>Женский</span></div>
+  <span class="lbl">Уровень</span>
+  <div class="card"><div class="row"><span class="radio"></span><span class="sp"><b>Новичок</b><br><span class="muted">меньше полугода</span></span></div><div class="row"><span class="radio on"></span><span class="sp"><b>Средний</b><br><span class="muted">от полугода до 2 лет</span></span></div><div class="row"><span class="radio"></span><span class="sp"><b>Опытный</b><br><span class="muted">больше 2 лет</span></span></div></div>
+  <div class="stepper"><i>−</i><div><span class="muted">Рост, см</span><span class="num">181</span></div><i>+</i></div><div class="stepper"><i>−</i><div><span class="muted">Вес, кг</span><span class="num">78</span></div><i>+</i></div>
+  <div class="dock"><span class="btn">Готово</span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>04 · Анкета программы</b>шаг 2 из 4</figcaption><div class="phone"><div class="scr no-tab">
+  <div class="between"><span class="link">← Назад</span><span class="lbl">Шаг 2 из 4</span><span class="link">Я сам</span></div>
+  <div class="bar" style="--w:50%"><i></i></div>
+  <div class="h1">Сколько готовы тренироваться?</div>
+  <p class="muted">Честно, с запасом: лучше 3 дня каждую неделю, чем 5 через раз.</p>
+  <span class="lbl">Дней в неделю</span><div class="seg"><span>2</span><span class="on">3</span><span>4</span><span>5</span></div>
+  <div class="card"><b>3 дня — всё тело каждую тренировку</b><span class="muted">Каждая мышца работает 3 раза в неделю.</span></div>
+  <span class="lbl">Время на тренировку</span><div class="seg"><span>~45 мин</span><span class="on">~60 мин</span><span>75+</span></div>
+  <p class="muted">≈ 6 упражнений за тренировку.</p>
+  <div class="dock"><span class="btn">Далее</span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>05 · Главная</b>серия и кольцо недели — новое</figcaption><div class="phone" data-tab="home"><div class="scr">
+  <div class="between"><div><div class="eyebrow">Понедельник, 16 ноября</div><div class="h1">Привет, Сергей</div></div><svg class="ico"><use href="#i-bell"/></svg></div>
+  <div class="hero"><div class="hstack"><span class="ring" data-v=".67" data-t="2/3" data-s="62"></span><div class="sp"><div class="h2"><svg class="ico flame"><use href="#i-flame"/></svg> <span data-count="5">5</span> недель подряд</div><p class="muted">До цели недели — одна тренировка. Пропуск раз в неделю серию не сбивает.</p></div></div>
+    <div class="only-b" style="flex-direction:column;gap:4px"><div class="between"><b>Уровень 7</b><span class="muted">340 / 500 очков</span></div><div class="bar" style="--w:68%"><i></i></div></div></div>
+  <div class="card"><span class="eyebrow">Сегодня по плану</span><div class="between"><div><div class="h2">День A · всё тело</div><span class="muted">6 упражнений · ~60 мин</span></div><span class="btn sm">Начать</span></div></div>
+  <span class="lbl">Сигналы</span>
+  <div class="card"><div class="row"><span class="mark hot">★</span><span class="sp"><b>Рекорд · Жим лёжа</b><br><span class="muted">92,5 кг × 5 — вчера</span></span></div><div class="row"><span class="mark">≈</span><span class="sp"><b>Плато · Тяга в наклоне</b><br><span class="muted">3 недели без роста</span></span></div><div class="row"><span class="mark">!</span><span class="sp"><b>Перегрузка · Присед</b><br><span class="muted">можно разгрузиться</span></span></div></div>
+  <div class="card"><div class="between"><b>Сила за 3 месяца</b><span class="badge ok">+8%</span></div><span class="spk" data-pts="80,82,81,84,86,85,88,90,92.5"></span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>06 · Новая тренировка</b>комплексы</figcaption><div class="phone" data-tab="workout"><div class="scr">
+  <div class="h1">Новая тренировка</div>
+  <div class="tiles"><div class="tile"><b>＋ Своя</b><small>любые упражнения</small></div><div class="tile"><b>↻ Повторить</b><small>Грудь и спина</small></div></div>
+  <div class="between"><span class="lbl">Программа</span><span class="link">Вся программа →</span></div>
+  <div class="tiles"><div class="tile"><b>День A</b><small>6 упражнений</small></div><div class="tile"><b>День B</b><small>6 упражнений</small></div></div>
+  <span class="lbl">Мои комплексы</span>
+  <div class="tiles"><div class="tile"><div class="between"><b>Грудь и спина</b><span class="ibs"><span class="ib">✎</span><span class="ib">✕</span></span></div><small>3 упражнения</small></div><div class="tile"><div class="between"><b>Ноги</b><span class="ibs"><span class="ib">✎</span><span class="ib">✕</span></span></div><small>3 упражнения</small></div></div>
+  <span class="lbl">Готовые</span>
+  <div class="tiles"><div class="tile"><b>Руки</b><small>3 упражнения</small></div><div class="tile"><b>Торс</b><small>4 упражнения</small></div></div>
+  <span class="link">План на неделю →</span>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>07 · Комплекс</b>редактирование</figcaption><div class="phone" data-tab="workout"><div class="scr">
+  <span class="link">← Новая тренировка</span>
+  <div><div class="eyebrow">Мой комплекс</div><div class="h1">Грудь и спина</div></div>
+  <span class="lbl">Название</span><div class="field filled">Грудь и спина</div>
+  <span class="lbl">Упражнения</span>
+  <div class="card"><div class="row"><span class="mark">1</span><b class="sp">Жим лёжа</b><span class="ibs"><span class="ib">↑</span><span class="ib">↓</span><span class="ib">✕</span></span></div><div class="row"><span class="mark">2</span><b class="sp">Подтягивания</b><span class="ibs"><span class="ib">↑</span><span class="ib">↓</span><span class="ib">✕</span></span></div><div class="row"><span class="mark">3</span><b class="sp">Тяга в наклоне</b><span class="ibs"><span class="ib">↑</span><span class="ib">↓</span><span class="ib">✕</span></span></div><div class="row"><b>＋ Добавить упражнение</b></div></div>
+  <div class="dock"><span class="btn">Сохранить</span><span class="btn ghost">Отменить изменения</span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>08 · Тренировка идёт</b>контроль подходов</figcaption><div class="phone" data-tab="workout"><div class="scr">
+  <div class="between"><div><div class="eyebrow">День A · всё тело</div><div class="num xl">24:15</div></div><span class="btn sm ghost">Завершить</span></div>
+  <div><div class="between"><b>Подходы 5 из 18</b><span class="muted">1 из 6 готово</span></div><div class="bar" style="--w:28%;margin-top:5px"><i></i></div></div>
+  <div class="chips"><span class="chip done">✓ Присед</span><span class="chip on">Жим лёжа · 2/3</span><span class="chip">Тяга · 0/3</span></div>
+  <div class="card"><div class="hstack"><span class="thumb"><svg class="ico"><use href="#i-db"/></svg></span><div class="sp"><div class="h2">Жим лёжа</div><span class="muted">план: 3 × 8–12 · отдых 2 мин</span></div></div>
+    <div class="note good"><b>+2,5 кг</b> — в прошлые 2 раза на 60 кг было 12, 12, 12. Пора прибавить.</div>
+    <div class="row"><span class="mark ok">✓</span><span class="sp muted">Подход 1</span><b>62,5 кг × 9</b></div><div class="row"><span class="mark ok">✓</span><span class="sp muted">Подход 2</span><b>62,5 кг × 8</b></div>
+    <div class="gset"><u></u><span class="sp">Подход 3 — записать</span><b>62,5 × 8–12</b></div></div>
+  <div class="note only-a">Отдых 1:42 — следующий подход через 18 с</div>
+  <div class="dock"><span class="btn">＋ Записать подход 3</span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>09 · Окно подхода</b>всплывающее</figcaption><div class="phone"><div class="scr no-tab"><div class="h1">24:15</div><div class="card" style="height:120px"></div></div>
+  <div class="dim"><div class="sheet"><div class="between"><div><span class="eyebrow">Подход 3 из 3</span><div class="h2">Жим лёжа</div></div><span class="ib">✕</span></div>
+    <div class="stepper"><i>−</i><div><span class="muted">Вес, кг</span><span class="num xl">62,5</span></div><i>+</i></div>
+    <div class="stepper"><i>−</i><div><span class="muted">Повторы</span><span class="num xl">8</span></div><i>+</i></div>
+    <div class="check"><u></u>Разминочный подход</div>
+    <p class="muted">Прошлый раз на этом подходе: 60 кг × 12</p>
+    <span class="btn">Готово</span><span class="btn ghost">Отмена</span></div></div>
+</div></figure>
+
+<figure class="shot"><figcaption><b>10 · Добавить упражнение</b>всплывающее</figcaption><div class="phone"><div class="scr no-tab"></div>
+  <div class="dim"><div class="sheet" style="height:92%"><div class="between"><div class="h2">Добавить упражнение</div><span class="ib">✕</span></div>
+    <div class="field">Поиск: жим, присед…</div>
+    <span class="lbl">Недавние</span><div class="chips"><span class="chip">Жим лёжа</span><span class="chip">Подтягивания</span><span class="chip">Присед</span></div>
+    <span class="lbl">Часть тела</span>
+    <div class="tiles t3"><div class="tile"><b>Грудь</b><small>14</small></div><div class="tile"><b>Спина</b><small>16</small></div><div class="tile"><b>Ноги</b><small>21</small></div><div class="tile"><b>Плечи</b><small>11</small></div><div class="tile"><b>Руки</b><small>18</small></div><div class="tile"><b>Пресс</b><small>9</small></div></div>
+    <div class="card"><div class="row"><span class="thumb"><svg class="ico"><use href="#i-db"/></svg></span><span class="sp"><b>Жим гантелей лёжа</b><br><span class="muted">грудь, трицепс</span></span><span class="ib">i</span></div><div class="row"><span class="thumb"><svg class="ico"><use href="#i-db"/></svg></span><span class="sp"><b>Сведение в кроссовере</b><br><span class="muted">грудь</span></span><span class="ib">i</span></div></div>
+    <span class="link">＋ Своё упражнение</span></div></div>
+</div></figure>
+
+<figure class="shot"><figcaption><b>11 · Как выполнять</b>карточка техники</figcaption><div class="phone"><div class="scr no-tab"></div>
+  <div class="dim"><div class="sheet" style="height:92%"><div class="between"><span class="ib">←</span><div class="h2">Жим лёжа</div><span class="ib">✕</span></div>
+    <p class="muted" style="text-align:center">Грудь · штанга</p>
+    <div class="hstack"><div class="card sp" style="height:86px;align-items:center;justify-content:center"><svg class="ico" style="width:34px;height:34px"><use href="#i-db"/></svg></div><svg class="ico"><use href="#i-swap"/></svg><div class="card sp" style="height:86px;align-items:center;justify-content:center"><svg class="ico" style="width:34px;height:34px"><use href="#i-db"/></svg></div></div>
+    <div class="chips"><span class="chip on">Грудь</span><span class="chip">Передняя дельта</span><span class="chip">Трицепс</span></div>
+    <div class="h2">Как выполнять</div>
+    <p>1. Опустите штангу к середине груди.<br>2. На выдохе выжмите вверх до почти прямых рук.</p>
+    <div class="note warn"><b>Частые ошибки</b><br>Отрывать таз от скамьи. Отбивать штангу от груди.</div>
+    <span class="btn">Понятно</span></div></div>
+</div></figure>
+
+<figure class="shot"><figcaption><b>12 · «Почти всё!»</b>завершение, план не весь</figcaption><div class="phone"><div class="scr no-tab"></div>
+  <div class="dim"><div class="sheet"><div style="display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center"><span class="ring" data-v=".83" data-t="15/18" data-s="76" style="--ring-fg:var(--p-good)"></span><div class="h1">Почти всё!</div><p class="muted">До плана дня — 3 подхода, это минут 8.</p></div>
+    <div class="card"><div class="row"><span class="mark">1</span><span class="sp">Тяга верхнего блока</span><span class="muted">2 из 3</span></div><div class="row"><span class="mark">2</span><span class="sp">Подъём на бицепс</span><span class="muted">0 из 2</span></div></div>
+    <span class="btn">Доделать</span><span class="btn ghost">Завершить так</span><p class="muted" style="text-align:center">Тренировка сохранится как есть.</p></div></div>
+</div></figure>
+
+<figure class="shot"><figcaption><b>13 · Итоги тренировки</b>плашка «План выполнен», рекорд</figcaption><div class="phone" data-tab="workout">
+  <div class="toast"><svg class="ico"><use href="#i-ok"/></svg><span><b>План дня выполнен</b>18 из 18 подходов</span></div>
+  <div class="confetti" aria-hidden="true"></div>
+  <div class="scr" style="padding-top:66px">
+  <div><div class="eyebrow">Тренировка завершена</div><div class="h1">День A · всё тело</div></div>
+  <div class="tiles t3"><div class="tile inv"><span class="num" data-count="6.4" data-suffix=" т">6,4 т</span><small>поднято</small></div><div class="tile"><span class="num" data-count="18">18</span><small>подходов</small></div><div class="tile"><span class="num" data-count="52">52</span><small>минуты</small></div></div>
+  <div class="hero"><div class="between"><span class="badge hot">Новый рекорд</span><span class="muted">личный</span></div><div class="h2">Жим лёжа — 62,5 кг × 9</div><p class="muted">На 2,5 кг больше, чем неделю назад.</p></div>
+  <div class="card"><div class="between"><b>Жим лёжа за месяц</b><span class="badge ok">+7,5 кг</span></div><span class="spk" data-pts="55,55,57.5,57.5,60,60,62.5"></span></div>
+  <div class="card"><div class="hstack"><span class="ring" data-v="1" data-t="3/3" data-s="46" style="--ring-fg:var(--p-good)"></span><span class="sp"><b>Неделя закрыта — серия 6 недель</b><br><span class="muted">Следующая тренировка — в среду.</span></span></div></div>
+  </div>
+</div></figure>
+
+<figure class="shot"><figcaption><b>14 · История</b>все тренировки</figcaption><div class="phone" data-tab="history"><div class="scr">
+  <div class="h1">История</div>
+  <div class="field filled between">Все упражнения <span>▾</span></div>
+  <span class="lbl">Ноябрь 2026</span>
+  <div class="card"><div class="between"><div class="h2">Чт, 12 нояб.</div><span class="badge hot">рекорд</span></div><span class="muted">День A · 1 ч 11 мин · 5,9 т</span>
+    <div class="row"><span class="sp"><b>Тяга верхнего блока ›</b><br><span class="muted">46 × 15 · 52 × 13 · 59 × 12, 11</span></span></div><div class="row"><span class="sp"><b>Жим от груди ★ ›</b><br><span class="muted">20 × 12 · 25 × 12 · 30 × 10, 10</span></span></div><span class="link">Подробнее →</span></div>
+  <div class="card"><div class="h2">Вт, 10 нояб.</div><span class="muted">День B · 58 мин · 5,1 т</span>
+    <div class="row"><span class="sp"><b>Румынская тяга ›</b><br><span class="muted">60 × 10, 10, 9</span></span></div><div class="row"><span class="sp"><b>Бег ›</b><br><span class="muted">2,17 км · 14:20</span></span></div></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>15 · Упражнение</b>график, плато, разгрузка</figcaption><div class="phone" data-tab="home"><div class="scr">
+  <span class="link">← Все упражнения</span>
+  <div class="between"><div><div class="h1">Жим лёжа</div><span class="muted">Грудь · штанга</span></div><span class="badge">плато 3 нед.</span></div>
+  <div class="seg"><span>1 мес</span><span class="on">3 мес</span><span>Год</span></div>
+  <div class="card"><div class="between"><span class="muted">Расчётный максимум</span><span class="num">104 кг</span></div><span class="spk" data-pts="92,94,95,97,99,101,103,104,104,104"></span></div>
+  <div class="tiles"><div class="tile"><span class="num">92,5×5</span><small>лучший подход</small></div><div class="tile"><span class="num">4,2 т</span><small>объём за неделю</small></div></div>
+  <div class="note warn"><b>Три недели без роста.</b> Смените повторы на 5–8 или дайте неделю разгрузки.</div>
+  <div class="dock"><span class="btn ghost">Разгрузиться на неделю</span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>16 · Рекорды</b></figcaption><div class="phone" data-tab="records"><div class="scr">
+  <div class="h1">Рекорды</div>
+  <div class="hero"><span class="badge hot" style="align-self:flex-start">новый · вчера</span><div class="h2">Жим лёжа</div><div class="num xl">92,5 кг × 5</div><p class="muted">Прошлый: 90 кг × 5 — 3 недели назад</p></div>
+  <span class="lbl">Все рекорды</span>
+  <div class="card"><div class="row"><span class="mark">1</span><b class="sp">Становая тяга</b><span>145 кг × 5</span></div><div class="row"><span class="mark">2</span><b class="sp">Присед</b><span>120 кг × 3</span></div><div class="row"><span class="mark">3</span><b class="sp">Подтягивания</b><span>14 повт.</span></div><div class="row"><span class="mark">4</span><b class="sp">Жим стоя</b><span>52,5 кг × 6</span></div><div class="row"><span class="mark">5</span><b class="sp">Бег 5 км</b><span>26:40</span></div></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>17 · Бег</b></figcaption><div class="phone" data-tab="records"><div class="scr">
+  <span class="link">← Главная</span><div class="h1">Бег</div>
+  <div class="tiles"><div class="tile inv"><span class="num" data-count="24.6" data-suffix=" км">24,6 км</span><small>за месяц</small></div><div class="tile"><span class="num">5:42</span><small>средний темп /км</small></div></div>
+  <div class="card"><div class="between"><b>Темп по неделям</b><span class="badge ok">быстрее на 14 с</span></div><span class="spk" data-pts="20,22,21,24,25,27,28"></span></div>
+  <span class="lbl">Пробежки</span>
+  <div class="card"><div class="row"><span class="sp"><b>5 км</b><br><span class="muted">12 нояб.</span></span><span>28:30 · 5:42 /км</span></div><div class="row"><span class="sp"><b>2,17 км</b><br><span class="muted">10 нояб.</span></span><span>14:20 · 6:36 /км</span></div><div class="row"><span class="sp"><b>5 км</b><br><span class="muted">6 нояб.</span></span><span>29:10 · 5:50 /км</span></div></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>18 · План недели</b></figcaption><div class="phone" data-tab="workout"><div class="scr">
+  <div class="h1">План на неделю</div>
+  <div class="card"><div class="row"><b class="sp">Пн <span class="badge hot">сегодня</span></b><span class="chip">День A ▾</span></div><div class="row"><b class="sp">Вт</b><span class="muted">Отдых ▾</span></div><div class="row"><b class="sp">Ср</b><span class="chip">День B ▾</span></div><div class="row"><b class="sp">Чт</b><span class="muted">Отдых ▾</span></div><div class="row"><b class="sp">Пт</b><span class="chip">День A ▾</span></div><div class="row"><b class="sp">Сб</b><span class="muted">Отдых ▾</span></div><div class="row"><b class="sp">Вс</b><span class="muted">Отдых ▾</span></div></div>
+  <div class="note good">Грудь, спина и ноги — по 3 раза в неделю ✓</div>
+  <div class="dock"><span class="btn">Сохранить план</span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>19 · Программа</b></figcaption><div class="phone" data-tab="profile"><div class="scr">
+  <span class="link">← Профиль</span>
+  <div><div class="h1">Ваша программа</div><span class="muted">Набрать мышцы · 3 дня · ~60 мин · зал</span></div>
+  <div class="hero"><div class="between"><div class="h2">Всё тело × 3</div><span class="muted">неделя 2 из 6</span></div><div class="bar" style="--w:33%"><i></i></div><p class="muted">Пересмотр — 26 декабря</p></div>
+  <div class="card"><div class="between"><div class="hstack"><span class="mark">Пн</span><b>День A · всё тело</b></div><span>⌄</span></div>
+    <div class="row"><span class="mark">1</span><span class="sp"><b>Присед со штангой</b><br><span class="muted">3 × 8–12 · отдых 2 мин</span></span><svg class="ico"><use href="#i-swap"/></svg></div>
+    <div class="row"><span class="mark">2</span><span class="sp"><b>Жим гантелей лёжа</b><br><span class="muted">3 × 8–12 · вместо: жим лёжа</span></span><span class="badge">заменено</span></div>
+    <div class="row"><span class="mark">3</span><span class="sp"><b>Тяга верхнего блока</b><br><span class="muted">3 × 8–12 · отдых 2 мин</span></span><svg class="ico"><use href="#i-swap"/></svg></div></div>
+  <div class="card"><div class="between"><div class="hstack"><span class="mark">Ср</span><b>День B · всё тело</b></div><span>›</span></div></div>
+  <div class="note"><b>Почему так:</b> каждая мышца — 3 раза в неделю. ACSM 2009</div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>20 · Замена упражнения</b>всплывающее</figcaption><div class="phone"><div class="scr no-tab"></div>
+  <div class="dim"><div class="sheet" style="height:90%"><div class="between"><div class="h2">Заменить: жим лёжа</div><span class="ib">✕</span></div>
+    <p class="muted">Только упражнения на ту же работу мышц. «i» — как выполнять.</p>
+    <div class="card"><div class="row"><span class="radio on"></span><span class="thumb"><svg class="ico"><use href="#i-db"/></svg></span><span class="sp"><b>Жим гантелей лёжа</b><br><span class="muted">уже делали: 32 кг × 10</span></span><span class="ib">i</span></div><div class="row"><span class="radio"></span><span class="thumb"><svg class="ico"><use href="#i-db"/></svg></span><span class="sp"><b>Жим в тренажёре</b><br><span class="muted">ещё не делали</span></span><span class="ib">i</span></div><div class="row"><span class="radio"></span><span class="thumb"><svg class="ico"><use href="#i-db"/></svg></span><span class="sp"><b>Отжимания от пола</b><br><span class="muted">уже есть в «День B»</span></span><span class="ib">i</span></div></div>
+    <div class="check"><u></u>Больше не предлагать: жим лёжа</div>
+    <div class="note"><b>Заменить можно один раз.</b> История прежнего упражнения сохранится.</div>
+    <div class="dock"><span class="btn">Заменить</span><span class="btn ghost">Отмена</span></div></div></div>
+</div></figure>
+
+<figure class="shot"><figcaption><b>21 · Отчёт за месяц</b></figcaption><div class="phone" data-tab="home"><div class="scr">
+  <div><div class="eyebrow">Отчёт за месяц</div><div class="h1">Октябрь 2026</div></div>
+  <div class="tiles"><div class="tile inv"><span class="num" data-count="11">11</span><small>тренировок</small></div><div class="tile"><span class="num" data-count="68" data-suffix=" т">68 т</span><small>поднято · +8%</small></div></div>
+  <div class="card"><b>Где прибавили</b><div class="row"><span class="sp">Жим лёжа</span><span class="badge ok">+5 кг</span></div><div class="row"><span class="sp">Присед</span><span class="badge ok">+7,5 кг</span></div><div class="row"><span class="sp">Тяга в наклоне</span><span class="badge">без изменений</span></div></div>
+  <div class="card"><div class="between"><b>Тоннаж по неделям</b><span class="muted">т</span></div><span class="spk" data-pts="14,16,15,18,17,19"></span></div>
+  <div class="dock"><span class="btn ghost">Поделиться картинкой</span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>22 · Уведомления</b>колокольчик</figcaption><div class="phone" data-tab="home"><div class="scr">
+  <div class="between"><div class="h1">Уведомления</div><span class="link">Прочитать все</span></div>
+  <div class="card"><div class="between"><span class="badge hot">Рекорд</span><span class="muted">вчера</span></div><b>Жим лёжа — 92,5 кг × 5</b><span class="muted">На 2,5 кг больше прошлого рекорда.</span></div>
+  <div class="card"><div class="between"><span class="badge">Пересмотр программы</span><span class="muted">сегодня</span></div><b>Прошло 6 недель с начала программы</b><span class="btn sm" style="align-self:flex-start">Пройти анкету</span></div>
+  <div class="card"><div class="between"><span class="badge">Итоги месяца</span><span class="muted">1 нояб.</span></div><b>Октябрь: 11 тренировок, 68 т</b><span class="link">Открыть отчёт</span></div>
+  <div class="card"><div class="between"><span class="badge ok">С возвращением</span><span class="muted">новое</span></div><b>9 дней без тренировок — бывает</b><span class="muted">Начните с привычных упражнений и весов чуть легче. Серия подождёт.</span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>23 · Профиль</b></figcaption><div class="phone" data-tab="profile"><div class="scr">
+  <div><div class="h1">Профиль</div><span class="muted">sergey@example.ru · подтверждён ✓</span></div>
+  <span class="lbl">Программа тренировок</span>
+  <div class="card"><div class="row"><span class="mark hot">3×</span><span class="sp"><b>Всё тело × 3</b><br><span class="muted">Набрать мышцы · неделя 2 из 6</span></span><span>›</span></div><div class="row"><span class="mark">↻</span><span class="sp"><b>Пройти анкету заново</b></span><span>›</span></div><div class="row"><span class="mark">–</span><span class="sp"><b>Не предлагать</b><br><span class="muted">жим лёжа</span></span><span class="link">Вернуть</span></div></div>
+  <div class="tiles"><div class="tile"><span class="num">181</span><small>рост, см</small></div><div class="tile"><span class="num">78,4</span><small>вес, кг · −0,6 за месяц</small></div></div>
+  <div class="card"><div class="between"><b>Напоминания о тренировке</b><span class="badge ok">вкл</span></div><span class="muted">в дни плана, в 19:00</span></div>
+  <div class="seg"><span>Светлая</span><span class="on">Тёмная</span><span>Как в системе</span></div>
+  <div class="between"><span class="btn sm ghost">Выйти</span><span class="link">Удалить аккаунт</span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>24 · Режим тренера</b>клиенты</figcaption><div class="phone" data-tab="home"><div class="scr">
+  <div class="note"><div class="between"><span>Вы в дневнике: <b>Анна</b></span><span class="link">✕ К себе</span></div></div>
+  <div class="h1">Клиенты</div>
+  <div class="card"><div class="row"><span class="mark hot">А</span><span class="sp"><b>Анна</b><br><span class="muted">тренировалась вчера</span></span><span class="badge hot">рекорд</span></div><div class="row"><span class="mark">И</span><span class="sp"><b>Игорь</b><br><span class="muted">жим лёжа стоит на месте</span></span><span class="badge">плато · 3 нед</span></div><div class="row"><span class="mark">О</span><span class="sp"><b>Олег</b><br><span class="muted">нет тренировок 9 дней</span></span><span class="badge">пропал</span></div><div class="row"><span class="mark">М</span><span class="sp"><b>Марина</b><br><span class="muted">всё по плану</span></span><span class="badge ok">в норме</span></div></div>
+  <div class="dock"><span class="btn">＋ Новый клиент</span><span class="btn ghost">Передать аккаунт клиенту</span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>25 · Состояния</b>пусто, ошибка, демо, код</figcaption><div class="phone" data-tab="history"><div class="scr">
+  <div class="note"><div class="between"><span><b>ДЕМО</b> · удалится через 23 ч</span><span class="btn sm">Регистрация</span></div></div>
+  <div class="hero"><div class="h2">Здесь появятся тренировки</div><p class="muted">Запишите первую — и увидите прогресс по каждому упражнению.</p><span class="link">Начать тренировку →</span></div>
+  <div class="card"><div class="row"><span class="mark">!</span><span class="sp"><b>Подход 3 не сохранён</b><br><span class="muted">нет сети — нажмите, чтобы повторить</span></span></div></div>
+  <div class="card"><b>Подтвердите email</b><span class="muted">Код из письма на sergey@example.ru</span><div class="hstack"><div class="field filled sp" style="justify-content:center">4</div><div class="field filled sp" style="justify-content:center">1</div><div class="field filled sp" style="justify-content:center">7</div><div class="field sp"></div><div class="field sp"></div><div class="field sp"></div></div></div>
+  <div class="note warn">Не получилось загрузить. Проверьте сеть и потяните вниз, чтобы обновить.</div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>26 · Подтверждение</b>окно по центру</figcaption><div class="phone"><div class="scr no-tab"><div class="h1">Профиль</div><div class="card" style="height:140px"></div></div>
+  <div class="dim center"><div class="sheet"><div class="h2">Удалить аккаунт?</div><p class="muted">Тренировки, рекорды и программа удалятся навсегда. Отменить это нельзя.</p><span class="lbl">Пароль</span><div class="field">введите пароль</div><span class="btn danger">Удалить навсегда</span><span class="btn ghost">Отмена</span></div></div>
+</div></figure>
+
+<figure class="shot"><figcaption><b>27 · Все упражнения</b>список с состоянием</figcaption><div class="phone" data-tab="home"><div class="scr">
+  <span class="link">← Главная</span><div class="h1">Упражнения</div>
+  <div class="field">Поиск по названию</div>
+  <div class="chips"><span class="chip on">Все</span><span class="chip">Грудь</span><span class="chip">Спина</span><span class="chip">Ноги</span></div>
+  <div class="card"><div class="row"><span class="sp"><b>Жим лёжа</b><br><span class="muted">92,5 кг × 5 · вчера</span></span><span class="badge hot">рекорд</span></div><div class="row"><span class="sp"><b>Тяга в наклоне</b><br><span class="muted">62,5 кг × 8 · 3 дня назад</span></span><span class="badge">плато</span></div><div class="row"><span class="sp"><b>Присед со штангой</b><br><span class="muted">100 кг × 6 · 5 дней назад</span></span><span class="badge">перегрузка</span></div><div class="row"><span class="sp"><b>Подтягивания</b><br><span class="muted">11 повт. · вчера</span></span><span class="badge ok">растёт</span></div><div class="row"><span class="sp"><b>Бег</b><br><span class="muted">5 км · 28:30</span></span><span>›</span></div></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>28 · Сброс пароля</b>код из письма</figcaption><div class="phone"><div class="scr no-tab">
+  <span class="h2">VEGAS</span><div class="h1" style="margin-top:10px">Новый пароль</div>
+  <p class="muted">Отправили код на sergey@example.ru. Он действует 15 минут.</p>
+  <span class="lbl">Код из письма</span>
+  <div class="hstack" style="gap:6px"><div class="field filled sp" style="justify-content:center;padding:0">4</div><div class="field filled sp" style="justify-content:center;padding:0">1</div><div class="field filled sp" style="justify-content:center;padding:0">7</div><div class="field sp" style="padding:0"></div><div class="field sp" style="padding:0"></div><div class="field sp" style="padding:0"></div></div>
+  <span class="lbl">Новый пароль</span><div class="field">не короче 8 символов</div>
+  <span class="link">Отправить код ещё раз</span>
+  <div class="dock"><span class="btn">Сменить пароль</span><span class="btn ghost">Вернуться ко входу</span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>29 · Демо готовится</b>экран ожидания</figcaption><div class="phone"><div class="scr no-tab" style="justify-content:center;align-items:center;text-align:center">
+  <span class="ring" data-v=".6" data-t="60%" data-s="96"></span>
+  <div class="h1">Готовим ваш дневник…</div>
+  <p class="muted">Создаём три месяца тренировок, рекорды и плато — чтобы было что посмотреть.</p>
+  <div class="card" style="align-self:stretch;text-align:left"><div class="row"><span class="mark ok">✓</span><b>Аккаунт</b></div><div class="row"><span class="mark ok">✓</span><b>Тренировки</b></div><div class="row"><span class="mark">…</span><span class="muted">Графики и рекорды</span></div></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>30 · Передать аккаунт</b>тренер → клиент, QR</figcaption><div class="phone"><div class="scr no-tab"><div class="h1">Анна</div><div class="card" style="height:150px"></div></div>
+  <div class="dim center"><div class="sheet"><div class="between"><div class="h2">Передать аккаунт</div><span class="ib">✕</span></div><p class="muted">Пусть Анна наведёт камеру телефона на код или откроет ссылку.</p><div class="qr" role="img" aria-label="QR-код ссылки"></div><div class="field filled" style="font-size:12px">vegas-fit.ru/claim/7f3a…c21</div><span class="btn">Скопировать ссылку</span><p class="muted" style="text-align:center">Ссылка действует 7 дней</p></div></div>
+</div></figure>
+
+<figure class="shot"><figcaption><b>31 · Принять аккаунт</b>клиент по ссылке тренера</figcaption><div class="phone"><div class="scr no-tab">
+  <span class="h2">VEGAS</span><div class="h1" style="margin-top:10px">Анна, это ваш дневник</div>
+  <p class="muted">Тренер Сергей вёл его за вас: 14 тренировок уже внутри. Задайте почту и пароль — и он ваш.</p>
+  <span class="lbl">Email</span><div class="field filled">anna@example.ru</div>
+  <span class="lbl">Пароль</span><div class="field">не короче 8 символов</div>
+  <div class="check"><u class="on"></u>Согласна на обработку данных</div>
+  <div class="check"><u class="on"></u>Тренер по-прежнему видит мой дневник</div>
+  <div class="dock"><span class="btn">Забрать аккаунт</span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>32 · Вес тела</b>запись и история</figcaption><div class="phone" data-tab="profile"><div class="scr">
+  <span class="link">← Профиль</span><div class="h1">Вес тела</div>
+  <div class="card"><div class="between"><span class="num xl">78,4 кг</span><span class="badge ok">−0,6 за месяц</span></div><span class="spk" data-pts="79.4,79.2,79.3,79,78.8,78.9,78.6,78.4"></span></div>
+  <div class="stepper"><i>−</i><div><span class="muted">Сегодня, кг</span><span class="num">78,4</span></div><i>+</i></div>
+  <span class="btn">Записать вес</span>
+  <div class="card"><div class="row"><span class="sp">16 ноября</span><b>78,4 кг</b></div><div class="row"><span class="sp">9 ноября</span><b>78,6 кг</b></div><div class="row"><span class="sp">2 ноября</span><b>78,9 кг</b></div></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>33 · Разгрузка</b>всплывающее</figcaption><div class="phone"><div class="scr no-tab"></div>
+  <div class="dim"><div class="sheet"><div class="between"><div class="h2">Разгрузка: присед</div><span class="ib">✕</span></div>
+    <p class="muted">Неделя легче — мышцы восстановятся, и рост пойдёт дальше.</p>
+    <div class="stepper"><i>−</i><div><span class="muted">Рабочий вес, кг</span><span class="num">80</span></div><i>+</i></div>
+    <span class="lbl">Подходов × повторов</span><div class="seg"><span class="on">2 × 8</span><span>3 × 6</span><span>2 × 10</span></div>
+    <span class="lbl">Сколько дней</span><div class="seg"><span>5</span><span class="on">7</span><span>10</span></div>
+    <div class="note good">Вернёмся к 100 кг 24 ноября. Подсказки подходов на это время возьмут вес разгрузки.</div>
+    <span class="btn">Начать разгрузку</span><span class="btn ghost">Отмена</span></div></div>
+</div></figure>
+
+<figure class="shot"><figcaption><b>34 · Своё упражнение</b>всплывающее</figcaption><div class="phone"><div class="scr no-tab"></div>
+  <div class="dim"><div class="sheet"><div class="between"><span class="ib">←</span><div class="h2">Своё упражнение</div><span class="ib">✕</span></div>
+    <span class="lbl">Название</span><div class="field filled">Тяга резины к поясу</div>
+    <span class="lbl">Часть тела</span><div class="chips wrap"><span class="chip">Грудь</span><span class="chip on">Спина</span><span class="chip">Ноги</span><span class="chip">Плечи</span><span class="chip">Руки</span><span class="chip">Пресс</span></div>
+    <span class="lbl">Снаряд</span><div class="seg"><span>Штанга</span><span>Гантели</span><span>Тренажёр</span><span class="on">Свой вес</span></div>
+    <span class="lbl">Что записывать</span><div class="seg"><span class="on">Вес и повторы</span><span>Время</span><span>Дистанция</span></div>
+    <span class="btn">Создать и добавить</span></div></div>
+</div></figure>
+
+<figure class="shot"><figcaption><b>35 · Сохранить как комплекс</b>окно по центру</figcaption><div class="phone"><div class="scr no-tab"><div class="h1">Итоги</div><div class="card" style="height:150px"></div></div>
+  <div class="dim center"><div class="sheet"><div class="h2">Сохранить как комплекс</div><span class="lbl">Название</span><div class="field">например, Верх · понедельник</div><p class="muted">Упражнений: 5. Порядок — как в тренировке.</p><span class="btn">Сохранить</span><span class="btn ghost">Отмена</span></div></div>
+</div></figure>
+
+<figure class="shot"><figcaption><b>36 · Поделиться графиком</b>картинка для соцсетей</figcaption><div class="phone"><div class="scr no-tab"></div>
+  <div class="dim"><div class="sheet"><div class="between"><div class="h2">Поделиться</div><span class="ib">✕</span></div>
+    <div class="hero"><div class="between"><b>VEGAS</b><span class="muted">3 месяца</span></div><div class="h2">Жим лёжа</div><div class="num xl">+12,5 кг</div><span class="spk" data-pts="80,82,81,84,86,85,88,90,92.5"></span></div>
+    <div class="seg"><span class="on">Светлая</span><span>Тёмная</span></div>
+    <span class="btn">Сохранить картинку</span><p class="muted" style="text-align:center">Имя и почта на картинку не попадают</p></div></div>
+</div></figure>
+
+<figure class="shot"><figcaption><b>37 · Напоминания</b>настройки</figcaption><div class="phone" data-tab="profile"><div class="scr">
+  <span class="link">← Профиль</span><div class="h1">Напоминания</div>
+  <div class="card"><div class="between"><b>О тренировке</b><span class="badge ok">вкл</span></div><div class="seg"><span class="on">В дни плана</span><span>Свои дни</span></div><div class="chips"><span class="chip on">Пн</span><span class="chip">Вт</span><span class="chip on">Ср</span><span class="chip">Чт</span><span class="chip on">Пт</span></div><div class="between"><span class="muted">Время</span><div class="field filled" style="height:38px">19:00</div></div></div>
+  <div class="card"><div class="between"><b>Давно не было тренировок</b><span class="badge ok">вкл</span></div><div class="between"><span class="muted">Напомнить через</span><div class="seg" style="flex:1"><span>5</span><span class="on">7</span><span>14 дн.</span></div></div></div>
+  <div class="note">Письма приходят на sergey@example.ru. Пересмотр программы и рекорды — только в колокольчике.</div>
+  <div class="dock"><span class="btn ghost">Отправить пробное письмо</span></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>38 · Новый клиент</b>режим тренера</figcaption><div class="phone" data-tab="home"><div class="scr">
+  <span class="link">← Клиенты</span><div class="h1">Новый клиент</div>
+  <span class="lbl">Имя</span><div class="field filled">Марина</div>
+  <span class="lbl">Телефон, необязательно</span><div class="field">+7</div>
+  <div class="seg"><span>Мужской</span><span class="on">Женский</span></div>
+  <div class="seg"><span class="on">Новичок</span><span>Средний</span><span>Опытный</span></div>
+  <span class="lbl">Заметка для себя</span><div class="field">колени, без выпадов</div>
+  <div class="dock"><span class="btn">Добавить клиента</span><p class="muted" style="text-align:center">Аккаунт клиенту можно передать позже</p></div>
+</div></div></figure>
+
+<figure class="shot"><figcaption><b>39 · Чей дневник</b>меню переключения</figcaption><div class="phone"><div class="scr no-tab"><div class="between"><span class="h2">VEGAS</span><span class="chip on">Я ▾</span></div><div class="card" style="height:150px"></div></div>
+  <div class="dim up"><div class="sheet"><div class="h2">Чей дневник открыть</div><div class="card"><div class="row"><span class="mark ok">✓</span><b class="sp">Я — Сергей</b></div><div class="row"><span class="mark">А</span><span class="sp"><b>Анна</b><br><span class="muted">рекорд вчера</span></span><span>›</span></div><div class="row"><span class="mark">И</span><span class="sp"><b>Игорь</b><br><span class="muted">плато 3 недели</span></span><span>›</span></div><div class="row"><b>＋ Новый клиент</b></div></div></div></div>
+</div></figure>
+
+</div>
+</main>
+
+<script>
+(function () {
+  var stage = document.getElementById('stage');
+  var rail = document.getElementById('rail');
+  var about = document.getElementById('about');
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var ABOUT = {
+    a: [['Характер', 'Светло и легко: матовые «стеклянные» карточки поверх мягких цветных бликов, тёмные кнопки, один синий акцент. Спокойно для глаз, выглядит свежо.'],
+        ['Что тянет вернуться', 'Тёмная карточка с кольцом недели и серией — первое, что видно на главной. Рекорд выделен малиновым, рост — зелёным.'],
+        ['Движение', 'Блики медленно плывут под стеклом, карточки мягко всплывают, кольца и полоски заполняются, графики прорисовываются.']],
+    b: [['Характер', 'Гамма Metrofitness: чёрный фон, ярко-жёлтый только на главном, широкий жирный шрифт заголовков. Энергично, как в зале.'],
+        ['Что тянет вернуться', 'Жёлтая карточка серии с огоньком, уровень и очки за сделанные подходы, конфетти на рекорде. Награда за регулярность.'],
+        ['Движение', 'Всё пружинит: карточки выпрыгивают, огонёк покачивается, кнопки с гранью проседают под пальцем, на рекорде сыплется конфетти.']],
+    c: [['Характер', 'Настоящий дневник: бумага в клетку, синяя ручка, жёлтый маркер под заголовками, стикеры и неровные рамки. Тёплый, личный, ни на что не похож.'],
+        ['Что тянет вернуться', 'Серия — жёлтый стикер на скотче, рекорд обведён красной ручкой. Ощущение своей тетради, которую жалко бросить.'],
+        ['Движение', 'Маркер проводит под заголовком, стикер приклеивается, графики и кольца прорисовываются, как ручкой.']]
+  };
+
+  // панель вкладок — одна на все экраны с data-tab
+  var TABS = [['home', 'i-home', 'Главная'], ['history', 'i-clock', 'История'], ['workout', 'i-db', 'Тренировка'], ['records', 'i-cup', 'Рекорды'], ['profile', 'i-user', 'Профиль']];
+  var phones = Array.prototype.slice.call(document.querySelectorAll('.phone'));
+  phones.forEach(function (phone) {
+    var tab = phone.getAttribute('data-tab');
+    if (tab) {
+      var bar = document.createElement('div');
+      bar.className = 'tabbar';
+      bar.innerHTML = TABS.map(function (t) {
+        var on = t[0] === tab;
+        return '<span' + (on ? ' class="on"' : '') + '><svg class="ico"><use href="#' + t[1] + '"/></svg>' + (on ? t[2] : '') + '</span>';
+      }).join('');
+      phone.appendChild(bar);
+    }
+    // порядок появления блоков
+    Array.prototype.forEach.call(phone.querySelectorAll('.scr > *'), function (el, i) { el.style.setProperty('--i', i); });
+  });
+
+  // кольца прогресса
+  Array.prototype.forEach.call(document.querySelectorAll('.ring'), function (el) {
+    var size = Number(el.getAttribute('data-s')) || 60, r = 26, c = 2 * Math.PI * r, v = Number(el.getAttribute('data-v'));
+    el.style.setProperty('--c', c.toFixed(1));
+    el.style.setProperty('--off', (c * (1 - v)).toFixed(1));
+    el.innerHTML = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 64 64" aria-hidden="true"><circle class="bg" cx="32" cy="32" r="26"/><circle class="fg" cx="32" cy="32" r="26"/></svg><span>' + el.getAttribute('data-t') + '</span>';
+    el.querySelector('span').style.fontSize = Math.round(size / 4.6) + 'px';
+  });
+
+  // графики-линии: точки → polyline в одном масштабе
+  Array.prototype.forEach.call(document.querySelectorAll('.spk'), function (el) {
+    var pts = el.getAttribute('data-pts').split(',').map(Number);
+    var min = Math.min.apply(null, pts), max = Math.max.apply(null, pts), span = max - min || 1;
+    var xy = pts.map(function (p, i) { return [(4 + i * 92 / (pts.length - 1)).toFixed(1), (32 - (p - min) / span * 26).toFixed(1)]; });
+    var line = xy.map(function (p) { return p.join(','); }).join(' ');
+    var last = xy[xy.length - 1];
+    el.outerHTML = '<svg class="spark" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"><polygon points="4,36 ' + line + ' 96,36"/><polyline pathLength="1" points="' + line + '"/></svg>';
+  });
+
+  // конфетти для «Игры»
+  Array.prototype.forEach.call(document.querySelectorAll('.confetti'), function (box) {
+    var colors = ['#fff200', '#ffffff', '#fff200', '#3ddc84', '#ffffff'], html = '';
+    for (var i = 0; i < 26; i++) {
+      html += '<i style="left:' + (4 + (i * 37) % 92) + '%;background:' + colors[i % colors.length] + ';--d:' + (300 + (i * 67) % 700) + '"></i>';
+    }
+    box.innerHTML = html;
+  });
+
+  function fmt(n, decimals) { return n.toFixed(decimals).replace('.', ','); }
+  function countUp(phone) {
+    Array.prototype.forEach.call(phone.querySelectorAll('[data-count]'), function (el) {
+      var target = Number(el.getAttribute('data-count')), suffix = el.getAttribute('data-suffix') || '';
+      var decimals = target % 1 ? 1 : 0, start = null;
+      if (reduce) { el.textContent = fmt(target, decimals) + suffix; return; }
+      function step(t) {
+        if (start === null) { start = t; }
+        var k = Math.min(1, (t - start) / 900), eased = 1 - Math.pow(1 - k, 3);
+        el.textContent = fmt(target * eased, decimals) + suffix;
+        if (k < 1) { requestAnimationFrame(step); }
+      }
+      requestAnimationFrame(step);
+    });
+  }
+
+  // анимация экрана — когда он показался в ленте
+  var seen = typeof IntersectionObserver === 'function' ? new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting && !e.target.classList.contains('play')) { e.target.classList.add('play'); countUp(e.target); }
+    });
+  }, { root: null, threshold: 0.25 }) : null;
+  function replay() {
+    phones.forEach(function (p) { p.classList.remove('play'); if (seen) { seen.unobserve(p); } });
+    void rail.offsetWidth; // перезапуск CSS-анимаций
+    phones.forEach(function (p) { if (seen) { seen.observe(p); } });
+  }
+
+  function setStyle(style) {
+    stage.setAttribute('data-style', style);
+    about.innerHTML = ABOUT[style].map(function (b) { return '<div><h2>' + b[0] + '</h2><p>' + b[1] + '</p></div>'; }).join('');
+    try { localStorage.setItem('vegas-style', style); } catch (e) { /* без памяти тоже работает */ }
+    replay();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="style"]'), function (input) {
+    input.addEventListener('change', function () { if (input.checked) { setStyle(input.value); } });
+  });
+  document.getElementById('replay').addEventListener('click', replay);
+
+  var saved = 'a';
+  try { saved = localStorage.getItem('vegas-style') || 'a'; } catch (e) { /* ничего */ }
+  if (!ABOUT[saved]) { saved = 'a'; }
+  document.getElementById('style-' + saved).checked = true;
+  setStyle(saved);
+})();
+</script>

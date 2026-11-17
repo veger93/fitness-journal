@@ -9,7 +9,7 @@ import styles from './SectionLabel.module.css';
 export function SectionLabel({ children, action, id }: { children: ReactNode; action?: ReactNode; id?: string }) {
   return (
     <div className={styles.row}>
-      <h2 id={id} className={styles.label}>
+      <h2 id={id} className={`ui-h2 ${styles.label}`}>
         {children}
       </h2>
       {action && <span className={styles.action}>{action}</span>}

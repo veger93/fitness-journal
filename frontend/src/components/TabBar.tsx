@@ -45,8 +45,12 @@ export function TabBar() {
 
   return (
     // в режиме клиента капсула оранжевая — как полоса сверху: видно, чей дневник открыт
-    <nav ref={navRef} aria-label="Разделы" className={acting ? `${styles.bar} ${styles.client}` : styles.bar}>
-      <span ref={capsuleRef} className={styles.capsule} aria-hidden="true" />
+    <nav
+      ref={navRef}
+      aria-label="Разделы"
+      className={acting ? `ui-tabbar ${styles.bar} ${styles.client}` : `ui-tabbar ${styles.bar}`}
+    >
+      <span ref={capsuleRef} className={`ui-tabbar-capsule ${styles.capsule}`} aria-hidden="true" />
       {TABS.map((tab) => (
         <NavLink
           key={tab.to}
