@@ -14,6 +14,7 @@ import { SectionLabel } from '../components/ui/SectionLabel';
 import { StatTile } from '../components/ui/StatTile';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { formatTonnage } from '../lib/format';
+import { findSameTemplate } from '../lib/templates';
 import { describeSet, formatDistance, formatDuration } from '../lib/workout';
 import styles from './WorkoutPages.module.css';
 
@@ -36,6 +37,8 @@ export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 
   const planDone = (useLocation().state as { planDone?: { done: number; total: number } } | null)?.planDone;
   const [saving, setSaving] = useState(false);
   const workout = useQuery({ queryKey: ['workout', workoutId], queryFn: () => workoutsApi.get(workoutId) });
+  // комплексы — тот же кэш, что у «Новой тренировки»: уже сохранённый набор второй раз не предлагаем
+  const templates = useQuery({ queryKey: ['templates'], queryFn: workoutsApi.templates });
   const phone = useMediaQuery('(max-width: 640px)');
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -53,6 +56,16 @@ export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 
   }
   const w = workout.data;
   const done = w.exercises.filter((e) => e.sets.length > 0);
+  // сохранили во время тренировки: в комплексе все упражнения тренировки (и те, где подходов не было)
+  const savedAs =
+    findSameTemplate(
+      templates.data,
+      done.map((e) => e.exerciseId),
+    ) ??
+    findSameTemplate(
+      templates.data,
+      w.exercises.map((e) => e.exerciseId),
+    );
   const workingSets = (type: 'run' | 'other') =>
     done
       .filter((e) => (e.trackingType === 'DISTANCE') === (type === 'run'))
@@ -145,10 +158,16 @@ export function WorkoutSummaryPage({ mode = 'finished' }: { mode?: 'finished' | 
         <p className="footnote">Рекорды и прогресс обновятся на главной через несколько секунд.</p>
       )}
       <div className={styles.summaryActions}>
-        {!w.templateId && (
+        {/* пока список комплексов грузится, кнопку не показываем — иначе она мелькнёт и пропадёт */}
+        {!w.templateId && templates.isSuccess && !savedAs && (
           <Button variant="secondary" onClick={() => setSaving(true)}>
             Сохранить как комплекс
           </Button>
+        )}
+        {!w.templateId && savedAs && (
+          <p className={styles.muted}>
+            Упражнения сохранены в комплекс <Link to={`/templates/${savedAs.id}`}>«{savedAs.name}»</Link>
+          </p>
         )}
       </div>
       {saving && <SaveTemplateDialog exerciseIds={done.map((e) => e.exerciseId)} onClose={() => setSaving(false)} />}

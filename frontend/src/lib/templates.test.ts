@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canUpdateTemplate, move, templateChanges } from './templates';
+import { canUpdateTemplate, findSameTemplate, move, templateChanges } from './templates';
 
 describe('templates', () => {
   it('изменения тренировки против комплекса: добавленные и убранные, порядок не важен', () => {
@@ -18,5 +18,20 @@ describe('templates', () => {
     expect(move(['a', 'b', 'c'], 1, -1)).toEqual(['b', 'a', 'c']);
     expect(move(['a', 'b', 'c'], 1, 1)).toEqual(['a', 'c', 'b']);
     expect(move(['a', 'b'], 0, -1)).toEqual(['a', 'b']);
+  });
+
+  it('такой же свой комплекс: тот же набор упражнений в любом порядке, готовые и дни программы не считаются', () => {
+    const tpl = (ids: string[], custom = true, program = false) => ({
+      custom,
+      program,
+      exercises: ids.map((id) => ({ id, name: id })),
+    });
+    const mine = tpl(['a', 'b']);
+    expect(findSameTemplate([tpl(['a']), mine], ['b', 'a'])).toBe(mine);
+    expect(findSameTemplate([mine], ['a', 'b', 'c'])).toBeUndefined();
+    expect(findSameTemplate([tpl(['a', 'b'], false)], ['a', 'b'])).toBeUndefined();
+    expect(findSameTemplate([tpl(['a', 'b'], true, true)], ['a', 'b'])).toBeUndefined();
+    expect(findSameTemplate([mine], [])).toBeUndefined();
+    expect(findSameTemplate(undefined, ['a'])).toBeUndefined();
   });
 });
