@@ -3,37 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/auth';
 import { usersApi } from '../api/users';
 import { useAuth } from '../auth/AuthProvider';
+import { AppearanceCard } from '../components/profile/AppearanceCard';
 import { BodyWeightCard } from '../components/profile/BodyWeightCard';
 import { ProfileSummary } from '../components/profile/ProfileSummary';
 import { ProgramCard } from '../components/profile/ProgramCard';
 import { RemindersCard } from '../components/profile/RemindersCard';
 import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
-import { ChoiceCards } from '../components/ui/ChoiceCards';
 import { PageColumns } from '../components/ui/PageColumns';
 import { PageHeader } from '../components/ui/PageHeader';
-import { SegmentedControl } from '../components/ui/SegmentedControl';
 import { DeleteAccountCard } from '../components/account/DeleteAccountCard';
 import { EmailVerifyCard } from '../components/account/EmailVerifyCard';
 import { ClientProfileCard } from '../components/trainer/ClientProfileCard';
 import { MyTrainerCard } from '../components/trainer/MyTrainerCard';
 import { TrainerModeCard } from '../components/trainer/TrainerModeCard';
-import { useTheme } from '../theme/ThemeProvider';
 import { useActingClient } from '../trainer/ActingClientProvider';
-import { SKINS, skinInfo } from '../theme/skin';
-import type { ThemeChoice } from '../theme/theme';
 import styles from './ProfilePage.module.css';
 
-const THEME_OPTIONS: { value: ThemeChoice; label: string }[] = [
-  { value: 'light', label: 'Светлая' },
-  { value: 'dark', label: 'Тёмная' },
-  { value: 'system', label: 'Как в системе' },
-];
-
-const SKIN_OPTIONS = SKINS.map((s) => ({ value: s.id, title: s.title, description: s.description }));
-
 export function ProfilePage() {
-  const { choice, setChoice, skin, setSkin } = useTheme();
   const { logout } = useAuth();
   const me = useQuery({ queryKey: ['me'], queryFn: authApi.me });
   const profile = useQuery({ queryKey: ['profile'], queryFn: usersApi.profile });
@@ -75,26 +61,7 @@ export function ProfilePage() {
 
             <TrainerModeCard />
 
-            <Card as="section">
-              <h2 className={styles.sectionTitle}>Оформление</h2>
-              {/* стиль — пробуем по очереди (docs/styles.md); выбор хранится в этом браузере */}
-              <ChoiceCards legend="Стиль" options={SKIN_OPTIONS} value={skin} onChange={setSkin} />
-              {skinInfo(skin).forcesLight ? (
-                <p className={styles.muted}>У стиля «{skinInfo(skin).title}» пока есть только светлая тема.</p>
-              ) : (
-                <>
-                  <SegmentedControl
-                    legend="Тема оформления"
-                    options={THEME_OPTIONS}
-                    value={choice}
-                    onChange={setChoice}
-                  />
-                  <p className={styles.muted}>
-                    «Как в системе» — тема переключится вместе с настройкой телефона или компьютера.
-                  </p>
-                </>
-              )}
-            </Card>
+            <AppearanceCard />
 
             {/* внизу одной строкой: "Выйти" слева, редкое "Удалить аккаунт" справа, по нижнему краю */}
             <div className={styles.bottomRow}>

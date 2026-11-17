@@ -9,8 +9,8 @@ describe('стиль оформления', () => {
   });
 
   it('сохраняет и читает выбор', () => {
-    saveSkin('notebook');
-    expect(loadSkin()).toBe('notebook');
+    saveSkin('metro');
+    expect(loadSkin()).toBe('metro');
   });
 
   it('мусор или удалённый стиль в хранилище — «Классика»', () => {
@@ -18,8 +18,9 @@ describe('стиль оформления', () => {
     expect(loadSkin()).toBe('classic');
   });
 
-  it('«Тетрадь» пока только светлая', () => {
-    expect(skinInfo('notebook').forcesLight).toBe(true);
-    expect(skinInfo('classic').forcesLight).toBe(false);
+  it('«Тетрадь» только светлая, «Метро» только тёмное, «Классика» — любая', () => {
+    expect(skinInfo('notebook').fixedTheme).toBe('light');
+    expect(skinInfo('metro').fixedTheme).toBe('dark');
+    expect(skinInfo('classic').fixedTheme).toBeNull();
   });
 });

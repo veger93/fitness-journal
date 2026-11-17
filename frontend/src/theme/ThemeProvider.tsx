@@ -16,7 +16,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 const darkQuery = () => window.matchMedia('(prefers-color-scheme: dark)');
 
 /**
- * Хранит выбор темы и стиля и ставит <html data-theme="light|dark" data-skin="classic|notebook">.
+ * Хранит выбор темы и стиля и ставит <html data-theme="light|dark" data-skin="classic|notebook|metro">.
  * Все цвета в tokens.css зависят от data-theme, детали пробных стилей (styles/skins/*.css) — от data-skin,
  * поэтому смена перекрашивает всё сразу, без перезагрузки.
  */
@@ -33,14 +33,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => query.removeEventListener('change', onChange);
   }, []);
 
-  // у стиля только светлый вариант — тёмную тему не включаем, выбор пользователя при этом не теряем
-  const theme = skinInfo(skin).forcesLight ? 'light' : resolveTheme(choice, systemDark);
+  // у стиля нарисован один вариант — берём его; выбор темы пользователя при этом не теряем
+  const theme = skinInfo(skin).fixedTheme ?? resolveTheme(choice, systemDark);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.skin = skin;
     // тема могла быть выбрана вручную, не как в системе — полосу браузера красим под неё же
-    const color = theme === 'light' ? skinInfo(skin).themeColor : THEME_COLOR.dark;
+    const color = skinInfo(skin).themeColor ?? THEME_COLOR[theme];
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
   }, [theme, skin]);
 
