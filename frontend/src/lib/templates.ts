@@ -49,3 +49,21 @@ export function move<T>(list: T[], index: number, delta: -1 | 1): T[] {
   [copy[index], copy[target]] = [copy[target], copy[index]];
   return copy;
 }
+
+/**
+ * Свой комплекс ровно с этими упражнениями (порядок не важен — как в templateChanges).
+ * Нужен, чтобы не предлагать «Сохранить как комплекс» второй раз: сохранили во время тренировки —
+ * на экране итогов кнопки уже нет. Добавили упражнение после сохранения — набор другой, предложим снова.
+ */
+export function findSameTemplate<T extends { custom: boolean; program: boolean; exercises: { id: string }[] }>(
+  templates: T[] | undefined,
+  exerciseIds: string[],
+): T | undefined {
+  if (!templates || exerciseIds.length === 0) {
+    return undefined;
+  }
+  const wanted = new Set(exerciseIds);
+  return templates.find(
+    (t) => t.custom && !t.program && t.exercises.length === wanted.size && t.exercises.every((e) => wanted.has(e.id)),
+  );
+}

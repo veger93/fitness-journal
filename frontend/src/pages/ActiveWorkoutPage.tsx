@@ -21,7 +21,7 @@ import { useCurrentWorkout, usePendingSets, useWorkoutActions, type PendingSet }
 import { describeSet, formatClock, runParts, toRequest } from '../lib/workout';
 import { formatKg } from '../lib/format';
 import { setsLabel } from '../lib/exercise';
-import { canUpdateTemplate, templateChanges } from '../lib/templates';
+import { canUpdateTemplate, findSameTemplate, templateChanges } from '../lib/templates';
 import {
   NEW_EXERCISE_HINT,
   doneSets,
@@ -97,6 +97,13 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
     removedNames.length > 0 && `убрать: ${removedNames.join(', ')}`,
   ].filter(Boolean);
   const offerTemplateUpdate = canUpdateTemplate(template) && changedNames.length > 0;
+  // своя тренировка, а такой комплекс уже есть (только что сохранили) — «Сохранить как комплекс» не показываем
+  const alreadySaved = Boolean(
+    findSameTemplate(
+      templates.data,
+      workout.exercises.map((e) => e.exerciseId),
+    ),
+  );
   const [updateTemplate, setUpdateTemplate] = useState(false);
   const pending = usePendingSets(workout.id);
 
@@ -190,7 +197,8 @@ function ActiveWorkout({ workout }: { workout: Workout }) {
           Убрать упражнение
         </button>
       )}
-      {!workout.templateId && workout.exercises.length > 0 && (
+      {/* уже сохранили этот набор — второй раз не предлагаем; добавили упражнение — набор другой, предложим снова */}
+      {!workout.templateId && workout.exercises.length > 0 && !alreadySaved && (
         <button type="button" className={styles.link} onClick={() => setModal({ kind: 'saveTemplate' })}>
           Сохранить как комплекс
         </button>
