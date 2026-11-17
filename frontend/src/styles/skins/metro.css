@@ -1,0 +1,203 @@
+/*
+ * Стиль «Метро» (docs/styles.md): чёрный и жёлтый, как у Metrofitness. Жёлтое — только главное
+ * (главная карточка, основная кнопка, выбранная вкладка), кнопки «объёмные» — с нижней гранью,
+ * заголовки — Unbounded 800 прописными. За карточками — неподвижное тёмное фото тела.
+ * Включается <html data-skin="metro"> (ThemeProvider). Только тёмный вариант (fixedTheme: 'dark').
+ * Устройство как у notebook.css: сначала токены, потом детали по классам-крючкам ui-*.
+ */
+:root[data-skin='metro'] {
+  color-scheme: dark;
+
+  --font-display: 'Unbounded', 'Onest', system-ui, sans-serif;
+  --font-body: 'Onest', system-ui, sans-serif;
+  /* Unbounded широкий — заголовок страницы чуть меньше, чем в «Классике» */
+  --text-h1: 30px;
+
+  --mt-yellow: #fff200;
+  --mt-on-yellow: #0c151a;
+  --mt-edge: #b3a900; /* нижняя грань жёлтой кнопки */
+  --mt-glass: rgb(22 22 22 / 0.76); /* карточка поверх фото */
+
+  --bg: #0a0a0a;
+  --surface: #1a1a1a;
+  --surface-inverse: var(--mt-yellow); /* главная карточка, основная кнопка, выбранное в переключателях */
+  --text: #f7f7f7;
+  --text-muted: #a3a3a3;
+  --text-on-inverse: var(--mt-on-yellow);
+  --accent: var(--mt-yellow); /* риск — тоже жёлтым: в «Метро» внимание = жёлтый */
+  --accent-strong: var(--mt-yellow); /* линии графиков */
+  --text-on-accent: var(--mt-on-yellow);
+  --accent-soft-text: #4a4600;
+  --chip: #2b2b2b;
+  --warning-soft: #332d00;
+  --border: #303030;
+  --input-bg: #121212;
+  --input-border: #3d3d3d;
+  --danger-text: #ff6b6b;
+  --success-text: #3ddc84;
+  --success: #15803d; /* заливка «выполнено», текст на ней белый */
+  --success-soft: #12301f;
+  --focus: var(--mt-yellow);
+}
+
+@media (max-width: 640px) {
+  :root[data-skin='metro'] {
+    --text-h1: 22px;
+  }
+}
+
+/* ---------- заголовки: жирно и прописными ---------- */
+:root[data-skin='metro'] .ui-h1,
+:root[data-skin='metro'] .ui-dialog-title {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+:root[data-skin='metro'] .ui-h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- кнопки: жёлтые с нижней гранью, при нажатии «проседают» ---------- */
+:root[data-skin='metro'] .ui-btn {
+  font-weight: 700;
+  transition:
+    transform 0.1s,
+    box-shadow 0.1s,
+    opacity 0.15s;
+}
+
+:root[data-skin='metro'] .ui-btn--primary,
+:root[data-skin='metro'] .ui-btn--accent {
+  box-shadow: 0 5px 0 var(--mt-edge);
+}
+
+:root[data-skin='metro'] .ui-btn--primary:active:not(:disabled),
+:root[data-skin='metro'] .ui-btn--accent:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--mt-edge);
+}
+
+:root[data-skin='metro'] .ui-btn--secondary {
+  color: var(--mt-yellow);
+}
+
+/* ---------- главная карточка — жёлтая; кнопки на ней белые (жёлтая на жёлтом пропала бы) ---------- */
+:root[data-skin='metro'] .ui-card--inverse {
+  --surface-inverse: #f7f7f7;
+  --text-on-inverse: var(--mt-on-yellow);
+  --text-muted: rgb(12 21 26 / 0.72);
+  --mt-edge: rgb(12 21 26 / 0.35);
+  background: var(--mt-yellow);
+  color: var(--mt-on-yellow);
+  animation: mt-pop 0.45s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+/* на жёлтой карточке вторичная кнопка — тёмная, а не жёлтая */
+:root[data-skin='metro'] .ui-card--inverse .ui-btn--secondary,
+:root[data-skin='metro'] .ui-card--accent .ui-btn--secondary {
+  color: var(--mt-on-yellow);
+}
+
+/* риск: жёлтая карточка, как главная */
+:root[data-skin='metro'] .ui-card--accent {
+  --mt-edge: rgb(12 21 26 / 0.35);
+}
+
+@keyframes mt-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+:root[data-skin='metro'] .ui-card--default,
+:root[data-skin='metro'] .ui-list {
+  border: 1px solid var(--border);
+}
+
+/* ---------- нижние вкладки: тёмная панель, выбранная — жёлтая ---------- */
+:root[data-skin='metro'] .ui-tabbar {
+  --text-on-inverse: #c9c9c9; /* невыбранные вкладки */
+  --text: var(--mt-on-yellow); /* выбранная — тёмная на жёлтом */
+  background: #1a1a1a;
+  border: 1px solid #303030;
+}
+
+:root[data-skin='metro'] .ui-tabbar-capsule {
+  background: var(--mt-yellow);
+}
+
+/* ---------- фон: неподвижное тёмное фото «Плечи со спины» с жёлтым отблеском ---------- */
+/*
+ * Два слоя position: fixed за всем содержимым (z-index: -1): ::before — фото, ::after — затемнение и отблеск.
+ * background-attachment: fixed на телефонах (iPhone) не работает — поэтому отдельные слои.
+ * Слои не двигаются при прокрутке и рисуются один раз: на скорость листания не влияют.
+ * Фото: Pexels, бесплатная лицензия (docs/styles.md). Скачивается только в «Метро» — правило срабатывает лишь тут.
+ */
+:root[data-skin='metro'] body::before,
+:root[data-skin='metro'] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+:root[data-skin='metro'] body::before {
+  background: url('../../assets/skins/metro/shoulders.webp') center 30% / cover no-repeat;
+  animation: mt-fade 0.8s ease-out both;
+}
+
+/* отблеск — как свет ламп в зале; сверху и снизу темнее — заголовок и вкладки читаются */
+:root[data-skin='metro'] body::after {
+  background:
+    radial-gradient(120% 60% at 85% 22%, rgb(255 242 0 / 0.2), transparent 60%),
+    linear-gradient(
+      180deg,
+      rgb(10 10 10 / 0.72) 0%,
+      rgb(10 10 10 / 0.2) 32%,
+      rgb(10 10 10 / 0.25) 62%,
+      rgb(10 10 10 / 0.92) 100%
+    ),
+    rgb(10 10 10 / 0.32);
+}
+
+/* компьютер: фото справа, к контенту слева плавно уходит в чёрное (растягивать на всю ширину — мыльно) */
+@media (min-width: 769px) {
+  :root[data-skin='metro'] body::before {
+    left: auto;
+    width: min(55vw, 900px);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%);
+    mask-image: linear-gradient(90deg, transparent, #000 45%);
+  }
+}
+
+@keyframes mt-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* карточки поверх фото — полупрозрачные с размытием: сквозь них угадывается рельеф */
+:root[data-skin='metro'] .ui-card--default,
+:root[data-skin='metro'] .ui-list,
+:root[data-skin='metro'] .ui-tabbar {
+  background: var(--mt-glass);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-skin='metro'] .ui-card--inverse,
+  :root[data-skin='metro'] body::before {
+    animation: none;
+  }
+
+  :root[data-skin='metro'] .ui-btn {
+    transition: none;
+  }
+}
