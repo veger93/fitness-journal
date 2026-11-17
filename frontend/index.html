@@ -53,8 +53,8 @@
         try {
           skin = localStorage.getItem('vegas.skin') || 'classic';
         } catch (e) {}
-        // у «Тетради» только светлая тема, у «Метро» — только тёмная (src/theme/skin.ts, fixedTheme)
-        if (skin !== 'notebook' && skin !== 'metro') skin = 'classic';
+        // у «Стекла» и «Тетради» только светлая тема, у «Метро» — только тёмная (src/theme/skin.ts, fixedTheme)
+        if (skin !== 'glass' && skin !== 'notebook' && skin !== 'metro') skin = 'classic';
         var dark =
           skin === 'metro' ||
           (skin === 'classic' &&
@@ -62,7 +62,7 @@
         document.documentElement.dataset.theme = dark ? 'dark' : 'light';
         document.documentElement.dataset.skin = skin;
         // цвет полосы браузера — как THEME_COLOR в src/theme/theme.ts и themeColor в src/theme/skin.ts
-        var bar = { notebook: '#fbfaf5', metro: '#0a0a0a' }[skin] || (dark ? '#0b0f17' : '#eef1f5');
+        var bar = { glass: '#eaeef6', notebook: '#fbfaf5', metro: '#0a0a0a' }[skin] || (dark ? '#0b0f17' : '#eef1f5');
         document.querySelector('meta[name="theme-color"]').setAttribute('content', bar);
       })();
     </script>
