@@ -11,7 +11,7 @@ export function Chip({ selected = false, className, ...rest }: ChipProps) {
     <button
       type="button"
       aria-pressed={selected}
-      className={[styles.chip, selected && styles.selected, className].filter(Boolean).join(' ')}
+      className={['ui-chip', styles.chip, selected && styles.selected, className].filter(Boolean).join(' ')}
       {...rest}
     />
   );

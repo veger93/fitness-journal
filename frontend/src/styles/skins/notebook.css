@@ -1,0 +1,250 @@
+/*
+ * Стиль «Тетрадь» (docs/styles.md): лист в клетку, синяя ручка, жёлтый маркер, стикеры.
+ * Включается атрибутом <html data-skin="notebook"> (ThemeProvider, src/theme/skin.ts).
+ *
+ * Как устроено:
+ * 1) сначала переопределяем токены (цвета, шрифты, размеры) — это перекрашивает ВСЁ приложение сразу;
+ * 2) потом точечно дорисовываем детали по глобальным классам-«крючкам» ui-* из общих компонентов
+ *    (у CSS-модулей имена хешированы, поэтому крючки — отдельные стабильные классы).
+ * Селектор :root[data-skin='notebook'] сильнее классов модулей — !important не нужен.
+ * Тёмного варианта пока нет: стиль принудительно светлый (forcesLight).
+ */
+:root[data-skin='notebook'] {
+  color-scheme: light;
+
+  /* Caveat — «почерк» для заголовков и цифр; у него мелкие буквы, поэтому крупнее размеры */
+  --font-display: 'Caveat', 'Segoe Print', cursive;
+  --font-body: 'Golos Text', system-ui, sans-serif;
+  --text-lg: 24px;
+  --text-xl: 24px;
+  --text-num-md: 24px;
+  --text-num: 38px;
+  --text-h1: 44px;
+
+  /* неровные края: «нарисовано от руки» */
+  --nb-wobble: 255px 14px 225px 14px / 14px 225px 14px 255px;
+  --nb-wobble-alt: 14px 225px 14px 255px / 255px 14px 225px 14px;
+  --radius-card: 18px;
+  --radius-section: 18px;
+
+  /* бумага и ручка */
+  --nb-ink: #1b2a6b;
+  --nb-paper: #fffef9;
+  --nb-grid: rgb(27 42 107 / 0.1);
+  --nb-marker: #ffe14d;
+  --nb-sticker: #ffe97a;
+  --nb-red: #d7263d;
+
+  --bg: #fbfaf5;
+  --surface: var(--nb-paper);
+  --surface-inverse: var(--nb-ink); /* основная кнопка и активная вкладка — цвета ручки */
+  --text: var(--nb-ink);
+  --text-muted: #4d5683;
+  --text-on-inverse: var(--nb-paper);
+  --accent: var(--nb-red); /* риск, перегрузка — красная ручка учителя */
+  --accent-strong: var(--nb-red); /* линии графиков */
+  --text-on-accent: #ffffff;
+  --accent-soft-text: #ffe4e8;
+  --chip: #eceef6; /* нейтральный бейдж, фон переключателей — чуть темнее бумаги */
+  --warning-soft: #fff3b0;
+  --border: rgb(27 42 107 / 0.25);
+  --input-bg: var(--nb-paper);
+  --input-border: var(--nb-ink);
+  --danger-text: #b3182d;
+  --success-text: #1c7c3c;
+  --success: #1c7c3c;
+  --success-soft: #e3f3e1;
+  --focus: var(--nb-red);
+}
+
+@media (max-width: 640px) {
+  :root[data-skin='notebook'] {
+    --text-h1: 36px;
+  }
+}
+
+/* лист в клетку 20px */
+:root[data-skin='notebook'] body {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--nb-grid) 1px, transparent 1px), linear-gradient(90deg, var(--nb-grid) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+:root[data-skin='notebook'] h1,
+:root[data-skin='notebook'] h2,
+:root[data-skin='notebook'] h3 {
+  line-height: 1.05;
+}
+
+/* ---------- заголовок страницы: проводим маркером ---------- */
+:root[data-skin='notebook'] .ui-h1-text {
+  /* фон у строчного элемента рисуется под каждой строкой отдельно (clone) — маркер на всех строках */
+  padding: 0 6px;
+  margin-left: -6px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  background: linear-gradient(transparent 58%, var(--nb-marker) 58%, var(--nb-marker) 92%, transparent 92%) no-repeat 0
+    0 / 100% 100%;
+  animation: nb-marker 0.7s ease-out 0.15s both;
+}
+
+@keyframes nb-marker {
+  from {
+    background-size: 0% 100%;
+  }
+}
+
+:root[data-skin='notebook'] .ui-h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ---------- карточки: бумага с рамкой от руки ---------- */
+:root[data-skin='notebook'] .ui-card--default {
+  border: 2px solid var(--nb-ink);
+  border-radius: var(--nb-wobble);
+  box-shadow: 3px 4px 0 rgb(27 42 107 / 0.12);
+}
+
+:root[data-skin='notebook'] .ui-card--default:nth-child(even) {
+  border-radius: var(--nb-wobble-alt);
+}
+
+/* главная карточка — жёлтый стикер со скотчем, чуть повёрнут */
+:root[data-skin='notebook'] .ui-card--inverse {
+  /* внутри стикера тёмный текст; кнопки на нём — бумажные */
+  --text-on-inverse: var(--nb-ink);
+  --surface-inverse: var(--nb-paper);
+  --text-muted: #4d5683;
+  position: relative;
+  background: var(--nb-sticker);
+  color: var(--nb-ink);
+  border-radius: 4px;
+  box-shadow: 0 10px 18px -8px rgb(27 42 107 / 0.35);
+  transform: rotate(-1.2deg);
+  animation: nb-stick 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+:root[data-skin='notebook'] .ui-card--inverse::before {
+  content: '';
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  width: 84px;
+  height: 22px;
+  translate: -50% 0;
+  rotate: 2deg;
+  background: rgb(255 255 255 / 0.55);
+  border: 1px solid rgb(27 42 107 / 0.08);
+  pointer-events: none;
+}
+
+@keyframes nb-stick {
+  from {
+    opacity: 0;
+    transform: rotate(-4deg) scale(0.94) translateY(-8px);
+  }
+}
+
+/* риск / перегрузка — обведено красной ручкой */
+:root[data-skin='notebook'] .ui-card--accent {
+  background: var(--nb-paper);
+  color: var(--nb-red);
+  border: 2.5px solid var(--nb-red);
+  border-radius: var(--nb-wobble-alt);
+  --text-on-accent: var(--nb-red);
+  --accent-soft-text: #8f1d2c;
+}
+
+/* ---------- кнопки ---------- */
+:root[data-skin='notebook'] .ui-btn {
+  border-radius: var(--nb-wobble);
+  font-weight: 600;
+  transition:
+    transform 0.12s,
+    box-shadow 0.12s,
+    opacity 0.15s;
+}
+
+:root[data-skin='notebook'] .ui-btn--primary {
+  box-shadow: 3px 3px 0 rgb(27 42 107 / 0.3);
+}
+
+:root[data-skin='notebook'] .ui-btn--primary:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgb(27 42 107 / 0.3);
+}
+
+:root[data-skin='notebook'] .ui-btn--accent {
+  box-shadow: 3px 3px 0 rgb(215 38 61 / 0.3);
+  --text-on-accent: #ffffff;
+  background: var(--nb-red);
+  color: #ffffff;
+}
+
+:root[data-skin='notebook'] .ui-btn--surface {
+  border: 2px solid var(--nb-ink);
+}
+
+/* ---------- поля, переключатели, чипы ---------- */
+:root[data-skin='notebook'] .ui-input {
+  border-width: 2px;
+  border-radius: var(--nb-wobble-alt);
+}
+
+:root[data-skin='notebook'] .ui-seg,
+:root[data-skin='notebook'] .ui-choice {
+  border-radius: var(--nb-wobble);
+}
+
+:root[data-skin='notebook'] .ui-chip,
+:root[data-skin='notebook'] .ui-badge {
+  border-radius: var(--nb-wobble-alt);
+}
+
+/* значок строки (★ ! ✓) — обведён ручкой */
+:root[data-skin='notebook'] .ui-mark {
+  border: 2px solid currentColor;
+  border-radius: 50% 45% 55% 48% / 48% 55% 45% 52%;
+}
+
+:root[data-skin='notebook'] .ui-list {
+  border: 2px solid var(--nb-ink);
+  border-radius: var(--nb-wobble);
+}
+
+/* ---------- окна ---------- */
+:root[data-skin='notebook'] .ui-dialog {
+  border: 2px solid var(--nb-ink);
+  border-radius: var(--nb-wobble-alt);
+  box-shadow: 5px 6px 0 rgb(27 42 107 / 0.18);
+}
+
+:root[data-skin='notebook'] .ui-dialog-title {
+  font-size: 30px;
+}
+
+/* ---------- нижние вкладки: синяя ручка, выбранная — выделена маркером ---------- */
+:root[data-skin='notebook'] .ui-tabbar {
+  border-radius: var(--nb-wobble);
+  box-shadow: 3px 4px 0 rgb(27 42 107 / 0.25);
+}
+
+:root[data-skin='notebook'] .ui-tabbar-capsule {
+  background: var(--nb-marker);
+  border-radius: var(--nb-wobble-alt);
+}
+
+/* графики: линии уже красная ручка (--accent-strong); свою анимацию «рисования» не навешиваем —
+   у графиков есть пунктир «нормы» и собственные анимации, общий stroke-dasharray их ломает */
+
+/* кто просит меньше движения — без анимаций, но с тем же видом */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-skin='notebook'] .ui-h1-text,
+  :root[data-skin='notebook'] .ui-card--inverse {
+    animation: none;
+  }
+}

@@ -140,7 +140,7 @@ export function Dialog({ open, onClose, title, subtitle, onBack, leading, childr
     // close — после dialog.close() (в том числе нашего, по окончании анимации): синхронизируем состояние React
     <dialog
       ref={ref}
-      className={anchorRef ? `${styles.dialog} ${styles.menu}` : styles.dialog}
+      className={anchorRef ? `ui-dialog ${styles.dialog} ${styles.menu}` : `ui-dialog ${styles.dialog}`}
       onClose={onClose}
       // Esc: не даём браузеру закрыть окно мгновенно — закрываем сами, с анимацией
       onCancel={(event) => {
@@ -164,7 +164,7 @@ export function Dialog({ open, onClose, title, subtitle, onBack, leading, childr
             </div>
             <div className={styles.heading}>
               {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
-              <h2 id={titleId} className={styles.title}>
+              <h2 id={titleId} className={`ui-dialog-title ${styles.title}`}>
                 {title}
               </h2>
             </div>

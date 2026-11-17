@@ -28,7 +28,10 @@ export function PageHeader({ title, eyebrow, subtitle, back, action }: PageHeade
           </Link>
         )}
         {eyebrow && <p className={styles.eyebrow}>{eyebrow}</p>}
-        <h1 className={styles.title}>{title}</h1>
+        <h1 className={`ui-h1 ${styles.title}`}>
+          {/* span — для оформления по строкам (маркер под каждой строкой в стиле «Тетрадь») */}
+          <span className="ui-h1-text">{title}</span>
+        </h1>
         {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
       </div>
       {action && <div className={styles.action}>{action}</div>}

@@ -35,7 +35,7 @@ export function ChoiceCards<T extends string>({
       {/* два варианта — всегда рядом; три и больше на телефоне встают списком (см. CSS) */}
       <div className={`${styles.cards} ${options.length > 2 ? styles.many : ''}`}>
         {options.map((option) => (
-          <label key={option.value} className={styles.card}>
+          <label key={option.value} className={`ui-choice ${styles.card}`}>
             <input
               type="radio"
               name={name}

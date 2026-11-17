@@ -16,7 +16,7 @@ export function TextField({ label, hint, id, ...rest }: TextFieldProps) {
       <label className={styles.label} htmlFor={inputId}>
         {label}
       </label>
-      <input id={inputId} className={styles.input} aria-describedby={hintId} {...rest} />
+      <input id={inputId} className={`ui-input ${styles.input}`} aria-describedby={hintId} {...rest} />
       {hint && (
         <span id={hintId} className={styles.hint}>
           {hint}

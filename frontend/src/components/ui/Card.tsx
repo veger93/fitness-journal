@@ -9,7 +9,14 @@ interface CardProps extends HTMLAttributes<HTMLElement> {
 }
 
 export function Card({ variant = 'default', size = 'card', as: Tag = 'div', className, ...rest }: CardProps) {
-  const classes = [styles.card, styles[variant], size === 'section' && styles.section, className]
+  const classes = [
+    'ui-card',
+    `ui-card--${variant}`,
+    styles.card,
+    styles[variant],
+    size === 'section' && styles.section,
+    className,
+  ]
     .filter(Boolean)
     .join(' ');
   return <Tag className={classes} {...rest} />;

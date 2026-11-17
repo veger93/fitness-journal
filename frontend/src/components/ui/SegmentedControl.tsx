@@ -17,7 +17,7 @@ interface SegmentedControlProps<T extends string> {
 export function SegmentedControl<T extends string>({ legend, options, value, onChange }: SegmentedControlProps<T>) {
   const name = useId();
   return (
-    <fieldset className={styles.group} style={{ '--count': options.length } as CSSProperties}>
+    <fieldset className={`ui-seg ${styles.group}`} style={{ '--count': options.length } as CSSProperties}>
       <legend className="visually-hidden">{legend}</legend>
       {options.map((option) => (
         <label key={option.value} className={styles.option}>

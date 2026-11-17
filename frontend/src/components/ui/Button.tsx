@@ -11,7 +11,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 /** Единственная кнопка приложения: несколько разновидностей, форма-"пилюля", высота 52px. */
 export function Button({ variant = 'primary', fullWidth = false, className, type = 'button', ...rest }: ButtonProps) {
-  const classes = [styles.button, styles[variant], fullWidth && styles.fullWidth, className].filter(Boolean).join(' ');
+  const classes = [
+    'ui-btn',
+    `ui-btn--${variant}`,
+    styles.button,
+    styles[variant],
+    fullWidth && styles.fullWidth,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
   return <button type={type} className={classes} {...rest} />;
 }
 
@@ -22,6 +31,15 @@ interface ButtonLinkProps extends LinkProps {
 
 /** Переход на другую страницу, оформленный как кнопка. Семантически это ссылка — так правильно для доступности. */
 export function ButtonLink({ variant = 'primary', fullWidth = false, className, ...rest }: ButtonLinkProps) {
-  const classes = [styles.button, styles[variant], fullWidth && styles.fullWidth, className].filter(Boolean).join(' ');
+  const classes = [
+    'ui-btn',
+    `ui-btn--${variant}`,
+    styles.button,
+    styles[variant],
+    fullWidth && styles.fullWidth,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
   return <Link className={classes} {...rest} />;
 }

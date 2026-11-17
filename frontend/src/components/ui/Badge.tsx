@@ -9,5 +9,5 @@ export function Badge({
   variant?: 'neutral' | 'inverse' | 'accent';
   children: ReactNode;
 }) {
-  return <span className={`${styles.badge} ${styles[variant]}`}>{children}</span>;
+  return <span className={`ui-badge ${styles.badge} ${styles[variant]}`}>{children}</span>;
 }

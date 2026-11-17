@@ -1,4 +1,6 @@
 @import './tokens.css';
+/* пробные стили оформления: действуют только при <html data-skin="..."> (src/theme/skin.ts) */
+@import './skins/notebook.css';
 
 *,
 *::before,
