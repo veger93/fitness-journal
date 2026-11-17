@@ -18,7 +18,8 @@ describe('стиль оформления', () => {
     expect(loadSkin()).toBe('classic');
   });
 
-  it('«Тетрадь» только светлая, «Метро» только тёмное, «Классика» — любая', () => {
+  it('«Стекло» и «Тетрадь» только светлые, «Метро» только тёмное, «Классика» — любая', () => {
+    expect(skinInfo('glass').fixedTheme).toBe('light');
     expect(skinInfo('notebook').fixedTheme).toBe('light');
     expect(skinInfo('metro').fixedTheme).toBe('dark');
     expect(skinInfo('classic').fixedTheme).toBeNull();

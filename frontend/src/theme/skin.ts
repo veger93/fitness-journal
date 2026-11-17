@@ -7,7 +7,7 @@
  */
 import type { Theme } from './theme';
 
-export type Skin = 'classic' | 'notebook' | 'metro';
+export type Skin = 'classic' | 'glass' | 'notebook' | 'metro';
 
 export interface SkinInfo {
   id: Skin;
@@ -21,6 +21,13 @@ export interface SkinInfo {
 
 export const SKINS: SkinInfo[] = [
   { id: 'classic', title: 'Классика', description: 'как было: строгий и светлый', fixedTheme: null, themeColor: null },
+  {
+    id: 'glass',
+    title: 'Стекло',
+    description: 'светлый воздух, матовое стекло, цветные блики',
+    fixedTheme: 'light',
+    themeColor: '#eaeef6',
+  },
   {
     id: 'notebook',
     title: 'Тетрадь',
@@ -41,6 +48,7 @@ export const SKINS: SkinInfo[] = [
 export const SKIN_FONTS: Partial<Record<Skin, string>> = {
   notebook:
     'https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Golos+Text:wght@400;500;600;700&display=swap',
+  glass: 'https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap',
   // Onest и Unbounded 500/700 уже есть (index.html), «Метро» нужна жирная 800 для заголовков
   metro: 'https://fonts.googleapis.com/css2?family=Unbounded:wght@800&display=swap',
 };
