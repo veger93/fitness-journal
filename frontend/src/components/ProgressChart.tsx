@@ -1,6 +1,7 @@
 import { CartesianGrid, Line, LineChart, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { ProgressPoint } from '../api/analytics';
 import { formatKg, formatShortDate } from '../lib/format';
+import { CHART_TOOLTIP } from '../lib/chartTooltip';
 
 interface ProgressChartProps {
   points: ProgressPoint[];
@@ -59,12 +60,7 @@ export function ProgressChart({ points, plateauFrom }: ProgressChartProps) {
           <Tooltip
             labelFormatter={(time) => formatShortDate(Number(time))}
             formatter={(value, name) => [formatKg(Number(value)), name === 'you' ? 'вы' : 'норма']}
-            contentStyle={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 12,
-              color: 'var(--text)',
-            }}
+            {...CHART_TOOLTIP}
           />
           <Line
             dataKey="reference"

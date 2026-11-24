@@ -7,6 +7,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { Card } from '../components/ui/Card';
 import { StatTile } from '../components/ui/StatTile';
 import { formatChange, formatShortDate } from '../lib/format';
+import { CHART_TOOLTIP } from '../lib/chartTooltip';
 import { formatClock, formatDistance } from '../lib/workout';
 import styles from './RunningPage.module.css';
 
@@ -167,14 +168,9 @@ function WeeksChart({ weeks }: { weeks: RunningSummary['weeks'] }) {
           <YAxis width={32} tick={{ fill: 'var(--text-muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
           <Tooltip
             cursor={{ fill: 'var(--chip)', opacity: 0.4 }}
-            formatter={(value) => [`${value} км`, 'пробежано']}
+            formatter={(value) => [`${String(value).replace('.', ',')} км`, 'пробежано']}
             labelFormatter={(label) => `неделя с ${label}`}
-            contentStyle={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 12,
-              color: 'var(--text)',
-            }}
+            {...CHART_TOOLTIP}
           />
           <Bar dataKey="km" radius={[8, 8, 0, 0]} isAnimationActive={false}>
             {/* текущая неделя — акцентом, прошлые — спокойным цветом */}
