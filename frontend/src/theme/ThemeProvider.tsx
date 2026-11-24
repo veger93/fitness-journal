@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { Suspense, createContext, lazy, useContext, useEffect, useState, type ReactNode } from 'react';
+import { loadLayoutDebug, saveLayoutDebug } from '../debug/debugFlag';
 import { SKIN_FONTS, loadSkin, saveSkin, skinInfo, type Skin } from './skin';
 import { THEME_COLOR, loadThemeChoice, resolveTheme, saveThemeChoice, type Theme, type ThemeChoice } from './theme';
 
@@ -9,7 +10,13 @@ interface ThemeContextValue {
   /** стиль оформления (docs/styles.md) */
   skin: Skin;
   setSkin: (skin: Skin) => void;
+  /** ВРЕМЕННО: панель «Диагностика экрана» (src/debug) */
+  layoutDebug: boolean;
+  setLayoutDebug: (on: boolean) => void;
 }
+
+// панель грузится отдельным файлом и только когда включена — обычным пользователям не мешает
+const LayoutDebug = lazy(() => import('../debug/LayoutDebug').then((m) => ({ default: m.LayoutDebug })));
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
@@ -23,6 +30,7 @@ const darkQuery = () => window.matchMedia('(prefers-color-scheme: dark)');
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [choice, setChoiceState] = useState<ThemeChoice>(loadThemeChoice);
   const [skin, setSkinState] = useState<Skin>(loadSkin);
+  const [layoutDebug, setLayoutDebugState] = useState(loadLayoutDebug);
   const [systemDark, setSystemDark] = useState(() => darkQuery().matches);
 
   // "Как в системе": следим, если пользователь переключит тему ОС, пока сайт открыт
@@ -67,7 +75,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     saveSkin(next);
   };
 
-  return <ThemeContext.Provider value={{ choice, theme, setChoice, skin, setSkin }}>{children}</ThemeContext.Provider>;
+  const setLayoutDebug = (on: boolean) => {
+    setLayoutDebugState(on);
+    saveLayoutDebug(on);
+  };
+
+  return (
+    <ThemeContext.Provider value={{ choice, theme, setChoice, skin, setSkin, layoutDebug, setLayoutDebug }}>
+      {children}
+      {layoutDebug && (
+        <Suspense fallback={null}>
+          <LayoutDebug />
+        </Suspense>
+      )}
+    </ThemeContext.Provider>
+  );
 }
 
 export function useTheme(): ThemeContextValue {

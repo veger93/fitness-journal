@@ -4,6 +4,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { Card } from '../ui/Card';
 import { ChoiceCards } from '../ui/ChoiceCards';
 import { SegmentedControl } from '../ui/SegmentedControl';
+import { Switch } from '../ui/Switch';
 import styles from './Profile.module.css';
 
 const THEME_OPTIONS: { value: ThemeChoice; label: string }[] = [
@@ -19,7 +20,7 @@ const SKIN_OPTIONS = SKINS.map((s) => ({ value: s.id, title: s.title, descriptio
  * Всё хранится в этом браузере (localStorage), на сервер не уходит.
  */
 export function AppearanceCard() {
-  const { choice, setChoice, skin, setSkin } = useTheme();
+  const { choice, setChoice, skin, setSkin, layoutDebug, setLayoutDebug } = useTheme();
   const fixed = skinInfo(skin).fixedTheme;
 
   return (
@@ -38,6 +39,13 @@ export function AppearanceCard() {
           </p>
         </>
       )}
+      {/* ВРЕМЕННО: ищем баг «страница сжимается / съезжает вбок» на iPhone (src/debug) */}
+      <Switch
+        label="Диагностика экрана"
+        hint="временно: ловит момент, когда страница съезжает вбок"
+        checked={layoutDebug}
+        onChange={setLayoutDebug}
+      />
     </Card>
   );
 }
