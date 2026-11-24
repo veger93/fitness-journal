@@ -1,0 +1,62 @@
+/* ВРЕМЕННАЯ панель диагностики: поверх всего, сверху, не шире экрана (сама не должна вызывать баг) */
+.panel {
+  position: fixed;
+  z-index: 1000;
+  top: max(8px, env(safe-area-inset-top));
+  left: 8px;
+  right: 8px;
+  max-height: 40vh;
+  overflow: auto;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgb(0 0 0 / 0.82);
+  color: #fff;
+  font:
+    11px/1.35 ui-monospace,
+    Menlo,
+    monospace;
+}
+
+.bad {
+  background: rgb(160 20 40 / 0.9);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row span {
+  flex: 1;
+}
+
+.row button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #fff;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+}
+
+.text {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.badge {
+  position: fixed;
+  z-index: 1000;
+  top: max(8px, env(safe-area-inset-top));
+  right: 8px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.75);
+  color: #fff;
+  font: 600 12px system-ui;
+}
